@@ -1,9 +1,10 @@
 import type { GraphQLResolveInfo } from 'graphql';
 import * as z from 'zod';
+import { logicRuleBrand, ruleBrand } from './brand.js';
+import { createGuardError } from './errors.js';
 import type {
   Cache,
   CacheConstructorOptions,
-  Fragment,
   GuardContext,
   GuardRule,
   LogicRule as LogicRuleType,
@@ -14,13 +15,15 @@ import type {
   RuleResult,
   Rule as RuleType,
 } from './types.js';
-import { isLogicRule } from './utils.js';
 
 export class Rule implements RuleType {
+  get [ruleBrand](): true {
+    return true;
+  }
+
   readonly name: string;
 
   private cache: Cache;
-  private fragment?: Fragment;
   private func: RuleFunction;
 
   constructor(
@@ -33,7 +36,6 @@ export class Rule implements RuleType {
     this.name = name;
     this.func = func;
     this.cache = options.cache;
-    this.fragment = options.fragment;
   }
 
   async resolve(
@@ -50,7 +52,7 @@ export class Rule implements RuleType {
       if (res instanceof Error) {
         return res;
       } else if (typeof res === 'string') {
-        return new Error(res);
+        return createGuardError(res, 'FORBIDDEN');
       } else if (res === true) {
         return true;
       } else {
@@ -69,17 +71,12 @@ export class Rule implements RuleType {
     return this.func === rule.func;
   }
 
-  extractFragment(): Fragment | undefined {
-    return this.fragment;
-  }
-
   private normalizeOptions(options: RuleConstructorOptions): RuleOptions {
     return {
       cache:
         options.cache !== undefined
           ? this.normalizeCacheOption(options.cache)
           : 'no_cache',
-      fragment: options.fragment !== undefined ? options.fragment : undefined,
     };
   }
 
@@ -172,19 +169,22 @@ export class InputRule<T> extends Rule {
     ) => {
       const result = await schema(z, ctx).safeParseAsync(args, options);
       if (result.success) return true;
-      return new Error(
+      const error = createGuardError(
         result.error.issues[0]?.message ?? result.error.message,
-        {
-          cause: result.error,
-        },
+        'BAD_USER_INPUT',
       );
+      return Object.assign(error, { cause: result.error });
     };
 
-    super(name, validationFunction, { cache: 'strict', fragment: undefined });
+    super(name, validationFunction, { cache: 'strict' });
   }
 }
 
 export class LogicRule implements LogicRuleType {
+  get [logicRuleBrand](): true {
+    return true;
+  }
+
   private rules: GuardRule[];
 
   constructor(rules: GuardRule[]) {
@@ -218,21 +218,6 @@ export class LogicRule implements LogicRuleType {
 
   getRules() {
     return this.rules;
-  }
-
-  extractFragments(): Fragment[] {
-    const fragments = this.rules.reduce<Fragment[]>((fragments, rule) => {
-      if (isLogicRule(rule)) {
-        return fragments.concat(...rule.extractFragments());
-      }
-
-      const fragment = rule.extractFragment();
-      if (fragment) return fragments.concat(fragment);
-
-      return fragments;
-    }, []);
-
-    return fragments;
   }
 }
 

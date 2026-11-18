@@ -2,8 +2,9 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   resolve: {
-    // graphql-middleware loads the CommonJS build of graphql; use the same
-    // build in tests so there is only one graphql instance.
+    // graphql 16 has no "exports" field, so Node always loads its CommonJS
+    // build. Vite prefers the ESM build, which gives tests a second graphql
+    // instance next to the one @graphql-tools loads. Match Node instead.
     alias: [{ find: /^graphql$/, replacement: 'graphql/index.js' }],
   },
   test: {

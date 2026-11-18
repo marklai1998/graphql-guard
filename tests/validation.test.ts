@@ -1,5 +1,6 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
-import { allow, guard, rule } from '../src/';
+import { graphql } from 'graphql';
+import { allow, deny, guard, rule } from '../src/';
 import { and } from '../src/constructors';
 import { ValidationError, validateRuleTree } from '../src/validation';
 import { applyGuard } from './helpers';
@@ -130,10 +131,73 @@ describe('guard works as expected', () => {
 
     /* Tests */
 
+    const schema = makeExecutableSchema({
+      typeDefs: `
+        type Query { foo: String bar: String qux: String foobarqux: String quxbarfoo: String }
+        type Mutation { a: String }
+        type Bar { a: String }
+      `,
+    });
+
     expect(() => {
-      guard(incorrectRuleTree);
+      guard(schema, incorrectRuleTree);
     }).toThrow(
       `There seem to be multiple definitions of these rules: one, two`,
     );
+  });
+});
+
+describe('rules on non-object types', () => {
+  const schema = makeExecutableSchema({
+    typeDefs: `
+      interface Node { id: ID! secret: String }
+      type Item implements Node { id: ID! secret: String }
+      union Result = Item
+      type Query { node: Node items: [Result!]! }
+    `,
+    resolvers: {
+      Node: { __resolveType: () => 'Item' },
+      Result: { __resolveType: () => 'Item' },
+    },
+  });
+
+  test('throws for rules on an interface', () => {
+    expect(() =>
+      applyGuard(schema, { Query: allow, Node: { secret: allow } }),
+    ).toThrow(
+      new ValidationError(
+        'It seems like you have applied rules to Node types but Guard can only apply rules to object types. Apply them to the object types that implement or belong to them instead.',
+      ),
+    );
+  });
+
+  test('throws for rules on a union', () => {
+    expect(() => applyGuard(schema, { Query: allow, Result: allow })).toThrow(
+      ValidationError,
+    );
+  });
+
+  test('applies rules to the object types that implement an interface', async () => {
+    const guarded = applyGuard(schema, {
+      Query: allow,
+      Item: { id: allow, secret: deny },
+    });
+    const result = await graphql({
+      schema: guarded,
+      source: '{ node { id secret } items { ... on Item { secret } } }',
+      rootValue: {
+        node: { id: '1', secret: 'a' },
+        items: [{ id: '2', secret: 'b' }],
+      },
+    });
+
+    expect(result.data).toEqual({
+      node: { id: '1', secret: null },
+      items: [{ secret: null }],
+    });
+    expect(result.errors?.map((error) => error.message)).toEqual([
+      'Not Authorised!',
+      'Not Authorised!',
+    ]);
   });
 });

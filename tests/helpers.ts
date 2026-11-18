@@ -1,5 +1,4 @@
 import type { GraphQLSchema } from 'graphql';
-import { applyMiddleware } from 'graphql-middleware';
 
 import { guard } from '../src';
 
@@ -9,5 +8,7 @@ import { guard } from '../src';
  */
 export const applyGuard = (
   schema: GraphQLSchema,
-  ...args: Parameters<typeof guard>
-): GraphQLSchema => applyMiddleware(schema, guard(...args));
+  ...args: Parameters<typeof guard> extends [unknown, ...infer Rest]
+    ? Rest
+    : never
+): GraphQLSchema => guard(schema, ...args);

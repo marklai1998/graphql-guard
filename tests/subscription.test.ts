@@ -85,3 +85,55 @@ describe('subscriptions', () => {
     expect(subscribeRule).toHaveBeenCalledTimes(1);
   });
 });
+
+test('checks every event against the rule for a subscription with a custom resolve', async () => {
+  const eventRule = vi.fn((event: { count: number }) => event.count !== 2);
+  const schema = applyGuard(
+    makeExecutableSchema({
+      typeDefs,
+      resolvers: {
+        Query: { ok: () => true },
+        Subscription: {
+          count: {
+            subscribe: async function* () {
+              for (const count of [1, 2, 3]) yield { count };
+            },
+            resolve: (event: { count: number }) => event.count * 10,
+          },
+        },
+      },
+    }),
+    {
+      Query: allow,
+      Subscription: {
+        count: rule()((event) => eventRule(event)),
+      },
+    },
+  );
+
+  const result = await subscribe({
+    schema,
+    document: parse('subscription { count }'),
+    contextValue: {},
+  });
+  const events: ExecutionResult[] = [];
+  for await (const event of result as AsyncIterable<ExecutionResult>) {
+    events.push(event);
+  }
+
+  expect(events.map((event) => event.data)).toEqual([
+    { count: 10 },
+    { count: null },
+    { count: 30 },
+  ]);
+  expect(events.map((event) => event.errors?.map((e) => e.message))).toEqual([
+    undefined,
+    ['Not Authorised!'],
+    undefined,
+  ]);
+  expect(eventRule.mock.calls.map(([event]) => event)).toEqual([
+    { count: 1 },
+    { count: 2 },
+    { count: 3 },
+  ]);
+});
