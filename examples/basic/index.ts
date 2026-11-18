@@ -64,8 +64,8 @@ const users = {
   },
 };
 
-function getUser(req) {
-  const auth = req.get('Authorization');
+function getUser(req: { get: (header: string) => string }) {
+  const auth = req.get('Authorization') as keyof typeof users;
   if (users[auth]) {
     return users[auth];
   } else {
@@ -108,7 +108,7 @@ const permissions = shield({
   Customer: isAdmin,
 });
 
-const server = GraphQLServer({
+const server = new GraphQLServer({
   typeDefs,
   resolvers,
   middlewares: [permissions],

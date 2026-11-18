@@ -1,8 +1,8 @@
-const bcrypt = require('bcrypt');
+import bcrypt from 'bcrypt';
 
-const { generateToken, setCookie } = require('../../helpers/cookies');
+import { generateToken, setCookie } from '../../helpers/cookies';
 
-async function login(parent, { data: { email, password } }, ctx, info) {
+export async function login(parent, { data: { email, password } }, ctx, info) {
   const user = await ctx.prisma.user({ email }, info);
   if (!user) {
     throw new Error('Could not find a match for username and password');
@@ -18,7 +18,3 @@ async function login(parent, { data: { email, password } }, ctx, info) {
 
   return user;
 }
-
-module.exports = {
-  login,
-};

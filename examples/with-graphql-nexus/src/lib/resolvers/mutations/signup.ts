@@ -1,8 +1,8 @@
-const bcrypt = require('bcrypt');
+import bcrypt from 'bcrypt';
 
-const { generateToken, setCookie } = require('../../helpers/cookies');
+import { generateToken, setCookie } from '../../helpers/cookies';
 
-async function signup(parent, { data }, ctx, info) {
+export async function signup(parent, { data }, ctx, info) {
   const existing = await ctx.prisma.user({ email: data.email });
   if (existing) {
     throw new Error(`User with email "${data.email}" already exists`);
@@ -16,7 +16,3 @@ async function signup(parent, { data }, ctx, info) {
 
   return user;
 }
-
-module.exports = {
-  signup,
-};

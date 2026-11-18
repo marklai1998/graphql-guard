@@ -1,7 +1,7 @@
-const { ApolloServer, gql } = require('apollo-server-lambda');
-const { applyMiddleware } = require('graphql-middleware');
-const { makeExecutableSchema } = require('@graphql-tools/schema');
-const { rule, shield } = require('graphql-shield');
+import { makeExecutableSchema } from '@graphql-tools/schema';
+import { ApolloServer, gql } from 'apollo-server-lambda';
+import { applyMiddleware } from 'graphql-middleware';
+import { rule, shield } from 'graphql-shield';
 
 const isAuthenticated = rule()(async (parent, args, ctx, info) => {
   return ctx.user;
@@ -42,4 +42,4 @@ const server = new ApolloServer({
   },
 });
 
-exports.graphql = server.createHandler();
+export const graphql = server.createHandler();

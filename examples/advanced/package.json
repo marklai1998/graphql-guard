@@ -2,9 +2,9 @@
   "name": "advanced",
   "private": true,
   "scripts": {
-    "start": "dotenv -- nodemon -e ts,graphql -x ts-node src/index.ts",
+    "start": "dotenv -- nodemon -e ts,graphql -x tsx src/index.ts",
     "dev": "npm-run-all --parallel start playground",
-    "debug": "dotenv -- nodemon -e ts,graphql -x ts-node --inspect src/index.ts",
+    "debug": "dotenv -- nodemon -e ts,graphql -x \"tsx --inspect\" src/index.ts",
     "playground": "graphql playground",
     "build": "rimraf dist && tsc"
   },
@@ -21,10 +21,9 @@
     "graphql-cli": "3.0.14",
     "nodemon": "1.19.4",
     "npm-run-all": "4.1.5",
-    "prettier": "^1.18.2",
     "prisma": "1.34.10",
     "rimraf": "3.0.0",
-    "ts-node": "8.4.1",
+    "tsx": "^4.23.15",
     "typescript": "3.6.4"
   }
 }

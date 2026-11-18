@@ -1,6 +1,6 @@
-const { inputObjectType } = require('nexus');
+import { inputObjectType } from 'nexus';
 
-const LoginInput = inputObjectType({
+export const LoginInput = inputObjectType({
   name: 'LoginInput',
   definition(t) {
     t.field('email', {
@@ -11,7 +11,3 @@ const LoginInput = inputObjectType({
     });
   },
 });
-
-module.exports = {
-  LoginInput,
-};
