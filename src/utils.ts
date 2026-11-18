@@ -51,10 +51,3 @@ export const flattenObjectOf = <T>(
   }, []);
   return values;
 };
-
-export const withDefault = <T>(fallback: T): ((value: T | undefined) => T) => {
-  return (value) => {
-    if (value === undefined) return fallback;
-    return value;
-  };
-};

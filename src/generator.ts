@@ -23,7 +23,6 @@ import {
   isRule,
   isRuleFieldMap,
   isRuleFunction,
-  withDefault,
 } from './utils.js';
 import { ValidationError } from './validation.js';
 
@@ -142,7 +141,7 @@ const applyRuleToType = (
       (middleware, field) => ({
         ...middleware,
         [field]: generateFieldMiddlewareFromRule(
-          withDefault(defaultTypeRule || options.fallbackRule)(rules[field]),
+          rules[field] ?? (defaultTypeRule || options.fallbackRule),
           options,
         ),
       }),

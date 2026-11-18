@@ -2,15 +2,7 @@ import { type IMiddlewareGenerator, middleware } from 'graphql-middleware';
 import hash from 'object-hash';
 import { allow } from './constructors.js';
 import { generateMiddlewareGeneratorFromRuleTree } from './generator.js';
-import type {
-  FallbackErrorType,
-  GuardRule,
-  HashFunction,
-  Options,
-  PopulatedOptions,
-  Rules,
-} from './types.js';
-import { withDefault } from './utils.js';
+import type { Options, PopulatedOptions, Rules } from './types.js';
 import { ValidationError, validateRuleTree } from './validation.js';
 
 const normalizeOptions = (options: Options): PopulatedOptions => {
@@ -19,13 +11,11 @@ const normalizeOptions = (options: Options): PopulatedOptions => {
   }
 
   return {
-    debug: options.debug !== undefined ? options.debug : false,
-    allowExternalErrors: withDefault(false)(options.allowExternalErrors),
-    fallbackRule: withDefault<GuardRule>(allow)(options.fallbackRule),
-    fallbackError: withDefault<FallbackErrorType>(new Error('Not Authorised!'))(
-      options.fallbackError,
-    ),
-    hashFunction: withDefault<HashFunction>(hash)(options.hashFunction),
+    debug: options.debug ?? false,
+    allowExternalErrors: options.allowExternalErrors ?? false,
+    fallbackRule: options.fallbackRule ?? allow,
+    fallbackError: options.fallbackError ?? new Error('Not Authorised!'),
+    hashFunction: options.hashFunction ?? hash,
   };
 };
 

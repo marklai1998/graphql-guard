@@ -5,7 +5,6 @@ import {
   isRule,
   isRuleFieldMap,
   isRuleFunction,
-  withDefault,
 } from '../src/utils';
 
 describe('type identifiers', () => {
@@ -43,12 +42,5 @@ describe('type identifiers', () => {
         bar: false,
       }),
     ).toBeFalsy();
-  });
-});
-
-describe('helper functions', () => {
-  test('withDefault returns correct value', async () => {
-    expect(withDefault('pass')(undefined)).toBe('pass');
-    expect(withDefault('fail')('pass')).toBe('pass');
   });
 });
