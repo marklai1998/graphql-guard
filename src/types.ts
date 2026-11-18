@@ -104,8 +104,4 @@ export type Options = {
   hashFunction?: HashFunction;
 };
 
-export type GuardContext = {
-  _guard: {
-    cache: { [key: string]: RuleResult | Promise<RuleResult> };
-  };
-};
+export type GuardContext = any;

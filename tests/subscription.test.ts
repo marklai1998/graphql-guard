@@ -106,7 +106,8 @@ test('checks every event against the rule for a subscription with a custom resol
     {
       Query: allow,
       Subscription: {
-        count: rule()((event) => eventRule(event)),
+        // The parent is the root value (undefined) when the client subscribes.
+        count: rule()((event) => event === undefined || eventRule(event)),
       },
     },
   );
@@ -136,4 +137,43 @@ test('checks every event against the rule for a subscription with a custom resol
     { count: 2 },
     { count: 3 },
   ]);
+});
+
+test('checks a subscription with a custom resolve when the client subscribes', async () => {
+  const subscribeFn = vi.fn();
+  const schema = applyGuard(
+    makeExecutableSchema({
+      typeDefs,
+      resolvers: {
+        Query: { ok: () => true },
+        Subscription: {
+          count: {
+            subscribe: async function* () {
+              subscribeFn();
+              yield { count: 1 };
+            },
+            resolve: (event: { count: number }) => event.count,
+          },
+        },
+      },
+    }),
+    {
+      Query: allow,
+      Subscription: {
+        count: rule()((_parent, _args, ctx) => ctx.allowed === true),
+      },
+    },
+  );
+
+  const result = await subscribe({
+    schema,
+    document: parse('subscription { count }'),
+    contextValue: { allowed: false },
+  });
+
+  expect(Symbol.asyncIterator in result).toBe(false);
+  expect(
+    (result as ExecutionResult).errors?.map((error) => error.message),
+  ).toEqual(['Not Authorised!']);
+  expect(subscribeFn).not.toHaveBeenCalled();
 });

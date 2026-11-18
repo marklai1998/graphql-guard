@@ -530,3 +530,34 @@ describe('legacy cache:', () => {
     expect(allowMock).toBeCalledTimes(5);
   });
 });
+
+test('Contextual cache - a context object reused across requests does not leak results', async () => {
+  const schema = makeExecutableSchema({
+    typeDefs: 'type Query { secret: String }',
+    resolvers: { Query: { secret: () => 'secret' } },
+  });
+  const isAdmin = rule({ cache: 'contextual' })(
+    (_parent, _args, ctx) => ctx.user.role === 'admin',
+  );
+  const guarded = applyGuard(schema, { Query: { secret: isAdmin } });
+
+  // A server that mistakenly shares one context object between requests.
+  const sharedContext: { user: { role: string } } = {
+    user: { role: 'admin' },
+  };
+
+  const adminRes = await graphql({
+    schema: guarded,
+    source: '{ secret }',
+    contextValue: sharedContext,
+  });
+  sharedContext.user = { role: 'viewer' };
+  const viewerRes = await graphql({
+    schema: guarded,
+    source: '{ secret }',
+    contextValue: sharedContext,
+  });
+
+  expect(adminRes.data).toEqual({ secret: 'secret' });
+  expect(viewerRes.data).toEqual({ secret: null });
+});

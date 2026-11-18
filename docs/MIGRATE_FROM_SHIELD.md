@@ -72,7 +72,9 @@ With GraphQL Yoga and `@envelop/graphql-middleware`, guard the schema instead of
 
 Also:
 
-- The per-request cache is stored on `ctx._guard` instead of `ctx._shield`. This only matters if your code reads or resets that cache directly.
+- The per-request cache is no longer stored on the context (`ctx._shield`). It is kept per operation run, so a context object reused across requests no longer shares cached results. Code that read or reset `ctx._shield` should be removed.
+- `not(rule)` denies when the wrapped rule throws. In graphql-shield, a thrown error counted as "no", so `not` turned it into "yes" and let the request through.
+- A subscription field with a custom `resolve` is also checked when the client subscribes, not only on each event. Rules that read the event payload get the root value (usually `undefined`) as `parent` at that point.
 - Validation errors say `Guard cannot find them in your schema` instead of `Shield cannot find them in your schema`. Update any test or log matching that text.
 
 ## Rename Types

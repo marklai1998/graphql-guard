@@ -1,6 +1,7 @@
 import type { GraphQLResolveInfo } from 'graphql';
 import type * as z from 'zod';
 import { logicRuleBrand, ruleBrand } from './brand.js';
+import { getRuleCache } from './cache.js';
 import { createGuardError } from './errors.js';
 import type {
   Cache,
@@ -15,6 +16,12 @@ import type {
   RuleResult,
   Rule as RuleType,
 } from './types.js';
+
+// Set while a rule runs inside not(). A rule that throws then rethrows instead
+// of resolving to false, so not() can deny rather than invert the failure.
+const failClosed = Symbol('failClosed');
+
+type ResolveOptions = PopulatedOptions & { [failClosed]?: true };
 
 export class Rule implements RuleType {
   get [ruleBrand](): true {
@@ -59,7 +66,7 @@ export class Rule implements RuleType {
         return false;
       }
     } catch (err) {
-      if (options.debug) {
+      if (options.debug || (options as ResolveOptions)[failClosed]) {
         throw err;
       } else {
         return false;
@@ -148,10 +155,11 @@ export class Rule implements RuleType {
     info: GraphQLResolveInfo,
   ) => string | boolean | Error | Promise<RuleResult> {
     return (parent, args, ctx, info) => {
-      if (!ctx._guard.cache[key]) {
-        ctx._guard.cache[key] = this.func(parent, args, ctx, info);
+      const cache = getRuleCache(ctx, info);
+      if (!cache.has(key)) {
+        cache.set(key, this.func(parent, args, ctx, info));
       }
-      return ctx._guard.cache[key];
+      return cache.get(key) as RuleResult | Promise<RuleResult>;
     };
   }
 }
@@ -381,11 +389,20 @@ export class RuleNot extends LogicRule {
     info: GraphQLResolveInfo,
     options: PopulatedOptions,
   ): Promise<RuleResult> {
-    const [res] = await this.evaluate(parent, args, ctx, info, options);
+    let res: RuleResult | undefined;
+    try {
+      const innerOptions: ResolveOptions = { ...options, [failClosed]: true };
+      [res] = await this.evaluate(parent, args, ctx, info, innerOptions);
+    } catch (err) {
+      // The wrapped rule threw (for example, its database is down). Inverting
+      // that would let every request through, so deny instead. Inside another
+      // not(), rethrow so the outermost not() denies.
+      if (options.debug || (options as ResolveOptions)[failClosed]) throw err;
+      return false;
+    }
 
-    if (res instanceof Error) {
-      return true;
-    } else if (res !== true) {
+    // A returned error or string is a deliberate "no", so it inverts to "yes".
+    if (res !== true) {
       return true;
     } else {
       if (this.error) return this.error;
