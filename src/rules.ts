@@ -36,16 +36,6 @@ export class Rule implements IRule {
     this.fragment = options.fragment;
   }
 
-  /**
-   *
-   * @param parent
-   * @param args
-   * @param ctx
-   * @param info
-   *
-   * Resolves rule and writes to cache its result.
-   *
-   */
   async resolve(
     parent: object,
     args: object,
@@ -75,34 +65,14 @@ export class Rule implements IRule {
     }
   }
 
-  /**
-   *
-   * @param rule
-   *
-   * Compares a given rule with the current one
-   * and checks whether their functions are equal.
-   *
-   */
   equals(rule: Rule): boolean {
     return this.func === rule.func;
   }
 
-  /**
-   *
-   * Extracts fragment from the rule.
-   *
-   */
   extractFragment(): IFragment | undefined {
     return this.fragment;
   }
 
-  /**
-   *
-   * @param options
-   *
-   * Sets default values for options.
-   *
-   */
   private normalizeOptions(options: IRuleConstructorOptions): IRuleOptions {
     return {
       cache:
@@ -113,13 +83,6 @@ export class Rule implements IRule {
     };
   }
 
-  /**
-   *
-   * @param cache
-   *
-   * This ensures backward capability of shield.
-   *
-   */
   private normalizeCacheOption(cache: ICacheContructorOptions): ICache {
     switch (cache) {
       case true: {
@@ -134,14 +97,6 @@ export class Rule implements IRule {
     }
   }
 
-  /**
-   * Executes a rule and writes to cache if needed.
-   *
-   * @param parent
-   * @param args
-   * @param ctx
-   * @param info
-   */
   private executeRule(
     parent: object,
     args: object,
@@ -184,12 +139,6 @@ export class Rule implements IRule {
       }
     }
   }
-
-  /**
-   * Writes or reads result from cache.
-   *
-   * @param key
-   */
 
   private writeToCache(
     key: string,
@@ -235,9 +184,6 @@ export class LogicRule implements ILogicRule {
     this.rules = rules;
   }
 
-  /**
-   * By default logic rule resolves to false.
-   */
   async resolve(
     parent: object,
     args: object,
@@ -248,9 +194,6 @@ export class LogicRule implements ILogicRule {
     return false;
   }
 
-  /**
-   * Evaluates all the rules.
-   */
   async evaluate(
     parent: object,
     args: object,
@@ -266,16 +209,10 @@ export class LogicRule implements ILogicRule {
     return Promise.all(tasks);
   }
 
-  /**
-   * Returns rules in a logic rule.
-   */
   getRules() {
     return this.rules;
   }
 
-  /**
-   * Extracts fragments from the defined rules.
-   */
   extractFragments(): IFragment[] {
     const fragments = this.rules.reduce<IFragment[]>((fragments, rule) => {
       if (isLogicRule(rule)) {
@@ -299,9 +236,6 @@ export class RuleOr extends LogicRule {
     super(rules);
   }
 
-  /**
-   * Makes sure that at least one of them has evaluated to true.
-   */
   async resolve(
     parent: object,
     args: object,
@@ -325,9 +259,6 @@ export class RuleAnd extends LogicRule {
     super(rules);
   }
 
-  /**
-   * Makes sure that all of them have resolved to true.
-   */
   async resolve(
     parent: object,
     args: object,
@@ -351,9 +282,6 @@ export class RuleChain extends LogicRule {
     super(rules);
   }
 
-  /**
-   * Makes sure that all of them have resolved to true.
-   */
   async resolve(
     parent: object,
     args: object,
@@ -371,9 +299,6 @@ export class RuleChain extends LogicRule {
     }
   }
 
-  /**
-   * Evaluates all the rules.
-   */
   async evaluate(
     parent: object,
     args: object,
@@ -405,9 +330,6 @@ export class RuleRace extends LogicRule {
     super(rules);
   }
 
-  /**
-   * Makes sure that at least one of them resolved to true.
-   */
   async resolve(
     parent: object,
     args: object,
@@ -425,9 +347,6 @@ export class RuleRace extends LogicRule {
     }
   }
 
-  /**
-   * Evaluates all the rules.
-   */
   async evaluate(
     parent: object,
     args: object,
@@ -462,16 +381,6 @@ export class RuleNot extends LogicRule {
     this.error = error;
   }
 
-  /**
-   *
-   * @param parent
-   * @param args
-   * @param ctx
-   * @param info
-   *
-   * Negates the result.
-   *
-   */
   async resolve(
     parent: object,
     args: object,
@@ -497,11 +406,6 @@ export class RuleTrue extends LogicRule {
     super([]);
   }
 
-  /**
-   *
-   * Always true.
-   *
-   */
   async resolve(): Promise<IRuleResult> {
     return true;
   }
@@ -512,11 +416,6 @@ export class RuleFalse extends LogicRule {
     super([]);
   }
 
-  /**
-   *
-   * Always false.
-   *
-   */
   async resolve(): Promise<IRuleResult> {
     return false;
   }

@@ -1,15 +1,6 @@
 import type { ILogicRule, IRule, IRules, ShieldRule } from './types.js';
 import { flattenObjectOf, isLogicRule, isRuleFunction } from './utils.js';
 
-/**
- *
- * @param ruleTree
- *
- * Validates the rule tree declaration by checking references of rule
- * functions. We deem rule tree valid if no two rules with the same name point
- * to different rules.
- *
- */
 export function validateRuleTree(
   ruleTree: IRules,
 ): { status: 'ok' } | { status: 'err'; message: string } {
@@ -45,13 +36,6 @@ export function validateRuleTree(
   }
 
   /* Helper functions */
-  /**
-   *
-   * @param ruleTree
-   *
-   * Extracts rules from rule tree.
-   *
-   */
   function extractRules(ruleTree: IRules): IRule[] {
     const resolvers = flattenObjectOf<ShieldRule>(ruleTree, isRuleFunction);
 
@@ -66,12 +50,6 @@ export function validateRuleTree(
     return rules;
   }
 
-  /**
-   *
-   * Recursively extracts Rules from LogicRule
-   *
-   * @param rule
-   */
   function extractLogicRules(rule: ILogicRule): IRule[] {
     return rule.getRules().reduce<IRule[]>((acc, shieldRule) => {
       if (isLogicRule(shieldRule)) {

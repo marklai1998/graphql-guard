@@ -27,14 +27,6 @@ import {
 } from './utils.js';
 import { ValidationError } from './validation.js';
 
-/**
- *
- * @param options
- *
- * Generates a middleware function from a given rule and
- * initializes the cache object in context.
- *
- */
 function generateFieldMiddlewareFromRule(
   rule: ShieldRule,
   options: IOptions,
@@ -107,15 +99,6 @@ function generateFieldMiddlewareFromRule(
   return middleware as IMiddlewareFunction<object, object, IShieldContext>;
 }
 
-/**
- *
- * @param type
- * @param rules
- * @param options
- *
- * Generates middleware from rule for a particular type.
- *
- */
 function applyRuleToType(
   type: GraphQLObjectType,
   rules: ShieldRule | IRuleFieldMap,
@@ -183,15 +166,6 @@ function applyRuleToType(
   }
 }
 
-/**
- *
- * @param schema
- * @param rule
- * @param options
- *
- * Applies the same rule over entire schema.
- *
- */
 function applyRuleToSchema(
   schema: GraphQLSchema,
   rule: ShieldRule,
@@ -217,14 +191,6 @@ function applyRuleToSchema(
   return middleware;
 }
 
-/**
- *
- * @param rules
- * @param wrapper
- *
- * Converts rule tree to middleware.
- *
- */
 function generateMiddlewareFromSchemaAndRuleTree(
   schema: GraphQLSchema,
   rules: IRules,
@@ -234,10 +200,6 @@ function generateMiddlewareFromSchemaAndRuleTree(
     /* Applies rule to entire schema. */
     return applyRuleToSchema(schema, rules, options);
   } else {
-    /**
-     * Checks type map and field map and applies rules
-     * to particular fields.
-     */
     const typeMap = schema.getTypeMap();
 
     /* Validation */
@@ -273,14 +235,6 @@ function generateMiddlewareFromSchemaAndRuleTree(
   }
 }
 
-/**
- *
- * @param ruleTree
- * @param options
- *
- * Generates middleware from given rules.
- *
- */
 export function generateMiddlewareGeneratorFromRuleTree<
   TSource = any,
   TContext = any,

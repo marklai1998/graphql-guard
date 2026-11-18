@@ -13,14 +13,6 @@ import type {
 import { withDefault } from './utils.js';
 import { ValidationError, validateRuleTree } from './validation.js';
 
-/**
- *
- * @param options
- *
- * Makes sure all of defined rules are in accord with the options
- * shield can process.
- *
- */
 function normalizeOptions(options: IOptionsConstructor): IOptions {
   if (typeof options.fallbackError === 'string') {
     options.fallbackError = new Error(options.fallbackError);
@@ -37,14 +29,6 @@ function normalizeOptions(options: IOptionsConstructor): IOptions {
   };
 }
 
-/**
- *
- * @param ruleTree
- * @param options
- *
- * Validates rules and generates middleware from defined rule tree.
- *
- */
 export function shield<TSource = any, TContext = any, TArgs = any>(
   ruleTree: IRules,
   options: IOptionsConstructor = {},
