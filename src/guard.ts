@@ -1,32 +1,31 @@
-import { type IMiddlewareGenerator, middleware } from 'graphql-middleware';
+import type { GraphQLSchema } from 'graphql';
 import hash from 'object-hash';
 import { allow } from './constructors.js';
-import { generateMiddlewareGeneratorFromRuleTree } from './generator.js';
+import { createGuardError } from './errors.js';
+import { applyRulesToSchema } from './generator.js';
 import type { Options, Rules } from './types.js';
 import { validateRuleTree } from './validation.js';
 
-export const defaultFallbackError = new Error('Not Authorised!');
+export const defaultFallbackError = createGuardError(
+  'Not Authorised!',
+  'FORBIDDEN',
+);
 
-export const guard = <TSource = any, TContext = any, TArgs = any>(
+export const guard = (
+  schema: GraphQLSchema,
   ruleTree: Rules,
   options: Options = {},
-): IMiddlewareGenerator<TSource, TContext, TArgs> => {
+): GraphQLSchema => {
   validateRuleTree(ruleTree);
 
-  const generatorFunction = generateMiddlewareGeneratorFromRuleTree<
-    TSource,
-    TContext,
-    TArgs
-  >(ruleTree, {
+  return applyRulesToSchema(schema, ruleTree, {
     debug: options.debug ?? false,
     allowExternalErrors: options.allowExternalErrors ?? false,
     fallbackRule: options.fallbackRule ?? allow,
     fallbackError:
       typeof options.fallbackError === 'string'
-        ? new Error(options.fallbackError)
+        ? createGuardError(options.fallbackError, 'FORBIDDEN')
         : (options.fallbackError ?? defaultFallbackError),
     hashFunction: options.hashFunction ?? hash,
   });
-
-  return middleware(generatorFunction);
 };

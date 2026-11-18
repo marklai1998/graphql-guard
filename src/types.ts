@@ -8,7 +8,6 @@ export type Rule = {
   readonly name: string;
 
   equals(rule: Rule): boolean;
-  extractFragment(): Fragment | undefined;
   resolve(
     parent: object,
     args: object,
@@ -20,12 +19,10 @@ export type Rule = {
 
 export type RuleOptions = {
   cache: Cache;
-  fragment?: Fragment;
 };
 
 export type LogicRule = {
   getRules(): GuardRule[];
-  extractFragments(): Fragment[];
   evaluate(
     parent: object,
     args: object,
@@ -42,7 +39,6 @@ export type LogicRule = {
   ): Promise<RuleResult>;
 };
 
-export type Fragment = string;
 export type Cache = 'strict' | 'contextual' | 'no_cache' | CacheKeyFn;
 export type CacheKeyFn = (
   parent: any,
@@ -64,7 +60,6 @@ export type CacheConstructorOptions = Cache | boolean;
 
 export type RuleConstructorOptions = {
   cache?: CacheConstructorOptions;
-  fragment?: Fragment;
 };
 
 // Rules Definition Tree
