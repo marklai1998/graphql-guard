@@ -302,15 +302,37 @@ const guardedSchema = guard(schema, ruleTree, options);
 | fallbackError       | [`defaultFallbackError`](#defaultfallbackerror)      | Error returned on denial. A string, `Error`, or a function. |
 | hashFunction        | [object-hash](https://github.com/puleos/object-hash) | Hashing function used by the `strict` cache.                |
 
+> [!WARNING]
+> By default, errors **thrown by resolvers** are caught and replaced with `fallbackError` (`Not Authorised!`), the same response a denial gets. The original error is not rethrown, so it never reaches your server's error logging and real bugs look like permission failures. Use `debug: true` to rethrow them, `allowExternalErrors: true` to pass them through to the client, or a `fallbackError` function to log them (it receives the thrown error as its first argument, and `null` for a denial). See [Custom errors](#custom-errors).
+
 ### `rule`
 
 ```ts
-rule(name?: string, options?: { cache?: 'no_cache' | 'contextual' | 'strict' })(
+rule(
+  name?: string,
+  options?: {
+    cache?:
+      | 'no_cache'
+      | 'contextual'
+      | 'strict'
+      | ((parent, args, ctx, info) => string);
+  },
+)(
   (parent, args, ctx, info) => boolean | string | Error | Promise<boolean | string | Error>,
 )
 ```
 
 Wraps a validation function into a reusable rule. Return `true` to allow, `false` to deny, or an `Error`/string to deny with a custom message.
+
+`cache` also accepts a function that returns a cache key. The rule runs once per request for each distinct key, so you can cache on just the data the rule depends on instead of hashing all of `parent` and `args` like `strict` does:
+
+```ts
+const canEditPost = rule({ cache: (parent, args) => args.postId })(
+  async (parent, args, ctx, info) => {
+    return ctx.user.editablePostIds.includes(args.postId);
+  },
+);
+```
 
 ### `inputRule`
 
