@@ -6,7 +6,6 @@ GraphQL Guard 1.x is a fork of `graphql-shield@7.x` (based on `7.6.5`, the lates
 - [Update Import](#update-import)
 - [Rename `shield` to `guard`](#rename-shield-to-guard)
 - [Rename Types](#rename-types)
-- [Type Aliases Instead of Interfaces](#type-aliases-instead-of-interfaces)
 - [Replace Yup with Zod in `inputRule`](#replace-yup-with-zod-in-inputrule)
 - [Package Entry Points](#package-entry-points)
 
@@ -81,37 +80,6 @@ import type { Rule, Rules } from 'graphql-guard';
 
 const isAdmin: Rule = rule()(async (parent, args, ctx) => ctx.user.isAdmin);
 const permissions: Rules = { Query: { users: isAdmin } };
-```
-
-## Type Aliases Instead of Interfaces
-
-Exported types are now declared with `type` instead of `interface`. Using them, and extending them with `interface ... extends`, works as before. Only module augmentation is no longer possible, because a type alias can't be re-declared. Define your own type instead.
-
-Before
-
-```ts
-import type { IRule } from 'graphql-shield';
-
-// Module augmentation adds the field to IRule everywhere
-declare module 'graphql-shield' {
-  interface IRule {
-    description?: string;
-  }
-}
-
-const describe = (rule: IRule) => rule.description;
-```
-
-After
-
-```ts
-import type { Rule } from 'graphql-guard';
-
-type DescribedRule = Rule & {
-  description?: string;
-};
-
-const describe = (rule: DescribedRule) => rule.description;
 ```
 
 ## Replace Yup with Zod in `inputRule`
