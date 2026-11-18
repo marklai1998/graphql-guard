@@ -203,6 +203,8 @@ const canSeeUserSensitiveData = rule({ cache: 'strict' })(
 );
 ```
 
+If a cache key can't be computed, the rule runs without the cache for that call. For example, object-hash can't hash a `parent` that holds a `Promise` or a `WeakMap`, which is common with ORMs and data loaders.
+
 > [!NOTE]
 > For backward compatibility, `{ cache: false }` maps to `no_cache` and `{ cache: true }` maps to `strict`.
 
@@ -297,7 +299,7 @@ The blocked field is non-nullable in your schema. GraphQL must honour the schema
 This is caching. `contextual` rules are cached per request regardless of `parent` and `args`. Use `strict` (or `no_cache`) when the rule depends on them.
 
 **How long does a cached result last?**
-One run of an operation. The cache is keyed by the context object and the run, so results never carry over to another request, even if your server reuses one context object. With graphql-js 16 and earlier, each subscription event gets a fresh cache. With graphql-js 17, a subscription keeps one cache for its lifetime, so use `no_cache` for rules whose answer can change while a client stays subscribed (for example, a ban check).
+One run of an operation. The cache is keyed by the context object and the run, so results never carry over to another request, even if your server reuses one context object. Each subscription event gets a fresh cache, keyed by the event payload. An event whose payload is not an object (for example, a bare number) shares one cache with the other events of that subscription on graphql-js 17, so use `no_cache` for rules on such events whose answer can change while a client stays subscribed (for example, a ban check).
 
 ## 💻 API
 
@@ -375,6 +377,8 @@ const isValidSignup = inputRule()((z, ctx) =>
 ```
 
 When validation fails, the rule fails with the first issue's message (e.g. `It has to be an email!`). The full `ZodError`, with every issue, is available as the error's `cause`.
+
+Results are cached per request by `args` only, so the same input is validated once even across the items of a list.
 
 ### `allow` / `deny`
 
