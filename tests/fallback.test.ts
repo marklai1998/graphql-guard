@@ -667,3 +667,21 @@ describe('defaultFallbackError', () => {
     expect(error.originalError).toBe(defaultFallbackError);
   });
 });
+
+describe('options', () => {
+  test('a string fallbackError does not mutate the passed options', async () => {
+    const schema = makeExecutableSchema({
+      typeDefs: 'type Query { closed: String }',
+      resolvers: { Query: { closed: () => 'closed' } },
+    });
+    const options = { fallbackError: 'Denied!' };
+
+    const res = await graphql({
+      schema: applyMiddleware(schema, guard({ Query: deny }, options)),
+      source: '{ closed }',
+    });
+
+    expect(res.errors?.map((error) => error.message)).toEqual(['Denied!']);
+    expect(options).toEqual({ fallbackError: 'Denied!' });
+  });
+});
