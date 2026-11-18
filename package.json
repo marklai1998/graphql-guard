@@ -47,9 +47,7 @@
     "definition": "dist/typings/index.d.ts"
   },
   "files": [
-    "dist/cjs",
-    "dist/esm",
-    "dist/typings"
+    "dist"
   ],
   "type": "module",
   "sideEffects": false,
