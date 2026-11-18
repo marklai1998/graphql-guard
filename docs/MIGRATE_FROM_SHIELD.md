@@ -16,7 +16,7 @@ GraphQL Guard 1.x is a fork of `graphql-shield@7.x` (based on `7.6.5`, the lates
 ## Requirement
 
 - Node 18 or above
-- `graphql` 14, 15 or 16 (support for `graphql` 0.11, 0.12 and 0.13 is removed)
+- `graphql` 14.4 or above, 15 or 16. Support for `graphql` 0.11 to 0.13 and 14.0 to 14.3 is removed
 - `graphql-middleware` is no longer needed. Remove it unless you use it for other middleware
 
 ## Update Import
@@ -183,7 +183,4 @@ The `fragment` rule option and `fragmentReplacements` are removed. They existed 
 
 ## Package Entry Points
 
-The package is built with [tsdown](https://tsdown.dev) and ships `dist/index.mjs` (ESM) and `dist/index.cjs` (CommonJS) with their own type definitions. Both `import` and `require` work as before.
-
-- `require('graphql-shield/package.json')` is no longer exported. Read the version from your lockfile or `npm ls graphql-guard` instead.
-- The `default` export condition is removed. Tools that resolve packages with neither the `import` nor the `require` condition fall back to the `main`, `module` and `types` fields.
+The package is built with [tsdown](https://tsdown.dev) and ships `dist/index.mjs` (ESM) and `dist/index.cjs` (CommonJS) with their own type definitions. Both `import` and `require` work as before, and `graphql-guard/package.json` is still exported.
