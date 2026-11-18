@@ -16,6 +16,9 @@
   "author": "Mark Lai <marklai1998@pm.me>",
   "license": "MIT",
   "homepage": "https://github.com/marklai1998/graphql-guard",
+  "bugs": {
+    "url": "https://github.com/marklai1998/graphql-guard/issues"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/marklai1998/graphql-guard.git"
