@@ -52,8 +52,7 @@
   "sideEffects": false,
   "scripts": {
     "build": "tsdown --format esm --format cjs",
-    "test": "vitest run --coverage",
-    "check": "tsc --noEmit"
+    "test": "vitest run --coverage"
   },
   "dependencies": {
     "object-hash": "^3.0.0",
