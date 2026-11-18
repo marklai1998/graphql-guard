@@ -1,6 +1,6 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { graphql } from 'graphql';
-import { inputRule } from '../src/index.js';
+import { inputRule, rule } from '../src/index.js';
 import { applyGuard } from './helpers.js';
 
 describe('input rule', () => {
@@ -105,5 +105,99 @@ describe('input rule errors', () => {
       'It has to be an email!',
       'Must be an adult!',
     ]);
+  });
+});
+
+describe('rules with an unhashable parent', () => {
+  const typeDefs = `
+    type Query {
+      user: User!
+    }
+
+    type User {
+      greet(name: String!): String
+      posts: [String!]!
+    }
+  `;
+  // ORMs and loaders often put lazy fields like this on the parent.
+  const resolvers = {
+    Query: {
+      user: () => ({
+        posts: Promise.resolve([]),
+        meta: new WeakMap(),
+      }),
+    },
+    User: {
+      greet: (_: unknown, { name }: { name: string }) => `hi ${name}`,
+    },
+  };
+
+  test('inputRule validates the input instead of denying it', async () => {
+    const validate = vi.fn();
+    const schema = applyGuard(makeExecutableSchema({ typeDefs, resolvers }), {
+      User: {
+        greet: inputRule()((z) => {
+          validate();
+          return z.object({ name: z.string().min(2, 'Too short!') });
+        }),
+      },
+    });
+
+    const res = await graphql({
+      schema,
+      source: `{
+        user {
+          a: greet(name: "bob")
+          b: greet(name: "bob")
+          c: greet(name: "x")
+        }
+      }`,
+      contextValue: {},
+    });
+
+    expect(res.data).toEqual({
+      user: { a: 'hi bob', b: 'hi bob', c: null },
+    });
+    expect(res.errors?.map((error) => error.message)).toEqual(['Too short!']);
+    // Cached by args alone, so the repeated "bob" check runs once.
+    expect(validate).toHaveBeenCalledTimes(2);
+  });
+
+  test('a strict rule runs uncached instead of denying', async () => {
+    const allow = vi.fn().mockResolvedValue(true);
+    const schema = applyGuard(makeExecutableSchema({ typeDefs, resolvers }), {
+      User: { greet: rule({ cache: 'strict' })(allow) },
+    });
+
+    const res = await graphql({
+      schema,
+      source: '{ user { greet(name: "bob") } }',
+      contextValue: {},
+    });
+
+    expect(res).toEqual({ data: { user: { greet: 'hi bob' } } });
+    expect(allow).toHaveBeenCalledTimes(1);
+  });
+
+  test('a rule runs uncached when its cache key function throws', async () => {
+    const allow = vi.fn().mockResolvedValue(true);
+    const schema = applyGuard(makeExecutableSchema({ typeDefs, resolvers }), {
+      User: {
+        greet: rule({
+          cache: () => {
+            throw new Error('no key');
+          },
+        })(allow),
+      },
+    });
+
+    const res = await graphql({
+      schema,
+      source: '{ user { greet(name: "bob") } }',
+      contextValue: {},
+    });
+
+    expect(res).toEqual({ data: { user: { greet: 'hi bob' } } });
+    expect(allow).toHaveBeenCalledTimes(1);
   });
 });

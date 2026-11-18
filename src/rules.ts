@@ -8,6 +8,7 @@ import type {
   CacheConstructorOptions,
   GuardContext,
   GuardRule,
+  HashFunction,
   LogicRule as LogicRuleType,
   PopulatedOptions,
   RuleConstructorOptions,
@@ -111,16 +112,26 @@ export class Rule implements RuleType {
     switch (typeof this.cache) {
       case 'function': {
         /* User defined cache function. */
-        const key = String(this.cache(parent, args, ctx, info));
-        return this.writeToCache(key)(parent, args, ctx, info);
+        const cacheKeyFn = this.cache;
+        return this.withCacheKey(
+          () => String(cacheKeyFn(parent, args, ctx, info)),
+          parent,
+          args,
+          ctx,
+          info,
+        );
       }
       case 'string': {
         /* Standard cache option. */
         switch (this.cache) {
           case 'strict': {
-            const key = options.hashFunction({ parent, args });
-
-            return this.writeToCache(key)(parent, args, ctx, info);
+            return this.withCacheKey(
+              () => options.hashFunction(this.strictCacheInput(parent, args)),
+              parent,
+              args,
+              ctx,
+              info,
+            );
           }
           case 'contextual': {
             return this.writeToCache()(parent, args, ctx, info);
@@ -139,6 +150,35 @@ export class Rule implements RuleType {
         throw new Error(`Unsupported cache format: ${typeof this.cache}`);
       }
     }
+  }
+
+  /** The values a `strict` cache key is hashed from. */
+  protected strictCacheInput(
+    parent: object,
+    args: object,
+  ): Parameters<HashFunction>[0] {
+    return { parent, args };
+  }
+
+  /**
+   * Runs the rule through the cache under the key from `getKey`. If the key
+   * can't be computed (for example, object-hash throws on a parent holding a
+   * Promise or a WeakMap), the rule runs uncached instead of being denied.
+   */
+  private withCacheKey(
+    getKey: () => string,
+    parent: object,
+    args: object,
+    ctx: GuardContext,
+    info: GraphQLResolveInfo,
+  ): string | boolean | Error | Promise<RuleResult> {
+    let key: string;
+    try {
+      key = getKey();
+    } catch {
+      return this.func(parent, args, ctx, info);
+    }
+    return this.writeToCache(key)(parent, args, ctx, info);
   }
 
   /**
@@ -189,6 +229,15 @@ export class InputRule<T> extends Rule {
     };
 
     super(name, validationFunction, { cache: 'strict' });
+  }
+
+  // The schema only reads args, so the parent is left out of the cache key.
+  // That also skips hashing the parent for every item of a list.
+  protected override strictCacheInput(
+    _parent: object,
+    args: object,
+  ): Parameters<HashFunction>[0] {
+    return { parent: undefined, args };
   }
 }
 
