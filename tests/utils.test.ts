@@ -1,10 +1,10 @@
-import { and, rule } from '../src/constructors';
+import { and, rule } from '../src/constructors.js';
 import {
   isLogicRule,
   isRule,
   isRuleFieldMap,
   isRuleFunction,
-} from '../src/utils';
+} from '../src/utils.js';
 
 // Objects from graphql-shield have the same class names but are not rules.
 const shieldLike = {
@@ -15,7 +15,7 @@ const shieldLike = {
 // A second, separate instance of the package, like an app that loads both the
 // ESM and the CommonJS build. `instanceof` fails across the two copies.
 vi.resetModules();
-const otherCopy = await import('../src/index');
+const otherCopy = await import('../src/index.js');
 
 describe('type identifiers', () => {
   test('recognises every rule kind from another copy of graphql-guard', () => {

@@ -1,6 +1,6 @@
 import type { GraphQLSchema } from 'graphql';
 
-import { guard } from '../src';
+import { guard } from '../src/index.js';
 
 /**
  * The single place the tests apply guard to a schema, so changing how guard

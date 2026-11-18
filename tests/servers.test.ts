@@ -3,8 +3,8 @@ import { makeExecutableSchema } from '@graphql-tools/schema';
 import type { GraphQLSchema } from 'graphql';
 import { createYoga } from 'graphql-yoga';
 
-import { allow, and, deny, inputRule, or, rule } from '../src';
-import { applyGuard } from './helpers';
+import { allow, and, deny, inputRule, or, rule } from '../src/index.js';
+import { applyGuard } from './helpers.js';
 
 /* Users and context */
 

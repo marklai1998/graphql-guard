@@ -41,7 +41,22 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        graphql: ["16", "17"]
+        # Every graphql major in the peer range, plus its lowest supported version.
+        # @graphql-tools/schema 11 (used by the tests) needs graphql 16+, so older
+        # versions use 10. GraphQL Yoga 6 and Apollo Server 5 need graphql 16+,
+        # so the server tests only run there.
+        include:
+          - graphql: "14.4.0"
+            test-deps: "@graphql-tools/schema@10"
+            test-args: "--exclude tests/servers.test.ts"
+          - graphql: "14"
+            test-deps: "@graphql-tools/schema@10"
+            test-args: "--exclude tests/servers.test.ts"
+          - graphql: "15"
+            test-deps: "@graphql-tools/schema@10"
+            test-args: "--exclude tests/servers.test.ts"
+          - graphql: "16"
+          - graphql: "17"
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -62,7 +77,7 @@ jobs:
 
       - name: Use graphql ${{ matrix.graphql }}
         if: matrix.graphql != '16'
-        run: pnpm add -D graphql@${{ matrix.graphql }}
+        run: pnpm add -D graphql@${{ matrix.graphql }} ${{ matrix.test-deps }}
 
       - name: Test Code
-        run: pnpm test
+        run: pnpm test ${{ matrix.test-args }}

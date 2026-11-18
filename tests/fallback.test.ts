@@ -1,7 +1,7 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { graphql } from 'graphql';
-import { allow, defaultFallbackError, deny, rule } from '../src/index';
-import { applyGuard } from './helpers';
+import { allow, defaultFallbackError, deny, rule } from '../src/index.js';
+import { applyGuard } from './helpers.js';
 
 describe('fallbackError correctly handles errors', () => {
   test('error in resolver returns fallback error.', async () => {

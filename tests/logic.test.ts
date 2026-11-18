@@ -1,10 +1,9 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { type GraphQLResolveInfo, graphql } from 'graphql';
-
-import { allow, and, deny, not, or, rule } from '../src';
-import { chain, race } from '../src/constructors';
-import { LogicRule } from '../src/rules';
-import { applyGuard } from './helpers';
+import { chain, race } from '../src/constructors.js';
+import { allow, and, deny, not, or, rule } from '../src/index.js';
+import { LogicRule } from '../src/rules.js';
+import { applyGuard } from './helpers.js';
 
 describe('logic rules', () => {
   test('allow, deny work as expeted', async () => {

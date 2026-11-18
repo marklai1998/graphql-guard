@@ -1,8 +1,8 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { graphql } from 'graphql';
-import { rule } from '../src/index';
-import type { HashFunction } from '../src/types';
-import { applyGuard } from './helpers';
+import { rule } from '../src/index.js';
+import type { HashFunction } from '../src/types.js';
+import { applyGuard } from './helpers.js';
 
 describe('caching:', () => {
   test('Strict cache - Rule is called multiple times, based on different parent.', async () => {
@@ -300,7 +300,7 @@ describe('caching:', () => {
 
     const schemaWithPermissions = applyGuard(schema, {
       Query: rule({
-        cache: (parent, args, ctx, info) => {
+        cache: (_parent, args) => {
           return JSON.stringify(args);
         },
       })(allowMock),

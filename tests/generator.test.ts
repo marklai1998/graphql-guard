@@ -1,7 +1,7 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { getIntrospectionQuery, graphql } from 'graphql';
-import { deny, rule } from '../src';
-import { applyGuard } from './helpers';
+import { deny, rule } from '../src/index.js';
+import { applyGuard } from './helpers.js';
 
 describe('generates correct middleware', () => {
   test('correctly applies schema rule to schema', async () => {

@@ -1,13 +1,13 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { graphql } from 'graphql';
-import { allow, deny, rule } from '../src';
-import { ValidationError } from '../src/validation';
-import { applyGuard } from './helpers';
+import { allow, deny, rule } from '../src/index.js';
+import { ValidationError } from '../src/validation.js';
+import { applyGuard } from './helpers.js';
 
 // A second, separate instance of the package, like an app that loads both the
 // ESM and the CommonJS build.
 vi.resetModules();
-const otherCopy = await import('../src/index');
+const otherCopy = await import('../src/index.js');
 
 const execute = async (
   schema: ReturnType<typeof applyGuard>,
@@ -96,17 +96,17 @@ describe('values that are not rules', () => {
 });
 
 describe('names of built-in object properties', () => {
+  // A plain record, so TypeScript accepts `constructor` as a resolver name
+  const queryResolvers: Record<string, () => string> = {
+    constructor: () => 'constructor',
+    toString: () => 'toString',
+    hasOwnProperty: () => 'hasOwnProperty',
+    other: () => 'other',
+  };
   const schema = makeExecutableSchema({
     typeDefs:
       'type Query { constructor: String toString: String hasOwnProperty: String other: String }',
-    resolvers: {
-      Query: {
-        constructor: () => 'constructor',
-        toString: () => 'toString',
-        hasOwnProperty: () => 'hasOwnProperty',
-        other: () => 'other',
-      },
-    },
+    resolvers: { Query: queryResolvers },
   });
   const source = '{ constructor toString hasOwnProperty other }';
 

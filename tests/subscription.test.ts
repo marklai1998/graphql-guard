@@ -1,8 +1,8 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { type ExecutionResult, parse, subscribe } from 'graphql';
 
-import { allow, rule } from '../src';
-import { applyGuard } from './helpers';
+import { allow, rule } from '../src/index.js';
+import { applyGuard } from './helpers.js';
 
 const typeDefs = /* GraphQL */ `
   type Query {
