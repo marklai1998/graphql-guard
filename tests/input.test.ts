@@ -1,7 +1,7 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { graphql } from 'graphql';
-import { inputRule } from '../src';
-import { applyGuard } from './helpers';
+import { inputRule } from '../src/index.js';
+import { applyGuard } from './helpers.js';
 
 describe('input rule', () => {
   test('schema validation works as expected', async () => {

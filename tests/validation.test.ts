@@ -1,9 +1,9 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { graphql } from 'graphql';
-import { allow, deny, guard, rule } from '../src/';
-import { and } from '../src/constructors';
-import { ValidationError, validateRuleTree } from '../src/validation';
-import { applyGuard } from './helpers';
+import { and } from '../src/constructors.js';
+import { allow, deny, guard, rule } from '../src/index.js';
+import { ValidationError, validateRuleTree } from '../src/validation.js';
+import { applyGuard } from './helpers.js';
 
 describe('correctly helps developer', () => {
   test('Finds a type missing in schema and warns developer.', async () => {

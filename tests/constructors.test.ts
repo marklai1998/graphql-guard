@@ -8,7 +8,7 @@ import {
   not,
   or,
   rule,
-} from '../src/constructors';
+} from '../src/constructors.js';
 import {
   InputRule,
   Rule,
@@ -18,7 +18,7 @@ import {
   RuleNot,
   RuleOr,
   RuleTrue,
-} from '../src/rules';
+} from '../src/rules.js';
 
 describe('rule constructor', () => {
   beforeEach(() => {
