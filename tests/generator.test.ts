@@ -1,7 +1,7 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { graphql } from 'graphql';
 import { applyMiddleware } from 'graphql-middleware';
-import { rule, shield } from '../src';
+import { guard, rule } from '../src';
 
 describe('generates correct middleware', () => {
   test('correctly applies schema rule to schema', async () => {
@@ -32,7 +32,7 @@ describe('generates correct middleware', () => {
     /* Permissions */
 
     const allowMock = vi.fn().mockResolvedValue(true);
-    const permissions = shield(rule({ cache: 'no_cache' })(allowMock));
+    const permissions = guard(rule({ cache: 'no_cache' })(allowMock));
 
     const schemaWithPermissions = applyMiddleware(schema, permissions);
 
@@ -92,7 +92,7 @@ describe('generates correct middleware', () => {
     /* Permissions */
 
     const allowMock = vi.fn().mockResolvedValue(true);
-    const permissions = shield({
+    const permissions = guard({
       Query: rule({ cache: 'no_cache' })(allowMock),
     });
 
@@ -154,7 +154,7 @@ describe('generates correct middleware', () => {
     /* Permissions */
 
     const allowMock = vi.fn().mockResolvedValue(true);
-    const permissions = shield({
+    const permissions = guard({
       Query: { a: rule({ cache: 'no_cache' })(allowMock) },
     });
 
@@ -222,7 +222,7 @@ describe('generates correct middleware', () => {
     const defaultQueryMock = vi.fn().mockResolvedValue(true);
     const defaultTypeMock = vi.fn().mockResolvedValue(true);
 
-    const permissions = shield({
+    const permissions = guard({
       Query: {
         a: rule({ cache: 'no_cache' })(allowMock),
         type: rule({ cache: 'no_cache' })(vi.fn().mockResolvedValue(true)),
@@ -303,7 +303,7 @@ describe('generates correct middleware', () => {
     const defaultQueryMock = vi.fn().mockResolvedValue(true);
     const defaultTypeMock = vi.fn().mockResolvedValue(true);
 
-    const permissions = shield({
+    const permissions = guard({
       Query: {
         a: rule({ cache: 'no_cache' })(allowMock),
         type: rule({ cache: 'no_cache' })(vi.fn().mockResolvedValue(true)),

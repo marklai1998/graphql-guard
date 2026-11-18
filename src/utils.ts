@@ -1,9 +1,9 @@
 import { LogicRule, Rule } from './rules.js';
 import type {
+  GuardRule,
   LogicRule as LogicRuleType,
   RuleFieldMap,
   Rule as RuleType,
-  ShieldRule,
 } from './types.js';
 
 export const isRule = (x: any): x is RuleType => {
@@ -24,7 +24,7 @@ export const isLogicRule = (x: any): x is LogicRuleType => {
   );
 };
 
-export const isRuleFunction = (x: any): x is ShieldRule => {
+export const isRuleFunction = (x: any): x is GuardRule => {
   return isRule(x) || isLogicRule(x);
 };
 

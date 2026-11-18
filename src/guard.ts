@@ -4,11 +4,11 @@ import { allow } from './constructors.js';
 import { generateMiddlewareGeneratorFromRuleTree } from './generator.js';
 import type {
   FallbackErrorType,
+  GuardRule,
   HashFunction,
   Options,
   OptionsConstructor,
   Rules,
-  ShieldRule,
 } from './types.js';
 import { withDefault } from './utils.js';
 import { ValidationError, validateRuleTree } from './validation.js';
@@ -21,7 +21,7 @@ const normalizeOptions = (options: OptionsConstructor): Options => {
   return {
     debug: options.debug !== undefined ? options.debug : false,
     allowExternalErrors: withDefault(false)(options.allowExternalErrors),
-    fallbackRule: withDefault<ShieldRule>(allow)(options.fallbackRule),
+    fallbackRule: withDefault<GuardRule>(allow)(options.fallbackRule),
     fallbackError: withDefault<FallbackErrorType>(new Error('Not Authorised!'))(
       options.fallbackError,
     ),
@@ -29,7 +29,7 @@ const normalizeOptions = (options: OptionsConstructor): Options => {
   };
 };
 
-export const shield = <TSource = any, TContext = any, TArgs = any>(
+export const guard = <TSource = any, TContext = any, TArgs = any>(
   ruleTree: Rules,
   options: OptionsConstructor = {},
 ): IMiddlewareGenerator<TSource, TContext, TArgs> => {

@@ -2,7 +2,7 @@ import { makeExecutableSchema } from '@graphql-tools/schema';
 import { type GraphQLResolveInfo, graphql } from 'graphql';
 import { applyMiddleware } from 'graphql-middleware';
 
-import { allow, and, deny, not, or, rule, shield } from '../src';
+import { allow, and, deny, guard, not, or, rule } from '../src';
 import { chain, race } from '../src/constructors';
 import { LogicRule } from '../src/rules';
 
@@ -25,7 +25,7 @@ describe('logic rules', () => {
     const schema = makeExecutableSchema({ typeDefs, resolvers });
 
     // Permissions
-    const permissions = shield({
+    const permissions = guard({
       Query: {
         allow: allow,
         deny: deny,
@@ -81,7 +81,7 @@ describe('logic rules', () => {
       throw new Error();
     });
 
-    const permissions = shield({
+    const permissions = guard({
       Query: {
         allow: and(allow, allow),
         deny: and(allow, deny),
@@ -160,7 +160,7 @@ describe('logic rules', () => {
       throw new Error('error');
     });
 
-    const permissions = shield({
+    const permissions = guard({
       Query: {
         allow: chain(allowRuleA, allowRuleB, allowRuleC),
         deny: chain(denyRule, denyRule, denyRule),
@@ -242,7 +242,7 @@ describe('logic rules', () => {
       throw new Error('error');
     });
 
-    const permissions = shield({
+    const permissions = guard({
       Query: {
         allow: race(denyRuleA, allowRuleB, allowRuleC),
         deny: race(denyRule, denyRule, denyRule),
@@ -298,7 +298,7 @@ describe('logic rules', () => {
 
     /* Permissions */
 
-    const permissions = shield({
+    const permissions = guard({
       Query: {
         allow: or(allow, deny),
         deny: or(deny, deny),
@@ -370,7 +370,7 @@ describe('logic rules', () => {
       return 'error_string_pass';
     });
 
-    const permissions = shield({
+    const permissions = guard({
       Query: {
         allow: not(deny),
         deny: not(allow),
@@ -431,7 +431,7 @@ describe('logic rules', () => {
 
     /* Permissions */
 
-    const permissions = shield({
+    const permissions = guard({
       Query: {
         not: not(allow, 'This is a custom not message.'),
       },
@@ -467,7 +467,7 @@ describe('internal execution', () => {
     const res = await rule.resolve(
       {},
       {},
-      { _shield: { cache: {} } },
+      { _guard: { cache: {} } },
       {} as GraphQLResolveInfo,
       {
         allowExternalErrors: false,
@@ -500,7 +500,7 @@ describe('internal execution', () => {
 
     const ruleDeny = rule()(() => false);
 
-    const permissions = shield({
+    const permissions = guard({
       Query: {
         deny: ruleDeny,
       },

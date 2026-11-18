@@ -1,7 +1,7 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { graphql } from 'graphql';
 import { applyMiddleware } from 'graphql-middleware';
-import { rule, shield } from '../src/index';
+import { guard, rule } from '../src/index';
 import type { HashFunction } from '../src/types';
 
 describe('caching:', () => {
@@ -35,7 +35,7 @@ describe('caching:', () => {
     /* Permissions */
 
     const allowMock = vi.fn().mockResolvedValue(true);
-    const permissions = shield({
+    const permissions = guard({
       Test: rule({ cache: 'strict' })(allowMock),
     });
 
@@ -95,7 +95,7 @@ describe('caching:', () => {
 
     const allowMock = vi.fn().mockResolvedValue(true);
 
-    const permissions = shield({
+    const permissions = guard({
       Query: rule({ cache: 'strict' })(allowMock),
     });
 
@@ -169,7 +169,7 @@ describe('caching:', () => {
     const ruleTwoMock = vi.fn().mockResolvedValue(true);
     const ruleTwo = rule({ cache: 'contextual' })(ruleTwoMock);
 
-    const permissions = shield({
+    const permissions = guard({
       Query: {
         a: ruleOne,
         b: ruleOne,
@@ -244,7 +244,7 @@ describe('caching:', () => {
     const allowMock = vi.fn().mockResolvedValue(true);
     const allow = rule({ cache: 'no_cache' })(allowMock);
 
-    const permissions = shield({
+    const permissions = guard({
       Query: allow,
     });
 
@@ -305,7 +305,7 @@ describe('caching:', () => {
 
     const allowMock = vi.fn().mockResolvedValue(true);
 
-    const permissions = shield({
+    const permissions = guard({
       Query: rule({
         cache: (parent, args, ctx, info) => {
           return JSON.stringify(args);
@@ -371,7 +371,7 @@ test('Customize hash function', async () => {
 
   const hashFunction: HashFunction = vi.fn((opts) => JSON.stringify(opts));
 
-  const permissions = shield(
+  const permissions = guard(
     {
       Query: rule({ cache: 'strict' })(allowMock),
     },
@@ -447,7 +447,7 @@ describe('legacy cache:', () => {
     /* Permissions */
 
     const allowMock = vi.fn().mockResolvedValue(true);
-    const permissions = shield({
+    const permissions = guard({
       Test: rule({ cache: true })(allowMock),
     });
 
@@ -509,7 +509,7 @@ describe('legacy cache:', () => {
     const allowMock = vi.fn().mockResolvedValue(true);
     const allow = rule({ cache: false })(allowMock);
 
-    const permissions = shield({
+    const permissions = guard({
       Query: allow,
     });
 

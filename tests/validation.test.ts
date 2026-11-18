@@ -1,6 +1,6 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { applyMiddleware } from 'graphql-middleware';
-import { allow, rule, shield } from '../src/';
+import { allow, guard, rule } from '../src/';
 import { and } from '../src/constructors';
 import { validateRuleTree } from '../src/validation';
 
@@ -21,7 +21,7 @@ describe('correctly helps developer', () => {
 
     // Permissions
 
-    const permissions = shield({
+    const permissions = guard({
       Query: allow,
       Fail1: allow,
       Fail2: allow,
@@ -30,7 +30,7 @@ describe('correctly helps developer', () => {
     expect(() => {
       applyMiddleware(schema, permissions);
     }).toThrow(
-      `It seems like you have applied rules to Fail1, Fail2 types but Shield cannot find them in your schema.`,
+      `It seems like you have applied rules to Fail1, Fail2 types but Guard cannot find them in your schema.`,
     );
   });
 
@@ -49,7 +49,7 @@ describe('correctly helps developer', () => {
 
     // Permissions
 
-    const permissions = shield({
+    const permissions = guard({
       Query: {
         a: allow,
         b: allow,
@@ -60,7 +60,7 @@ describe('correctly helps developer', () => {
     expect(() => {
       applyMiddleware(schema, permissions);
     }).toThrow(
-      'It seems like you have applied rules to Query.b, Query.c fields but Shield cannot find them in your schema.',
+      'It seems like you have applied rules to Query.b, Query.c fields but Guard cannot find them in your schema.',
     );
   });
 });
@@ -107,7 +107,7 @@ describe('rule tree validation', () => {
   });
 });
 
-describe('shield works as expected', () => {
+describe('guard works as expected', () => {
   test('throws an error on invalid schema', async () => {
     /* Rules */
 
@@ -133,7 +133,7 @@ describe('shield works as expected', () => {
     /* Tests */
 
     expect(() => {
-      shield(incorrectRuleTree);
+      guard(incorrectRuleTree);
     }).toThrow(
       `There seem to be multiple definitions of these rules: one, two`,
     );

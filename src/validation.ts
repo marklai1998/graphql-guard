@@ -1,18 +1,18 @@
-import type { LogicRule, Rule, Rules, ShieldRule } from './types.js';
+import type { GuardRule, LogicRule, Rule, Rules } from './types.js';
 import { flattenObjectOf, isLogicRule, isRuleFunction } from './utils.js';
 
 const extractLogicRules = (rule: LogicRule): Rule[] => {
-  return rule.getRules().reduce<Rule[]>((acc, shieldRule) => {
-    if (isLogicRule(shieldRule)) {
-      return [...acc, ...extractLogicRules(shieldRule)];
+  return rule.getRules().reduce<Rule[]>((acc, guardRule) => {
+    if (isLogicRule(guardRule)) {
+      return [...acc, ...extractLogicRules(guardRule)];
     } else {
-      return [...acc, shieldRule];
+      return [...acc, guardRule];
     }
   }, []);
 };
 
 const extractRules = (ruleTree: Rules): Rule[] => {
-  const resolvers = flattenObjectOf<ShieldRule>(ruleTree, isRuleFunction);
+  const resolvers = flattenObjectOf<GuardRule>(ruleTree, isRuleFunction);
 
   const rules = resolvers.reduce<Rule[]>((rules, rule) => {
     if (isLogicRule(rule)) {

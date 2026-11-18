@@ -11,10 +11,10 @@ import {
   RuleTrue,
 } from './rules.js';
 import type {
+  GuardContext,
+  GuardRule,
   RuleConstructorOptions,
   RuleFunction,
-  ShieldContext,
-  ShieldRule,
 } from './types.js';
 
 export const rule =
@@ -39,7 +39,7 @@ export const rule =
 export const inputRule =
   <T>(name?: string) =>
   (
-    schema: (zod: typeof z, ctx: ShieldContext) => z.ZodType<T>,
+    schema: (zod: typeof z, ctx: GuardContext) => z.ZodType<T>,
     options?: Parameters<z.ZodType<T>['safeParseAsync']>[1],
   ) => {
     if (typeof name === 'string') {
@@ -49,23 +49,23 @@ export const inputRule =
     }
   };
 
-export const and = (...rules: ShieldRule[]): RuleAnd => {
+export const and = (...rules: GuardRule[]): RuleAnd => {
   return new RuleAnd(rules);
 };
 
-export const chain = (...rules: ShieldRule[]): RuleChain => {
+export const chain = (...rules: GuardRule[]): RuleChain => {
   return new RuleChain(rules);
 };
 
-export const race = (...rules: ShieldRule[]): RuleRace => {
+export const race = (...rules: GuardRule[]): RuleRace => {
   return new RuleRace(rules);
 };
 
-export const or = (...rules: ShieldRule[]): RuleOr => {
+export const or = (...rules: GuardRule[]): RuleOr => {
   return new RuleOr(rules);
 };
 
-export const not = (rule: ShieldRule, error?: string | Error): RuleNot => {
+export const not = (rule: GuardRule, error?: string | Error): RuleNot => {
   if (typeof error === 'string') return new RuleNot(rule, new Error(error));
   return new RuleNot(rule, error);
 };

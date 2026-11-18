@@ -4,6 +4,8 @@ import type {
   Cache,
   CacheConstructorOptions,
   Fragment,
+  GuardContext,
+  GuardRule,
   LogicRule as LogicRuleType,
   Options,
   RuleConstructorOptions,
@@ -11,8 +13,6 @@ import type {
   RuleOptions,
   RuleResult,
   Rule as RuleType,
-  ShieldContext,
-  ShieldRule,
 } from './types.js';
 import { isLogicRule } from './utils.js';
 
@@ -39,7 +39,7 @@ export class Rule implements RuleType {
   async resolve(
     parent: object,
     args: object,
-    ctx: ShieldContext,
+    ctx: GuardContext,
     info: GraphQLResolveInfo,
     options: Options,
   ): Promise<RuleResult> {
@@ -100,7 +100,7 @@ export class Rule implements RuleType {
   private executeRule(
     parent: object,
     args: object,
-    ctx: ShieldContext,
+    ctx: GuardContext,
     info: GraphQLResolveInfo,
     options: Options,
   ): string | boolean | Error | Promise<RuleResult> {
@@ -147,14 +147,14 @@ export class Rule implements RuleType {
   ): (
     parent: object,
     args: object,
-    ctx: ShieldContext,
+    ctx: GuardContext,
     info: GraphQLResolveInfo,
   ) => string | boolean | Error | Promise<RuleResult> {
     return (parent, args, ctx, info) => {
-      if (!ctx._shield.cache[key]) {
-        ctx._shield.cache[key] = this.func(parent, args, ctx, info);
+      if (!ctx._guard.cache[key]) {
+        ctx._guard.cache[key] = this.func(parent, args, ctx, info);
       }
-      return ctx._shield.cache[key];
+      return ctx._guard.cache[key];
     };
   }
 }
@@ -162,13 +162,13 @@ export class Rule implements RuleType {
 export class InputRule<T> extends Rule {
   constructor(
     name: string,
-    schema: (zod: typeof z, ctx: ShieldContext) => z.ZodType<T>,
+    schema: (zod: typeof z, ctx: GuardContext) => z.ZodType<T>,
     options?: Parameters<z.ZodType<T>['safeParseAsync']>[1],
   ) {
     const validationFunction: RuleFunction = async (
       _parent: object,
       args: object,
-      ctx: ShieldContext,
+      ctx: GuardContext,
     ) => {
       const result = await schema(z, ctx).safeParseAsync(args, options);
       if (result.success) return true;
@@ -185,16 +185,16 @@ export class InputRule<T> extends Rule {
 }
 
 export class LogicRule implements LogicRuleType {
-  private rules: ShieldRule[];
+  private rules: GuardRule[];
 
-  constructor(rules: ShieldRule[]) {
+  constructor(rules: GuardRule[]) {
     this.rules = rules;
   }
 
   async resolve(
     _parent: object,
     _args: object,
-    _ctx: ShieldContext,
+    _ctx: GuardContext,
     _info: GraphQLResolveInfo,
     _options: Options,
   ): Promise<RuleResult> {
@@ -204,7 +204,7 @@ export class LogicRule implements LogicRuleType {
   async evaluate(
     parent: object,
     args: object,
-    ctx: ShieldContext,
+    ctx: GuardContext,
     info: GraphQLResolveInfo,
     options: Options,
   ): Promise<RuleResult[]> {
@@ -239,14 +239,14 @@ export class LogicRule implements LogicRuleType {
 // Extended Types
 
 export class RuleOr extends LogicRule {
-  constructor(rules: ShieldRule[]) {
+  constructor(rules: GuardRule[]) {
     super(rules);
   }
 
   override async resolve(
     parent: object,
     args: object,
-    ctx: ShieldContext,
+    ctx: GuardContext,
     info: GraphQLResolveInfo,
     options: Options,
   ): Promise<RuleResult> {
@@ -262,14 +262,14 @@ export class RuleOr extends LogicRule {
 }
 
 export class RuleAnd extends LogicRule {
-  constructor(rules: ShieldRule[]) {
+  constructor(rules: GuardRule[]) {
     super(rules);
   }
 
   override async resolve(
     parent: object,
     args: object,
-    ctx: ShieldContext,
+    ctx: GuardContext,
     info: GraphQLResolveInfo,
     options: Options,
   ): Promise<RuleResult> {
@@ -285,14 +285,14 @@ export class RuleAnd extends LogicRule {
 }
 
 export class RuleChain extends LogicRule {
-  constructor(rules: ShieldRule[]) {
+  constructor(rules: GuardRule[]) {
     super(rules);
   }
 
   override async resolve(
     parent: object,
     args: object,
-    ctx: ShieldContext,
+    ctx: GuardContext,
     info: GraphQLResolveInfo,
     options: Options,
   ): Promise<RuleResult> {
@@ -309,13 +309,13 @@ export class RuleChain extends LogicRule {
   override async evaluate(
     parent: object,
     args: object,
-    ctx: ShieldContext,
+    ctx: GuardContext,
     info: GraphQLResolveInfo,
     options: Options,
   ): Promise<RuleResult[]> {
     const rules = this.getRules();
 
-    const iterate = async ([rule, ...otherRules]: ShieldRule[]): Promise<
+    const iterate = async ([rule, ...otherRules]: GuardRule[]): Promise<
       RuleResult[]
     > => {
       if (rule === undefined) return [];
@@ -333,14 +333,14 @@ export class RuleChain extends LogicRule {
 }
 
 export class RuleRace extends LogicRule {
-  constructor(rules: ShieldRule[]) {
+  constructor(rules: GuardRule[]) {
     super(rules);
   }
 
   override async resolve(
     parent: object,
     args: object,
-    ctx: ShieldContext,
+    ctx: GuardContext,
     info: GraphQLResolveInfo,
     options: Options,
   ): Promise<RuleResult> {
@@ -357,13 +357,13 @@ export class RuleRace extends LogicRule {
   override async evaluate(
     parent: object,
     args: object,
-    ctx: ShieldContext,
+    ctx: GuardContext,
     info: GraphQLResolveInfo,
     options: Options,
   ): Promise<RuleResult[]> {
     const rules = this.getRules();
 
-    const iterate = async ([rule, ...otherRules]: ShieldRule[]): Promise<
+    const iterate = async ([rule, ...otherRules]: GuardRule[]): Promise<
       RuleResult[]
     > => {
       if (rule === undefined) return [];
@@ -383,7 +383,7 @@ export class RuleRace extends LogicRule {
 export class RuleNot extends LogicRule {
   error?: Error;
 
-  constructor(rule: ShieldRule, error?: Error) {
+  constructor(rule: GuardRule, error?: Error) {
     super([rule]);
     this.error = error;
   }
@@ -391,7 +391,7 @@ export class RuleNot extends LogicRule {
   override async resolve(
     parent: object,
     args: object,
-    ctx: ShieldContext,
+    ctx: GuardContext,
     info: GraphQLResolveInfo,
     options: Options,
   ): Promise<RuleResult> {

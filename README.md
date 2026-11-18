@@ -42,7 +42,7 @@ pnpm i graphql-guard graphql-middleware
 Define your rules (permissions.ts) and build a permission tree that matches your schema.
 
 ```ts
-import { shield, rule, and, or, not } from 'graphql-guard';
+import { guard, rule, and, or, not } from 'graphql-guard';
 
 const isAuthenticated = rule({ cache: 'contextual' })(
   async (parent, args, ctx, info) => {
@@ -62,7 +62,7 @@ const isEditor = rule({ cache: 'contextual' })(
   },
 );
 
-export const permissions = shield({
+export const permissions = guard({
   Query: {
     frontPage: not(isAuthenticated),
     fruits: and(isAuthenticated, or(isAdmin, isEditor)),
@@ -99,14 +99,14 @@ const schemaWithPermissions = applyMiddleware(schema, permissions);
 
 ### Permission tree
 
-The rule tree passed to `shield` must match your schema definition. A rule can apply to:
+The rule tree passed to `guard` must match your schema definition. A rule can apply to:
 
 - **a whole type**: `Customer: isAdmin`
 - **a single field**: `Query: { customers: isAdmin }`
 - **every field of a type without its own rule**: use the `'*'` wildcard
 
 ```ts
-const permissions = shield(
+const permissions = guard(
   {
     Query: {
       '*': deny, // every Query field except query1 and query2 is denied
@@ -136,7 +136,7 @@ const isOwner = rule()(async (parent, args, ctx, info) => {
   return ctx.user.items.some((id) => id === parent.id);
 });
 
-const permissions = shield({
+const permissions = guard({
   Query: {
     users: or(isAdmin, isEditor),
   },
@@ -206,11 +206,11 @@ Resolvers can do the same by returning an `Error`.
 To change the default error globally, set `fallbackError` to a string, an `Error`, or a function:
 
 ```ts
-const permissions = shield(rules, {
+const permissions = guard(rules, {
   fallbackError: 'You shall not pass!',
 });
 
-const permissions = shield(rules, {
+const permissions = guard(rules, {
   fallbackError: async (thrownThing, parent, args, context, info) => {
     if (thrownThing instanceof Error) {
       console.error(thrownThing); // report unexpected errors
@@ -228,7 +228,7 @@ const permissions = shield(rules, {
 Set `fallbackRule` to `deny` so any field without a rule is blocked. New fields stay private until you explicitly allow them.
 
 ```ts
-const permissions = shield(
+const permissions = guard(
   {
     Query: {
       users: allow,
@@ -273,20 +273,20 @@ This is caching. `contextual` rules are cached per request regardless of `parent
 
 ## 💻 API
 
-- [shield](#shield)
+- [guard](#guard)
 - [rule](#rule)
 - [inputRule](#inputrule)
 - [allow / deny](#allow--deny)
 - [Logic rules](#logic-rules)
 
-### `shield`
+### `guard`
 
 Generates a GraphQL Middleware layer from your rule tree.
 
 ```ts
-import { shield } from 'graphql-guard';
+import { guard } from 'graphql-guard';
 
-const permissions = shield(ruleTree, options);
+const permissions = guard(ruleTree, options);
 ```
 
 | Option              | Default                                              | Description                                                 |

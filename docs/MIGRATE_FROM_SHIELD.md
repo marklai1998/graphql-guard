@@ -1,9 +1,10 @@
 # Migrate from `graphql-shield`
 
-GraphQL Guard is a fork of `graphql-shield@7.6.5`. Rules, caching, logic rules, fallbacks and error handling all work as before. Apart from `inputRule`, which now validates with Zod instead of Yup, most projects only need to update the package name and the requirements below.
+GraphQL Guard is a fork of `graphql-shield@7.6.5`. Rules, caching, logic rules, fallbacks and error handling all work as before. Apart from `inputRule`, which now validates with Zod instead of Yup, most projects only need to update the package name, rename `shield` to `guard` and check the requirements below.
 
 - [Requirement](#requirement)
 - [Update Import](#update-import)
+- [Rename `shield` to `guard`](#rename-shield-to-guard)
 - [Rename Types](#rename-types)
 - [Type Aliases Instead of Interfaces](#type-aliases-instead-of-interfaces)
 - [Replace Yup with Zod in `inputRule`](#replace-yup-with-zod-in-inputrule)
@@ -17,7 +18,7 @@ GraphQL Guard is a fork of `graphql-shield@7.6.5`. Rules, caching, logic rules, 
 
 ## Update Import
 
-Replace the package and update every import. All exports keep their names: `shield`, `rule`, `inputRule`, `allow`, `deny`, `and`, `or`, `not`, `chain` and `race`.
+Replace the package and update every import. Apart from `shield`, which is renamed to `guard`, all exports keep their names: `rule`, `inputRule`, `allow`, `deny`, `and`, `or`, `not`, `chain` and `race`.
 
 ```bash
 npm uninstall graphql-shield
@@ -26,7 +27,35 @@ npm i graphql-guard
 
 ```diff
 - import { shield, rule, and, or, not } from 'graphql-shield';
-+ import { shield, rule, and, or, not } from 'graphql-guard';
++ import { guard, rule, and, or, not } from 'graphql-guard';
+```
+
+## Rename `shield` to `guard`
+
+- `shield` => `guard`. It takes the same rule tree and options and returns the same middleware.
+- The per-request cache is stored on `ctx._guard` instead of `ctx._shield`. This only matters if your code reads or resets that cache directly.
+- Validation errors say `Guard cannot find them in your schema` instead of `Shield cannot find them in your schema`. Update any test or log matching that text.
+
+Before
+
+```ts
+import { shield } from 'graphql-shield';
+
+const permissions = shield(
+  { Query: { users: isAdmin } },
+  { fallbackRule: deny },
+);
+```
+
+After
+
+```ts
+import { guard } from 'graphql-guard';
+
+const permissions = guard(
+  { Query: { users: isAdmin } },
+  { fallbackRule: deny },
+);
 ```
 
 ## Rename Types

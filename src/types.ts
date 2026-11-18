@@ -2,7 +2,7 @@ import type { GraphQLResolveInfo } from 'graphql';
 
 // Rule
 
-export type ShieldRule = Rule | LogicRule;
+export type GuardRule = Rule | LogicRule;
 
 export type Rule = {
   readonly name: string;
@@ -12,7 +12,7 @@ export type Rule = {
   resolve(
     parent: object,
     args: object,
-    ctx: ShieldContext,
+    ctx: GuardContext,
     info: GraphQLResolveInfo,
     options: Options,
   ): Promise<RuleResult>;
@@ -24,19 +24,19 @@ export type RuleOptions = {
 };
 
 export type LogicRule = {
-  getRules(): ShieldRule[];
+  getRules(): GuardRule[];
   extractFragments(): Fragment[];
   evaluate(
     parent: object,
     args: object,
-    ctx: ShieldContext,
+    ctx: GuardContext,
     info: GraphQLResolveInfo,
     options: Options,
   ): Promise<RuleResult[]>;
   resolve(
     parent: object,
     args: object,
-    ctx: ShieldContext,
+    ctx: GuardContext,
     info: GraphQLResolveInfo,
     options: Options,
   ): Promise<RuleResult>;
@@ -70,14 +70,14 @@ export type RuleConstructorOptions = {
 // Rules Definition Tree
 
 export type RuleTypeMap = {
-  [key: string]: ShieldRule | RuleFieldMap;
+  [key: string]: GuardRule | RuleFieldMap;
 };
 
 export type RuleFieldMap = {
-  [key: string]: ShieldRule;
+  [key: string]: GuardRule;
 };
 
-export type Rules = ShieldRule | RuleTypeMap;
+export type Rules = GuardRule | RuleTypeMap;
 
 export type HashFunction = (arg: { parent: any; args: any }) => string;
 
@@ -85,7 +85,7 @@ export type FallbackErrorMapperType = (
   err: unknown,
   parent: object,
   args: object,
-  ctx: ShieldContext,
+  ctx: GuardContext,
   info: GraphQLResolveInfo,
 ) => Promise<Error> | Error;
 
@@ -96,7 +96,7 @@ export type FallbackErrorType = Error | FallbackErrorMapperType;
 export type Options = {
   debug: boolean;
   allowExternalErrors: boolean;
-  fallbackRule: ShieldRule;
+  fallbackRule: GuardRule;
   fallbackError?: FallbackErrorType;
   hashFunction: HashFunction;
 };
@@ -104,13 +104,13 @@ export type Options = {
 export type OptionsConstructor = {
   debug?: boolean;
   allowExternalErrors?: boolean;
-  fallbackRule?: ShieldRule;
+  fallbackRule?: GuardRule;
   fallbackError?: string | FallbackErrorType;
   hashFunction?: HashFunction;
 };
 
-export type ShieldContext = {
-  _shield: {
+export type GuardContext = {
+  _guard: {
     cache: { [key: string]: RuleResult | Promise<RuleResult> };
   };
 };

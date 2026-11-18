@@ -12,11 +12,11 @@ import type {
 } from 'graphql-middleware';
 import type { IMiddlewareWithOptions } from 'graphql-middleware/types';
 import type {
+  GuardContext,
+  GuardRule,
   Options,
   RuleFieldMap,
   Rules,
-  ShieldContext,
-  ShieldRule,
 } from './types.js';
 import {
   isLogicRule,
@@ -28,28 +28,28 @@ import {
 import { ValidationError } from './validation.js';
 
 const generateFieldMiddlewareFromRule = (
-  rule: ShieldRule,
+  rule: GuardRule,
   options: Options,
-): IMiddlewareFunction<object, object, ShieldContext> => {
+): IMiddlewareFunction<object, object, GuardContext> => {
   const middleware = async (
     resolve: (
       parent: object,
       args: object,
-      ctx: ShieldContext,
+      ctx: GuardContext,
       info: GraphQLResolveInfo,
     ) => Promise<any>,
     parent: { [key: string]: any },
     args: { [key: string]: any },
-    ctx: ShieldContext,
+    ctx: GuardContext,
     info: GraphQLResolveInfo,
   ) => {
     // Cache
     if (!ctx) {
-      ctx = {} as ShieldContext;
+      ctx = {} as GuardContext;
     }
 
-    if (!ctx._shield) {
-      ctx._shield = {
+    if (!ctx._guard) {
+      ctx._guard = {
         cache: {},
       };
     }
@@ -86,22 +86,22 @@ const generateFieldMiddlewareFromRule = (
     return {
       fragment: rule.extractFragment(),
       resolve: middleware,
-    } as IMiddlewareWithOptions<object, object, ShieldContext>;
+    } as IMiddlewareWithOptions<object, object, GuardContext>;
   }
 
   if (isLogicRule(rule)) {
     return {
       fragments: rule.extractFragments(),
       resolve: middleware,
-    } as IMiddlewareWithOptions<object, object, ShieldContext>;
+    } as IMiddlewareWithOptions<object, object, GuardContext>;
   }
 
-  return middleware as IMiddlewareFunction<object, object, ShieldContext>;
+  return middleware as IMiddlewareFunction<object, object, GuardContext>;
 };
 
 const applyRuleToType = (
   type: GraphQLObjectType,
-  rules: ShieldRule | RuleFieldMap,
+  rules: GuardRule | RuleFieldMap,
   options: Options,
 ): IMiddleware => {
   if (isRuleFunction(rules)) {
@@ -132,7 +132,7 @@ const applyRuleToType = (
 
     if (fieldErrors.length > 0) {
       throw new ValidationError(
-        `It seems like you have applied rules to ${fieldErrors} fields but Shield cannot find them in your schema.`,
+        `It seems like you have applied rules to ${fieldErrors} fields but Guard cannot find them in your schema.`,
       );
     }
 
@@ -168,7 +168,7 @@ const applyRuleToType = (
 
 const applyRuleToSchema = (
   schema: GraphQLSchema,
-  rule: ShieldRule,
+  rule: GuardRule,
   options: Options,
 ): IMiddleware => {
   const typeMap = schema.getTypeMap();
@@ -210,7 +210,7 @@ const generateMiddlewareFromSchemaAndRuleTree = (
 
     if (typeErrors.length > 0) {
       throw new ValidationError(
-        `It seems like you have applied rules to ${typeErrors} types but Shield cannot find them in your schema.`,
+        `It seems like you have applied rules to ${typeErrors} types but Guard cannot find them in your schema.`,
       );
     }
 

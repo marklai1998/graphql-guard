@@ -1,7 +1,7 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { applyMiddleware } from 'graphql-middleware';
 import { allow } from '../src/constructors';
-import { and, not, or, rule, shield } from '../src/index';
+import { and, guard, not, or, rule } from '../src/index';
 
 describe('Fragment extraction', () => {
   test('Extracts fragment from rule correctly.', async () => {
@@ -73,7 +73,7 @@ describe('Fragment application', () => {
       return true;
     });
 
-    const permissions = shield({
+    const permissions = guard({
       Query: {
         user: allow,
         events: allow,

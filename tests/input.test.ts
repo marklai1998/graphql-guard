@@ -1,7 +1,7 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { graphql } from 'graphql';
 import { applyMiddleware } from 'graphql-middleware';
-import { inputRule, shield } from '../src';
+import { guard, inputRule } from '../src';
 
 describe('input rule', () => {
   test('schema validation works as expected', async () => {
@@ -27,7 +27,7 @@ describe('input rule', () => {
     const schema = makeExecutableSchema({ typeDefs, resolvers });
 
     // Permissions
-    const permissions = shield({
+    const permissions = guard({
       Mutation: {
         login: inputRule()((z) =>
           z.object({
@@ -80,7 +80,7 @@ describe('input rule errors', () => {
       },
     });
 
-    const permissions = shield({
+    const permissions = guard({
       Mutation: {
         signup: inputRule()((z) =>
           z.object({

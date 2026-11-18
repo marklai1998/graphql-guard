@@ -3,7 +3,7 @@ import { ApolloServer, gql } from 'apollo-server';
 import { applyMiddleware } from 'graphql-middleware';
 import wretch from 'wretch';
 
-import { allow, deny, shield } from '../src';
+import { allow, deny, guard } from '../src';
 
 describe('integration tests', () => {
   test('works with ApolloServer', async () => {
@@ -25,7 +25,7 @@ describe('integration tests', () => {
 
     /* Permissions */
 
-    const permissions = shield({
+    const permissions = guard({
       Query: {
         allow: allow,
         deny: deny,

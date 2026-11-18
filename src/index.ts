@@ -9,5 +9,5 @@ export {
   race,
   rule,
 } from './constructors.js';
-export { shield } from './shield.js';
+export { guard } from './guard.js';
 export type { Rule, Rules } from './types.js';

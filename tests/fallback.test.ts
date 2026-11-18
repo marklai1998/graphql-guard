@@ -1,7 +1,7 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { graphql } from 'graphql';
 import { applyMiddleware } from 'graphql-middleware';
-import { allow, rule, shield } from '../src/index';
+import { allow, guard, rule } from '../src/index';
 
 describe('fallbackError correctly handles errors', () => {
   test('error in resolver returns fallback error.', async () => {
@@ -29,7 +29,7 @@ describe('fallbackError correctly handles errors', () => {
 
     const fallbackError = new Error('fallback');
 
-    const permissions = shield(
+    const permissions = guard(
       {
         Query: allow,
       },
@@ -77,7 +77,7 @@ describe('fallbackError correctly handles errors', () => {
       throw new Error();
     });
 
-    const permissions = shield(
+    const permissions = guard(
       {
         Query: allow,
       },
@@ -128,7 +128,7 @@ describe('fallbackError correctly handles errors', () => {
     /* Permissions */
 
     const fallbackMessage = Math.random().toString();
-    const permissions = shield(
+    const permissions = guard(
       {
         Query: allow,
       },
@@ -175,7 +175,7 @@ describe('fallbackError correctly handles errors', () => {
       throw new Error();
     });
 
-    const permissions = shield(
+    const permissions = guard(
       {
         Query: allow,
       },
@@ -229,7 +229,7 @@ describe('fallbackError correctly handles errors', () => {
 
     const fallbackError = () => new Error('fallback');
 
-    const permissions = shield(
+    const permissions = guard(
       {
         Query: allow,
       },
@@ -281,7 +281,7 @@ describe('external errors can be controled correctly', () => {
 
     /* Permissions */
 
-    const permissions = shield(
+    const permissions = guard(
       {
         Query: allow,
       },
@@ -326,7 +326,7 @@ describe('external errors can be controled correctly', () => {
       throw new Error('external');
     });
 
-    const permissions = shield(
+    const permissions = guard(
       {
         Query: allow,
       },
@@ -373,7 +373,7 @@ describe('debug mode works as expected', () => {
       throw new Error('debug');
     });
 
-    const permissions = shield(
+    const permissions = guard(
       {
         Query: allow,
       },
@@ -423,7 +423,7 @@ describe('debug mode works as expected', () => {
 
     /* Permissions */
 
-    const permissions = shield(
+    const permissions = guard(
       {
         Query: allow,
       },
@@ -468,7 +468,7 @@ describe('custom errors work as expected', () => {
     /* Permissions */
 
     const error = new Error(`${Math.random()}`);
-    const permissions = shield({
+    const permissions = guard({
       Query: rule()(() => {
         return error;
       }),
@@ -508,7 +508,7 @@ describe('custom errors work as expected', () => {
 
     const error = `${Math.random()}`;
 
-    const permissions = shield({
+    const permissions = guard({
       Query: rule()(() => {
         return error;
       }),
@@ -570,7 +570,7 @@ describe('fallbackRule correctly applies fallback rule', () => {
     const fallbackRuleMock = vi.fn().mockResolvedValue(true);
     const fallbackRule = rule({ cache: 'no_cache' })(fallbackRuleMock);
 
-    const permissions = shield(
+    const permissions = guard(
       {
         Query: {
           a: allow,
