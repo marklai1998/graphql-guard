@@ -25,8 +25,12 @@ describe('getRuleCache', () => {
     expect(getRuleCache(ctx, undefined)).not.toBe(getRuleCache({}, undefined));
   });
 
-  test('does not cache without a context object', () => {
-    expect(getRuleCache(undefined, info({}))).not.toBe(
+  test('caches per run without a context object', () => {
+    const run = {};
+    expect(getRuleCache(undefined, info(run))).toBe(
+      getRuleCache(null, info(run)),
+    );
+    expect(getRuleCache(undefined, info(run))).not.toBe(
       getRuleCache(undefined, info({})),
     );
   });
@@ -63,5 +67,11 @@ describe('getRuleCache', () => {
         operation: { operation: 'query' },
       }) as unknown as GraphQLResolveInfo;
     expect(getRuleCache(ctx, query({}))).toBe(getRuleCache(ctx, query({})));
+  });
+
+  test('does not cache without a context object or variable values', () => {
+    expect(getRuleCache(undefined, undefined)).not.toBe(
+      getRuleCache(undefined, undefined),
+    );
   });
 });

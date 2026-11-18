@@ -617,3 +617,45 @@ test('Cache keys of different rules never collide', async () => {
   expect(allowMock).toBeCalledTimes(1);
   expect(denyMock).toBeCalledTimes(1);
 });
+
+describe('without a context:', () => {
+  const schema = makeExecutableSchema({
+    typeDefs: `
+      type Query {
+        a: String
+        b: String
+      }
+    `,
+    resolvers: {
+      Query: {
+        a: (_parent: unknown, _args: unknown, ctx: unknown) => String(ctx),
+        b: (_parent: unknown, _args: unknown, ctx: unknown) => String(ctx),
+      },
+    },
+  });
+
+  test('rules and resolvers get the context the server passed', async () => {
+    const seen = vi.fn().mockReturnValue(true);
+    const guarded = applyGuard(schema, {
+      Query: rule()((_parent, _args, ctx) => seen(ctx)),
+    });
+
+    const res = await graphql({ schema: guarded, source: '{ a b }' });
+
+    expect(res).toEqual({ data: { a: 'undefined', b: 'undefined' } });
+    expect(seen.mock.calls).toEqual([[undefined], [undefined]]);
+  });
+
+  test('a contextual rule still runs once per request', async () => {
+    const allowMock = vi.fn().mockResolvedValue(true);
+    const guarded = applyGuard(schema, {
+      Query: rule({ cache: 'contextual' })(allowMock),
+    });
+
+    await graphql({ schema: guarded, source: '{ a b }' });
+    expect(allowMock).toBeCalledTimes(1);
+
+    await graphql({ schema: guarded, source: '{ a b }' });
+    expect(allowMock).toBeCalledTimes(2);
+  });
+});
