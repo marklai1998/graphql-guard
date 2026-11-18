@@ -47,7 +47,9 @@
     "definition": "dist/typings/index.d.ts"
   },
   "files": [
-    "dist"
+    "dist/cjs",
+    "dist/esm",
+    "dist/typings"
   ],
   "type": "module",
   "sideEffects": false,
@@ -87,10 +89,6 @@
     "node-fetch": "^2.6.7",
     "typescript": "4.7.4",
     "vitest": "5.1.0"
-  },
-  "publishConfig": {
-    "directory": "dist",
-    "access": "public"
   },
   "packageManager": "pnpm@12.21.0"
 }
