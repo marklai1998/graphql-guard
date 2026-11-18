@@ -24,13 +24,6 @@ const guardResolver =
       ctx = {} as GuardContext;
     }
 
-    if (!ctx._guard) {
-      ctx._guard = {
-        // No prototype, so rule names like `constructor` are never found here
-        cache: Object.create(null),
-      };
-    }
-
     try {
       const res = await rule.resolve(parent, args, ctx, info, options);
 
@@ -134,27 +127,34 @@ export const applyRulesToSchema = (
         options.fallbackRule,
       );
 
-      // A custom resolver is guarded first. On a subscription field this runs
-      // the rule for every event, with the event as parent.
-      if (fieldConfig.resolve && fieldConfig.resolve !== defaultFieldResolver) {
-        return {
-          ...fieldConfig,
-          resolve: guardResolver(fieldConfig.resolve, rule, options),
-        };
-      }
+      const hasCustomResolve =
+        fieldConfig.resolve !== undefined &&
+        fieldConfig.resolve !== defaultFieldResolver;
 
-      // A subscription without a custom resolver is checked once, when the
-      // client subscribes.
+      // A subscription is checked when the client subscribes, so a denied
+      // subscription never runs its subscribe function. If it also has a custom
+      // resolve, the rule runs again for every event, with the event as parent.
       if (fieldConfig.subscribe) {
         return {
           ...fieldConfig,
           subscribe: guardResolver(fieldConfig.subscribe, rule, options),
+          ...(hasCustomResolve && {
+            resolve: guardResolver(
+              fieldConfig.resolve as Resolver,
+              rule,
+              options,
+            ),
+          }),
         };
       }
 
       return {
         ...fieldConfig,
-        resolve: guardResolver(defaultFieldResolver, rule, options),
+        resolve: guardResolver(
+          fieldConfig.resolve ?? defaultFieldResolver,
+          rule,
+          options,
+        ),
       };
     },
   });

@@ -391,7 +391,7 @@ describe('logic rules', () => {
     expect(res.data).toEqual({
       allow: 'allow',
       deny: null,
-      ruleError: 'ruleError',
+      ruleError: null,
       resolverError: null,
       customRuleError: 'customRuleError',
       customRuleErrorString: 'customRuleErrorString',
@@ -399,7 +399,76 @@ describe('logic rules', () => {
     expect(res.errors?.map((err) => err.message)).toEqual([
       'Not Authorised!',
       'Not Authorised!',
+      'Not Authorised!',
     ]);
+  });
+
+  test('not denies when the wrapped rule throws, however deeply nested', async () => {
+    const typeDefs = `
+      type Query {
+        direct: String
+        nested: String
+        doubleNot: String
+        working: String
+      }
+    `;
+    const resolvers = {
+      Query: {
+        direct: () => 'secret',
+        nested: () => 'secret',
+        doubleNot: () => 'secret',
+        working: () => 'secret',
+      },
+    };
+    const schema = makeExecutableSchema({ typeDefs, resolvers });
+
+    const isBanned = rule()(async () => {
+      throw new Error('db down');
+    });
+    const isNotBanned = rule()(async () => false);
+
+    const schemaWithPermissions = applyGuard(schema, {
+      Query: {
+        direct: not(isBanned),
+        nested: not(and(allow, or(deny, isBanned))),
+        doubleNot: not(not(not(isBanned))),
+        working: not(isNotBanned),
+      },
+    });
+
+    const res = await graphql({
+      schema: schemaWithPermissions,
+      source: '{ direct nested doubleNot working }',
+    });
+
+    expect(res.data).toEqual({
+      direct: null,
+      nested: null,
+      doubleNot: null,
+      working: 'secret',
+    });
+  });
+
+  test('a throwing rule outside not() still resolves to false', async () => {
+    const typeDefs = `
+      type Query {
+        a: String
+      }
+    `;
+    const schema = makeExecutableSchema({
+      typeDefs,
+      resolvers: { Query: { a: () => 'secret' } },
+    });
+    const throwing = rule()(async () => {
+      throw new Error('db down');
+    });
+
+    const res = await graphql({
+      schema: applyGuard(schema, { Query: { a: or(throwing, allow) } }),
+      source: '{ a }',
+    });
+
+    expect(res.data).toEqual({ a: 'secret' });
   });
 
   test('not returns custom error', async () => {

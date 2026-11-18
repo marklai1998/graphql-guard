@@ -263,9 +263,15 @@ const guardedSchema = guard(
 
 ### Subscriptions
 
-Rules on `Subscription` fields run once, when the client subscribes. A denied subscription returns the error instead of starting the stream.
+Rules on `Subscription` fields run when the client subscribes. A denied subscription returns the error and never calls the field's `subscribe` function, so no listeners, queries or other setup run for it.
 
-If the field has a custom `resolve`, the rule runs for every event instead, with the event as `parent`, so it can check the payload. A denied event resolves to `null` with the error, and the stream continues.
+If the field also has a custom `resolve`, the rule runs again for every event, with the event as `parent`, so it can check the payload. A denied event resolves to `null` with the error, and the stream continues. When the client subscribes, `parent` is the root value (usually `undefined`), so a rule that reads the payload must handle that:
+
+```ts
+const canSeePost = rule()((post, args, ctx) =>
+  post === undefined ? ctx.user !== null : post.authorId === ctx.user?.id,
+);
+```
 
 ### Troubleshooting
 
@@ -274,6 +280,9 @@ The blocked field is non-nullable in your schema. GraphQL must honour the schema
 
 **A rule runs only once even though the result has many items.**
 This is caching. `contextual` rules are cached per request regardless of `parent` and `args`. Use `strict` (or `no_cache`) when the rule depends on them.
+
+**How long does a cached result last?**
+One run of an operation. The cache is keyed by the context object and the run, so results never carry over to another request, even if your server reuses one context object. With graphql-js 16 and earlier, each subscription event gets a fresh cache. With graphql-js 17, a subscription keeps one cache for its lifetime, so use `no_cache` for rules whose answer can change while a client stays subscribed (for example, a ban check).
 
 ## 💻 API
 
@@ -375,7 +384,7 @@ Combine rules into more complex requirements.
 - `or(...rules)` - passes if at least one rule passes.
 - `chain(...rules)` - runs rules one by one and stops at the first failure (lazy `and`).
 - `race(...rules)` - runs rules one by one and stops at the first success (lazy `or`).
-- `not(rule, error?)` - inverts a rule, with an optional custom error.
+- `not(rule, error?)` - inverts a rule, with an optional custom error. If the wrapped rule throws (for example, its database is down), `not` denies instead of inverting, so `not(isBanned)` never lets everyone in while the ban check is broken. A rule that returns an error or a string is a deliberate "no", so `not` turns it into a "yes".
 
 ## 🧪 Examples
 
