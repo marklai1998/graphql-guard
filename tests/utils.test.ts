@@ -6,16 +6,37 @@ import {
   isRuleFunction,
 } from '../src/utils';
 
-// Rules created by another copy of the library (e.g. a duplicate install)
-// fail `instanceof`, so they are recognised by class name instead.
-const foreignRules = {
+// Objects from graphql-shield have the same class names but are not rules.
+const shieldLike = {
   Rule: class Rule {},
   RuleAnd: class RuleAnd {},
 };
-const testSimpleRule = new foreignRules.Rule();
-const testLogicRule = new foreignRules.RuleAnd();
+
+// A second, separate instance of the package, like an app that loads both the
+// ESM and the CommonJS build. `instanceof` fails across the two copies.
+vi.resetModules();
+const otherCopy = await import('../src/index');
 
 describe('type identifiers', () => {
+  test('recognises every rule kind from another copy of graphql-guard', () => {
+    const {
+      rule: otherRule,
+      inputRule,
+      and: otherAnd,
+      allow,
+      deny,
+    } = otherCopy;
+
+    expect(otherRule()(() => true)).not.toBeInstanceOf(
+      rule()(() => true).constructor,
+    );
+    expect(isRule(otherRule()(() => true))).toBe(true);
+    expect(isRule(inputRule()((z) => z.object({})))).toBe(true);
+    expect(isLogicRule(otherAnd())).toBe(true);
+    expect(isLogicRule(allow)).toBe(true);
+    expect(isLogicRule(deny)).toBe(true);
+  });
+
   test('isRuleFunction finds rule function.', async () => {
     expect(isRuleFunction(rule()(() => true))).toBeTruthy();
     expect(isRuleFunction(and())).toBeTruthy();
@@ -26,14 +47,14 @@ describe('type identifiers', () => {
     expect(isRule(rule()(() => true))).toBeTruthy();
     expect(isRule(and())).toBeFalsy();
     expect(isRule(false)).toBeFalsy();
-    expect(isRule(testSimpleRule)).toBeTruthy();
+    expect(isRule(new shieldLike.Rule())).toBeFalsy();
   });
 
   test('isLogicRule finds logic rule.', async () => {
     expect(isLogicRule(and())).toBeTruthy();
     expect(isLogicRule(rule()(() => true))).toBeFalsy();
     expect(isLogicRule(false)).toBeFalsy();
-    expect(isLogicRule(testLogicRule)).toBeTruthy();
+    expect(isLogicRule(new shieldLike.RuleAnd())).toBeFalsy();
   });
 
   test('isRuleFieldMap finds rule field map.', async () => {

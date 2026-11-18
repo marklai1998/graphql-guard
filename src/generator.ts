@@ -12,7 +12,7 @@ import type {
   PopulatedOptions,
   Rules,
 } from './types.js';
-import { isRuleFieldMap, isRuleFunction } from './utils.js';
+import { isRuleFunction } from './utils.js';
 import { ValidationError } from './validation.js';
 
 type Resolver = GraphQLFieldResolver<any, any, any>;
@@ -26,7 +26,8 @@ const guardResolver =
 
     if (!ctx._guard) {
       ctx._guard = {
-        cache: {},
+        // No prototype, so rule names like `constructor` are never found here
+        cache: Object.create(null),
       };
     }
 
@@ -65,11 +66,12 @@ const ruleForField = (
 ): GuardRule => {
   if (isRuleFunction(rules)) return rules;
 
+  if (!Object.hasOwn(rules, typeName)) return fallbackRule;
+
   const typeRules = rules[typeName];
   if (isRuleFunction(typeRules)) return typeRules;
-  if (isRuleFieldMap(typeRules)) {
-    return typeRules[fieldName] ?? typeRules['*'] ?? fallbackRule;
-  }
+  if (Object.hasOwn(typeRules, fieldName)) return typeRules[fieldName];
+  if (Object.hasOwn(typeRules, '*')) return typeRules['*'];
   return fallbackRule;
 };
 
@@ -97,9 +99,10 @@ const validateRulesAgainstSchema = (schema: GraphQLSchema, rules: Rules) => {
   }
 
   for (const [typeName, type] of Object.entries(typeMap)) {
-    const typeRules = rules[typeName];
     if (!isObjectType(type) || isIntrospectionType(type)) continue;
-    if (!isRuleFieldMap(typeRules)) continue;
+    if (!Object.hasOwn(rules, typeName)) continue;
+    const typeRules = rules[typeName];
+    if (isRuleFunction(typeRules)) continue;
 
     const fields = type.getFields();
     const missingFields = Object.keys(typeRules)

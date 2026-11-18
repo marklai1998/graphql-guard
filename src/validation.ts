@@ -31,7 +31,37 @@ const extractRules = (ruleTree: Rules): Rule[] => {
   return rules;
 };
 
+const isPlainObject = (x: unknown): x is Record<string, unknown> => {
+  if (x === null || typeof x !== 'object') return false;
+  const prototype = Object.getPrototypeOf(x);
+  return prototype === Object.prototype || prototype === null;
+};
+
+const notARule = (path: string) =>
+  new ValidationError(
+    `It seems like ${path} is not a graphql-guard rule. Create rules with rule(), inputRule(), allow, deny or the logic rules from graphql-guard. Rules created with graphql-shield are not supported.`,
+  );
+
+// Anything in the rule tree that is not a rule would otherwise be skipped
+// silently and replaced by the fallback rule.
+const validateRuleTreeShape = (ruleTree: unknown): void => {
+  if (isRuleFunction(ruleTree)) return;
+  if (!isPlainObject(ruleTree)) throw notARule('the rule tree');
+
+  for (const [typeName, typeRules] of Object.entries(ruleTree)) {
+    if (isRuleFunction(typeRules)) continue;
+    if (!isPlainObject(typeRules)) throw notARule(typeName);
+
+    for (const [fieldName, fieldRule] of Object.entries(typeRules)) {
+      if (!isRuleFunction(fieldRule))
+        throw notARule(`${typeName}.${fieldName}`);
+    }
+  }
+};
+
 export const validateRuleTree = (ruleTree: Rules): void => {
+  validateRuleTreeShape(ruleTree);
+
   const rules = extractRules(ruleTree);
 
   const valid = rules.reduce<{ map: Map<string, Rule>; duplicates: string[] }>(

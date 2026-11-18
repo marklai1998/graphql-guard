@@ -9,6 +9,7 @@ GraphQL Guard 1.x is a fork of `graphql-shield@7.x` (based on `7.6.5`, the lates
 - [Type Aliases Instead of Interfaces](#type-aliases-instead-of-interfaces)
 - [Replace Yup with Zod in `inputRule`](#replace-yup-with-zod-in-inputrule)
 - [Errors Are `GraphQLError`s](#errors-are-graphqlerrors)
+- [Only graphql-guard Rules Are Accepted](#only-graphql-guard-rules-are-accepted)
 - [Rules on Interfaces and Unions](#rules-on-interfaces-and-unions)
 - [Fragments Removed](#fragments-removed)
 - [Package Entry Points](#package-entry-points)
@@ -178,6 +179,13 @@ Errors created by GraphQL Guard are now `GraphQLError`s with a `code` extension 
 Servers that hide unexpected errors now show them. With `graphql-shield`, GraphQL Yoga's default error masking turned every denial into `Unexpected error.` If you turned masking off for that reason, you can turn it back on.
 
 A plain `Error` returned from a rule or a custom `fallbackError` is still passed through as is. Return a string or a `GraphQLError` if it should survive error masking.
+
+## Only graphql-guard Rules Are Accepted
+
+Every value in the rule tree must be a rule created with graphql-guard (`rule`, `inputRule`, `allow`, `deny` or a logic rule). Anything else throws a `ValidationError` that names the field, for example `It seems like Query.users is not a graphql-guard rule.`
+
+- Rules created with graphql-shield are not accepted. Recreate them with graphql-guard. Mixing the two never worked: graphql-shield rules with a contextual or strict cache always denied the request, because their cache lives on `ctx._shield`
+- `graphql-shield` replaced the whole type with the fallback rule when one value wasn't a rule, which let every field of that type through by default. GraphQL Guard throws instead
 
 ## Rules on Interfaces and Unions
 
