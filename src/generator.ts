@@ -41,7 +41,11 @@ const guardResolver =
       if (options.debug) {
         throw err;
       } else if (options.allowExternalErrors) {
-        return err;
+        // Returning a non-Error would make it field data, so wrap it. The value
+        // stays out of the message, as it may hold internal details.
+        return err instanceof Error
+          ? err
+          : new Error('Unexpected error value', { cause: err });
       } else {
         if (typeof options.fallbackError === 'function') {
           return await options.fallbackError(err, parent, args, ctx, info);

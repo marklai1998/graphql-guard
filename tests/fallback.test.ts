@@ -305,6 +305,39 @@ describe('external errors can be controled correctly', () => {
     expect(res.errors?.[0]?.message).toBe('external');
   });
 
+  test('a non-Error thrown in a resolver with allowExternalErrors is not returned as data.', async () => {
+    const schema = makeExecutableSchema({
+      typeDefs: `
+        type Query {
+          a: String
+        }
+      `,
+      resolvers: {
+        Query: {
+          a: () => {
+            throw 'internal: db password=x';
+          },
+        },
+      },
+    });
+
+    const res = await graphql({
+      schema: applyGuard(
+        schema,
+        { Query: allow },
+        { allowExternalErrors: true },
+      ),
+      source: '{ a }',
+    });
+
+    expect(res.data).toEqual({ a: null });
+    expect(res.errors?.[0]?.message).toBe('Unexpected error value');
+    expect(res.errors?.[0]?.originalError?.cause).toBe(
+      'internal: db password=x',
+    );
+    expect(JSON.stringify(res)).not.toContain('password');
+  });
+
   test('error in rule with allowExternalErrors returns fallback.', async () => {
     /* Schema */
     const typeDefs = `
