@@ -46,6 +46,9 @@
   "typescript": {
     "definition": "dist/typings/index.d.ts"
   },
+  "files": [
+    "dist"
+  ],
   "type": "module",
   "sideEffects": false,
   "scripts": {
