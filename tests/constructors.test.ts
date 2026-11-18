@@ -1,16 +1,6 @@
 import type * as z from 'zod';
+import { allow, and, chain, deny, not, or, rule } from '../src/constructors.js';
 import {
-  allow,
-  and,
-  chain,
-  deny,
-  inputRule,
-  not,
-  or,
-  rule,
-} from '../src/constructors.js';
-import {
-  InputRule,
   Rule,
   RuleAnd,
   RuleChain,
@@ -19,6 +9,7 @@ import {
   RuleOr,
   RuleTrue,
 } from '../src/rules.js';
+import { InputRule, inputRule } from '../src/zod.js';
 
 describe('rule constructor', () => {
   test('correctly constructs from no arguments', async () => {

@@ -363,10 +363,10 @@ const canEditPost = rule({ cache: (parent, args) => args.postId })(
 
 ### `inputRule`
 
-Validates arguments with a [Zod](https://zod.dev) schema. Zod is an optional peer dependency, so install it (`npm i zod`) before using `inputRule`. The callback receives `z` and the context, and the schema is checked against the entire `args` object, so start the schema with an object.
+Validates arguments with a [Zod](https://zod.dev) schema. Zod is an optional peer dependency, so install it (`npm i zod`) and import `inputRule` from `graphql-guard/zod`. Apps that do not use it never load Zod, not even for their type checks. The callback receives `z` and the context, and the schema is checked against the entire `args` object, so start the schema with an object.
 
 ```ts
-import { inputRule } from 'graphql-guard';
+import { inputRule } from 'graphql-guard/zod';
 
 const isValidSignup = inputRule()((z, ctx) =>
   z.object({

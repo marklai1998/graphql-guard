@@ -3,7 +3,6 @@ export {
   and,
   chain,
   deny,
-  inputRule,
   not,
   or,
   race,

@@ -11,16 +11,12 @@ const shieldLike = {
 // ESM and the CommonJS build. `instanceof` fails across the two copies.
 vi.resetModules();
 const otherCopy = await import('../src/index.js');
+const otherZodCopy = await import('../src/zod.js');
 
 describe('type identifiers', () => {
   test('recognises every rule kind from another copy of graphql-guard', () => {
-    const {
-      rule: otherRule,
-      inputRule,
-      and: otherAnd,
-      allow,
-      deny,
-    } = otherCopy;
+    const { rule: otherRule, and: otherAnd, allow, deny } = otherCopy;
+    const { inputRule } = otherZodCopy;
 
     expect(otherRule()(() => true)).not.toBeInstanceOf(
       rule()(() => true).constructor,

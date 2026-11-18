@@ -1,7 +1,5 @@
-import type * as z from 'zod';
 import { createGuardError } from './errors.js';
 import {
-  InputRule,
   Rule,
   RuleAnd,
   RuleChain,
@@ -25,7 +23,7 @@ import type {
 const counterKey = Symbol.for('graphql-guard/anonymous-rule-counter');
 const globalCounter = globalThis as { [counterKey]?: number };
 
-const anonymousName = (kind: string): string => {
+export const anonymousName = (kind: string): string => {
   const n = (globalCounter[counterKey] ?? 0) + 1;
   globalCounter[counterKey] = n;
   return `anonymous-${kind}-${n}`;
@@ -51,18 +49,6 @@ export const rule =
       cache: options.cache as CacheConstructorOptions,
     });
   };
-
-export const inputRule =
-  <TContext = GuardContext>(name?: string) =>
-  <T>(
-    schema: (zod: typeof z, ctx: TContext) => z.ZodType<T>,
-    options?: Parameters<z.ZodType<T>['safeParseAsync']>[1],
-  ): InputRule<T> =>
-    new InputRule<T>(
-      typeof name === 'string' ? name : anonymousName('input-rule'),
-      schema,
-      options,
-    );
 
 export const and = (...rules: GuardRule[]): RuleAnd => {
   return new RuleAnd(rules);

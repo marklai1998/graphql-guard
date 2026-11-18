@@ -21,7 +21,7 @@ GraphQL Guard 1.x is a fork of `graphql-shield@7.x` (based on `7.6.5`, the lates
 
 ## Update Import
 
-Replace the package and update every import. Apart from `shield`, which is renamed to `guard`, all exports keep their names: `rule`, `inputRule`, `allow`, `deny`, `and`, `or`, `not`, `chain` and `race`.
+Replace the package and update every import. Apart from `shield`, which is renamed to `guard`, all exports keep their names: `rule`, `inputRule`, `allow`, `deny`, `and`, `or`, `not`, `chain` and `race`. `inputRule` is imported from `graphql-guard/zod` (see [Replace Yup with Zod in `inputRule`](#replace-yup-with-zod-in-inputrule)).
 
 ```bash
 npm uninstall graphql-shield graphql-middleware
@@ -108,7 +108,9 @@ const permissions: Rules = { Query: { users: isAdmin } };
 
 ## Replace Yup with Zod in `inputRule`
 
-`inputRule` validates with [Zod](https://zod.dev) instead of Yup. `yup` and `@types/yup` are no longer installed.
+`inputRule` validates with [Zod](https://zod.dev) instead of Yup. `yup` and `@types/yup` are no longer installed. Zod is an optional peer dependency, so install it (`npm i zod`).
+
+- Import `inputRule` from `graphql-guard/zod` instead of the package root
 
 - The callback receives `z` instead of `yup` and must return a Zod schema
 - The optional second argument takes Zod's parse options instead of Yup's validate options. `abortEarly` has no equivalent
@@ -132,7 +134,7 @@ const isValidSignup = inputRule()(
 After
 
 ```ts
-import { inputRule } from 'graphql-guard';
+import { inputRule } from 'graphql-guard/zod';
 
 // Fields are required by default in Zod
 const isValidSignup = inputRule()((z) =>
@@ -189,4 +191,4 @@ The `fragment` rule option and `fragmentReplacements` are removed. They existed 
 
 ## Package Entry Points
 
-The package is built with [tsdown](https://tsdown.dev) and ships `dist/index.mjs` (ESM) and `dist/index.cjs` (CommonJS) with their own type definitions. Both `import` and `require` work as before, and `graphql-guard/package.json` is still exported.
+The package is built with [tsdown](https://tsdown.dev) and ships `dist/index.mjs` (ESM) and `dist/index.cjs` (CommonJS) with their own type definitions. Both `import` and `require` work as before, and `graphql-guard/package.json` is still exported. `inputRule` has its own entry point, `graphql-guard/zod`, so the main entry point and its type definitions do not depend on Zod.

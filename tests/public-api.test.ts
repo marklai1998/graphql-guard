@@ -6,13 +6,13 @@ import {
   type FallbackErrorMapperType,
   type GuardRule,
   guard,
-  inputRule,
   type Options,
   or,
   type RuleFunction,
   rule,
   ValidationError,
 } from '../src/index.js';
+import { inputRule } from '../src/zod.js';
 
 const schema = makeExecutableSchema({
   typeDefs: /* GraphQL */ `
