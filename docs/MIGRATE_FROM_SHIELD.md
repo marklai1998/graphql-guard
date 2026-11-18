@@ -16,7 +16,7 @@ GraphQL Guard 1.x is a fork of `graphql-shield@7.x` (based on `7.6.5`, the lates
 ## Requirement
 
 - Node 18 or above
-- `graphql` 14.4 or above, 15 or 16. Support for `graphql` 0.11 to 0.13 and 14.0 to 14.3 is removed
+- `graphql` 14.4 or above, 15, 16 or 17. Support for `graphql` 0.11 to 0.13 and 14.0 to 14.3 is removed. `graphql` 17 itself needs Node 22 or above
 - `graphql-middleware` is no longer needed. Remove it unless you use it for other middleware
 
 ## Update Import

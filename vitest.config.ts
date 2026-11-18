@@ -1,11 +1,15 @@
+import { createRequire } from 'node:module';
 import { defineConfig } from 'vitest/config';
+
+const require = createRequire(import.meta.url);
 
 export default defineConfig({
   resolve: {
-    // graphql 16 has no "exports" field, so Node always loads its CommonJS
-    // build. Vite prefers the ESM build, which gives tests a second graphql
-    // instance next to the one @graphql-tools loads. Match Node instead.
-    alias: [{ find: /^graphql$/, replacement: 'graphql/index.js' }],
+    // Dependencies like @graphql-tools load graphql through Node, which picks
+    // its CommonJS build. Vite would pick the ESM build for the tests, giving
+    // two graphql instances. Resolve graphql the way Node does (graphql 16
+    // and 17 alike).
+    alias: [{ find: /^graphql$/, replacement: require.resolve('graphql') }],
   },
   test: {
     globals: true,
