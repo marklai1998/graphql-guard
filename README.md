@@ -314,7 +314,7 @@ Wraps a validation function into a reusable rule. Return `true` to allow, `false
 
 ### `inputRule`
 
-Validates arguments with a [Zod](https://zod.dev) schema. The callback receives `z` and the context, and the schema is checked against the entire `args` object, so start the schema with an object.
+Validates arguments with a [Zod](https://zod.dev) schema. Zod is an optional peer dependency, so install it (`npm i zod`) before using `inputRule`. The callback receives `z` and the context, and the schema is checked against the entire `args` object, so start the schema with an object.
 
 ```ts
 import { inputRule } from 'graphql-guard';
