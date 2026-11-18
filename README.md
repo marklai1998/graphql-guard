@@ -1,5 +1,8 @@
 # GraphQL Guard
 
+> [!NOTE]
+> Come from graphql-shield? Checkout the [Migration Guide](docs/MIGRATE_FROM_SHIELD.md)
+
 <div align="center">
 
 GraphQL server permissions as another layer of abstraction. Fork of [graphql-shield](https://www.npmjs.com/package/graphql-shield)
