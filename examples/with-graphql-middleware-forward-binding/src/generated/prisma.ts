@@ -1,76 +1,76 @@
-import { GraphQLResolveInfo, GraphQLSchema } from 'graphql'
-import { IResolvers } from 'graphql-tools/dist/Interfaces'
-import { Options } from 'graphql-binding'
-import { makePrismaBindingClass, BasePrismaOptions } from 'prisma-binding'
+import type { GraphQLResolveInfo, GraphQLSchema } from 'graphql';
+import type { Options } from 'graphql-binding';
+import type { IResolvers } from 'graphql-tools/dist/Interfaces';
+import { type BasePrismaOptions, makePrismaBindingClass } from 'prisma-binding';
 
 export interface Query {
   users: <T = User[]>(
     args: {
-      where?: UserWhereInput
-      orderBy?: UserOrderByInput
-      skip?: Int
-      after?: String
-      before?: String
-      first?: Int
-      last?: Int
+      where?: UserWhereInput;
+      orderBy?: UserOrderByInput;
+      skip?: Int;
+      after?: String;
+      before?: String;
+      first?: Int;
+      last?: Int;
     },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   posts: <T = Post[]>(
     args: {
-      where?: PostWhereInput
-      orderBy?: PostOrderByInput
-      skip?: Int
-      after?: String
-      before?: String
-      first?: Int
-      last?: Int
+      where?: PostWhereInput;
+      orderBy?: PostOrderByInput;
+      skip?: Int;
+      after?: String;
+      before?: String;
+      first?: Int;
+      last?: Int;
     },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   user: <T = User | null>(
     args: { where: UserWhereUniqueInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   post: <T = Post | null>(
     args: { where: PostWhereUniqueInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   usersConnection: <T = UserConnection>(
     args: {
-      where?: UserWhereInput
-      orderBy?: UserOrderByInput
-      skip?: Int
-      after?: String
-      before?: String
-      first?: Int
-      last?: Int
+      where?: UserWhereInput;
+      orderBy?: UserOrderByInput;
+      skip?: Int;
+      after?: String;
+      before?: String;
+      first?: Int;
+      last?: Int;
     },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   postsConnection: <T = PostConnection>(
     args: {
-      where?: PostWhereInput
-      orderBy?: PostOrderByInput
-      skip?: Int
-      after?: String
-      before?: String
-      first?: Int
-      last?: Int
+      where?: PostWhereInput;
+      orderBy?: PostOrderByInput;
+      skip?: Int;
+      after?: String;
+      before?: String;
+      first?: Int;
+      last?: Int;
     },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   node: <T = Node | null>(
     args: { id: ID_Output },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
 }
 
 export interface Mutation {
@@ -78,70 +78,70 @@ export interface Mutation {
     args: { data: UserCreateInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   createPost: <T = Post>(
     args: { data: PostCreateInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   updateUser: <T = User | null>(
     args: { data: UserUpdateInput; where: UserWhereUniqueInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   updatePost: <T = Post | null>(
     args: { data: PostUpdateInput; where: PostWhereUniqueInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   deleteUser: <T = User | null>(
     args: { where: UserWhereUniqueInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   deletePost: <T = Post | null>(
     args: { where: PostWhereUniqueInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   upsertUser: <T = User>(
     args: {
-      where: UserWhereUniqueInput
-      create: UserCreateInput
-      update: UserUpdateInput
+      where: UserWhereUniqueInput;
+      create: UserCreateInput;
+      update: UserUpdateInput;
     },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   upsertPost: <T = Post>(
     args: {
-      where: PostWhereUniqueInput
-      create: PostCreateInput
-      update: PostUpdateInput
+      where: PostWhereUniqueInput;
+      create: PostCreateInput;
+      update: PostUpdateInput;
     },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   updateManyUsers: <T = BatchPayload>(
     args: { data: UserUpdateInput; where?: UserWhereInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   updateManyPosts: <T = BatchPayload>(
     args: { data: PostUpdateInput; where?: PostWhereInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   deleteManyUsers: <T = BatchPayload>(
     args: { where?: UserWhereInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   deleteManyPosts: <T = BatchPayload>(
     args: { where?: PostWhereInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
 }
 
 export interface Subscription {
@@ -149,50 +149,50 @@ export interface Subscription {
     args: { where?: UserSubscriptionWhereInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<AsyncIterator<T>>
+  ) => Promise<AsyncIterator<T>>;
   post: <T = PostSubscriptionPayload | null>(
     args: { where?: PostSubscriptionWhereInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<AsyncIterator<T>>
+  ) => Promise<AsyncIterator<T>>;
 }
 
 export interface Exists {
-  User: (where?: UserWhereInput) => Promise<boolean>
-  Post: (where?: PostWhereInput) => Promise<boolean>
+  User: (where?: UserWhereInput) => Promise<boolean>;
+  Post: (where?: PostWhereInput) => Promise<boolean>;
 }
 
 export interface Prisma {
-  query: Query
-  mutation: Mutation
-  subscription: Subscription
-  exists: Exists
+  query: Query;
+  mutation: Mutation;
+  subscription: Subscription;
+  exists: Exists;
   request: <T = any>(
     query: string,
     variables?: { [key: string]: any },
-  ) => Promise<T>
+  ) => Promise<T>;
   delegate(
     operation: 'query' | 'mutation',
     fieldName: string,
     args: {
-      [key: string]: any
+      [key: string]: any;
     },
     infoOrQuery?: GraphQLResolveInfo | string,
     options?: Options,
-  ): Promise<any>
+  ): Promise<any>;
   delegateSubscription(
     fieldName: string,
     args?: {
-      [key: string]: any
+      [key: string]: any;
     },
     infoOrQuery?: GraphQLResolveInfo | string,
     options?: Options,
-  ): Promise<AsyncIterator<any>>
-  getAbstractResolvers(filterSchema?: GraphQLSchema | string): IResolvers
+  ): Promise<AsyncIterator<any>>;
+  getAbstractResolvers(filterSchema?: GraphQLSchema | string): IResolvers;
 }
 
 export interface BindingConstructor<T> {
-  new (options: BasePrismaOptions): T
+  new (options: BasePrismaOptions): T;
 }
 /**
  * Type Defs
@@ -796,11 +796,11 @@ input UserWhereUniqueInput {
   id: ID
   name: String
 }
-`
+`;
 
 export const Prisma = makePrismaBindingClass<BindingConstructor<Prisma>>({
   typeDefs,
-})
+});
 
 /**
  * Types
@@ -816,7 +816,7 @@ export type UserOrderByInput =
   | 'updatedAt_ASC'
   | 'updatedAt_DESC'
   | 'createdAt_ASC'
-  | 'createdAt_DESC'
+  | 'createdAt_DESC';
 
 export type PostOrderByInput =
   | 'id_ASC'
@@ -830,228 +830,228 @@ export type PostOrderByInput =
   | 'updatedAt_ASC'
   | 'updatedAt_DESC'
   | 'createdAt_ASC'
-  | 'createdAt_DESC'
+  | 'createdAt_DESC';
 
-export type Role = 'ADMIN' | 'EDITOR' | 'CUSTOMER'
+export type Role = 'ADMIN' | 'EDITOR' | 'CUSTOMER';
 
-export type MutationType = 'CREATED' | 'UPDATED' | 'DELETED'
+export type MutationType = 'CREATED' | 'UPDATED' | 'DELETED';
 
 export interface PostCreateManyWithoutOwnerInput {
-  create?: PostCreateWithoutOwnerInput[] | PostCreateWithoutOwnerInput
-  connect?: PostWhereUniqueInput[] | PostWhereUniqueInput
+  create?: PostCreateWithoutOwnerInput[] | PostCreateWithoutOwnerInput;
+  connect?: PostWhereUniqueInput[] | PostWhereUniqueInput;
 }
 
 export interface UserWhereInput {
-  AND?: UserWhereInput[] | UserWhereInput
-  OR?: UserWhereInput[] | UserWhereInput
-  NOT?: UserWhereInput[] | UserWhereInput
-  id?: ID_Input
-  id_not?: ID_Input
-  id_in?: ID_Input[] | ID_Input
-  id_not_in?: ID_Input[] | ID_Input
-  id_lt?: ID_Input
-  id_lte?: ID_Input
-  id_gt?: ID_Input
-  id_gte?: ID_Input
-  id_contains?: ID_Input
-  id_not_contains?: ID_Input
-  id_starts_with?: ID_Input
-  id_not_starts_with?: ID_Input
-  id_ends_with?: ID_Input
-  id_not_ends_with?: ID_Input
-  name?: String
-  name_not?: String
-  name_in?: String[] | String
-  name_not_in?: String[] | String
-  name_lt?: String
-  name_lte?: String
-  name_gt?: String
-  name_gte?: String
-  name_contains?: String
-  name_not_contains?: String
-  name_starts_with?: String
-  name_not_starts_with?: String
-  name_ends_with?: String
-  name_not_ends_with?: String
-  role?: Role
-  role_not?: Role
-  role_in?: Role[] | Role
-  role_not_in?: Role[] | Role
-  posts_every?: PostWhereInput
-  posts_some?: PostWhereInput
-  posts_none?: PostWhereInput
+  AND?: UserWhereInput[] | UserWhereInput;
+  OR?: UserWhereInput[] | UserWhereInput;
+  NOT?: UserWhereInput[] | UserWhereInput;
+  id?: ID_Input;
+  id_not?: ID_Input;
+  id_in?: ID_Input[] | ID_Input;
+  id_not_in?: ID_Input[] | ID_Input;
+  id_lt?: ID_Input;
+  id_lte?: ID_Input;
+  id_gt?: ID_Input;
+  id_gte?: ID_Input;
+  id_contains?: ID_Input;
+  id_not_contains?: ID_Input;
+  id_starts_with?: ID_Input;
+  id_not_starts_with?: ID_Input;
+  id_ends_with?: ID_Input;
+  id_not_ends_with?: ID_Input;
+  name?: String;
+  name_not?: String;
+  name_in?: String[] | String;
+  name_not_in?: String[] | String;
+  name_lt?: String;
+  name_lte?: String;
+  name_gt?: String;
+  name_gte?: String;
+  name_contains?: String;
+  name_not_contains?: String;
+  name_starts_with?: String;
+  name_not_starts_with?: String;
+  name_ends_with?: String;
+  name_not_ends_with?: String;
+  role?: Role;
+  role_not?: Role;
+  role_in?: Role[] | Role;
+  role_not_in?: Role[] | Role;
+  posts_every?: PostWhereInput;
+  posts_some?: PostWhereInput;
+  posts_none?: PostWhereInput;
 }
 
 export interface PostUpdateInput {
-  isPublished?: Boolean
-  title?: String
-  text?: String
-  owner?: UserUpdateOneWithoutPostsInput
+  isPublished?: Boolean;
+  title?: String;
+  text?: String;
+  owner?: UserUpdateOneWithoutPostsInput;
 }
 
 export interface UserCreateWithoutPostsInput {
-  name: String
-  role: Role
+  name: String;
+  role: Role;
 }
 
 export interface PostUpsertWithWhereUniqueWithoutOwnerInput {
-  where: PostWhereUniqueInput
-  update: PostUpdateWithoutOwnerDataInput
-  create: PostCreateWithoutOwnerInput
+  where: PostWhereUniqueInput;
+  update: PostUpdateWithoutOwnerDataInput;
+  create: PostCreateWithoutOwnerInput;
 }
 
 export interface UserCreateOneWithoutPostsInput {
-  create?: UserCreateWithoutPostsInput
-  connect?: UserWhereUniqueInput
+  create?: UserCreateWithoutPostsInput;
+  connect?: UserWhereUniqueInput;
 }
 
 export interface PostUpdateWithoutOwnerDataInput {
-  isPublished?: Boolean
-  title?: String
-  text?: String
+  isPublished?: Boolean;
+  title?: String;
+  text?: String;
 }
 
 export interface UserSubscriptionWhereInput {
-  AND?: UserSubscriptionWhereInput[] | UserSubscriptionWhereInput
-  OR?: UserSubscriptionWhereInput[] | UserSubscriptionWhereInput
-  NOT?: UserSubscriptionWhereInput[] | UserSubscriptionWhereInput
-  mutation_in?: MutationType[] | MutationType
-  updatedFields_contains?: String
-  updatedFields_contains_every?: String[] | String
-  updatedFields_contains_some?: String[] | String
-  node?: UserWhereInput
+  AND?: UserSubscriptionWhereInput[] | UserSubscriptionWhereInput;
+  OR?: UserSubscriptionWhereInput[] | UserSubscriptionWhereInput;
+  NOT?: UserSubscriptionWhereInput[] | UserSubscriptionWhereInput;
+  mutation_in?: MutationType[] | MutationType;
+  updatedFields_contains?: String;
+  updatedFields_contains_every?: String[] | String;
+  updatedFields_contains_some?: String[] | String;
+  node?: UserWhereInput;
 }
 
 export interface PostUpdateWithWhereUniqueWithoutOwnerInput {
-  where: PostWhereUniqueInput
-  data: PostUpdateWithoutOwnerDataInput
+  where: PostWhereUniqueInput;
+  data: PostUpdateWithoutOwnerDataInput;
 }
 
 export interface PostWhereUniqueInput {
-  id?: ID_Input
+  id?: ID_Input;
 }
 
 export interface UserCreateInput {
-  name: String
-  role: Role
-  posts?: PostCreateManyWithoutOwnerInput
+  name: String;
+  role: Role;
+  posts?: PostCreateManyWithoutOwnerInput;
 }
 
 export interface UserUpdateWithoutPostsDataInput {
-  name?: String
-  role?: Role
+  name?: String;
+  role?: Role;
 }
 
 export interface UserUpdateInput {
-  name?: String
-  role?: Role
-  posts?: PostUpdateManyWithoutOwnerInput
+  name?: String;
+  role?: Role;
+  posts?: PostUpdateManyWithoutOwnerInput;
 }
 
 export interface PostCreateInput {
-  isPublished?: Boolean
-  title: String
-  text: String
-  owner: UserCreateOneWithoutPostsInput
+  isPublished?: Boolean;
+  title: String;
+  text: String;
+  owner: UserCreateOneWithoutPostsInput;
 }
 
 export interface PostCreateWithoutOwnerInput {
-  isPublished?: Boolean
-  title: String
-  text: String
+  isPublished?: Boolean;
+  title: String;
+  text: String;
 }
 
 export interface PostUpdateManyWithoutOwnerInput {
-  create?: PostCreateWithoutOwnerInput[] | PostCreateWithoutOwnerInput
-  connect?: PostWhereUniqueInput[] | PostWhereUniqueInput
-  disconnect?: PostWhereUniqueInput[] | PostWhereUniqueInput
-  delete?: PostWhereUniqueInput[] | PostWhereUniqueInput
+  create?: PostCreateWithoutOwnerInput[] | PostCreateWithoutOwnerInput;
+  connect?: PostWhereUniqueInput[] | PostWhereUniqueInput;
+  disconnect?: PostWhereUniqueInput[] | PostWhereUniqueInput;
+  delete?: PostWhereUniqueInput[] | PostWhereUniqueInput;
   update?:
     | PostUpdateWithWhereUniqueWithoutOwnerInput[]
-    | PostUpdateWithWhereUniqueWithoutOwnerInput
+    | PostUpdateWithWhereUniqueWithoutOwnerInput;
   upsert?:
     | PostUpsertWithWhereUniqueWithoutOwnerInput[]
-    | PostUpsertWithWhereUniqueWithoutOwnerInput
+    | PostUpsertWithWhereUniqueWithoutOwnerInput;
 }
 
 export interface UserUpdateOneWithoutPostsInput {
-  create?: UserCreateWithoutPostsInput
-  connect?: UserWhereUniqueInput
-  delete?: Boolean
-  update?: UserUpdateWithoutPostsDataInput
-  upsert?: UserUpsertWithoutPostsInput
+  create?: UserCreateWithoutPostsInput;
+  connect?: UserWhereUniqueInput;
+  delete?: Boolean;
+  update?: UserUpdateWithoutPostsDataInput;
+  upsert?: UserUpsertWithoutPostsInput;
 }
 
 export interface UserUpsertWithoutPostsInput {
-  update: UserUpdateWithoutPostsDataInput
-  create: UserCreateWithoutPostsInput
+  update: UserUpdateWithoutPostsDataInput;
+  create: UserCreateWithoutPostsInput;
 }
 
 export interface UserWhereUniqueInput {
-  id?: ID_Input
-  name?: String
+  id?: ID_Input;
+  name?: String;
 }
 
 export interface PostWhereInput {
-  AND?: PostWhereInput[] | PostWhereInput
-  OR?: PostWhereInput[] | PostWhereInput
-  NOT?: PostWhereInput[] | PostWhereInput
-  id?: ID_Input
-  id_not?: ID_Input
-  id_in?: ID_Input[] | ID_Input
-  id_not_in?: ID_Input[] | ID_Input
-  id_lt?: ID_Input
-  id_lte?: ID_Input
-  id_gt?: ID_Input
-  id_gte?: ID_Input
-  id_contains?: ID_Input
-  id_not_contains?: ID_Input
-  id_starts_with?: ID_Input
-  id_not_starts_with?: ID_Input
-  id_ends_with?: ID_Input
-  id_not_ends_with?: ID_Input
-  isPublished?: Boolean
-  isPublished_not?: Boolean
-  title?: String
-  title_not?: String
-  title_in?: String[] | String
-  title_not_in?: String[] | String
-  title_lt?: String
-  title_lte?: String
-  title_gt?: String
-  title_gte?: String
-  title_contains?: String
-  title_not_contains?: String
-  title_starts_with?: String
-  title_not_starts_with?: String
-  title_ends_with?: String
-  title_not_ends_with?: String
-  text?: String
-  text_not?: String
-  text_in?: String[] | String
-  text_not_in?: String[] | String
-  text_lt?: String
-  text_lte?: String
-  text_gt?: String
-  text_gte?: String
-  text_contains?: String
-  text_not_contains?: String
-  text_starts_with?: String
-  text_not_starts_with?: String
-  text_ends_with?: String
-  text_not_ends_with?: String
-  owner?: UserWhereInput
+  AND?: PostWhereInput[] | PostWhereInput;
+  OR?: PostWhereInput[] | PostWhereInput;
+  NOT?: PostWhereInput[] | PostWhereInput;
+  id?: ID_Input;
+  id_not?: ID_Input;
+  id_in?: ID_Input[] | ID_Input;
+  id_not_in?: ID_Input[] | ID_Input;
+  id_lt?: ID_Input;
+  id_lte?: ID_Input;
+  id_gt?: ID_Input;
+  id_gte?: ID_Input;
+  id_contains?: ID_Input;
+  id_not_contains?: ID_Input;
+  id_starts_with?: ID_Input;
+  id_not_starts_with?: ID_Input;
+  id_ends_with?: ID_Input;
+  id_not_ends_with?: ID_Input;
+  isPublished?: Boolean;
+  isPublished_not?: Boolean;
+  title?: String;
+  title_not?: String;
+  title_in?: String[] | String;
+  title_not_in?: String[] | String;
+  title_lt?: String;
+  title_lte?: String;
+  title_gt?: String;
+  title_gte?: String;
+  title_contains?: String;
+  title_not_contains?: String;
+  title_starts_with?: String;
+  title_not_starts_with?: String;
+  title_ends_with?: String;
+  title_not_ends_with?: String;
+  text?: String;
+  text_not?: String;
+  text_in?: String[] | String;
+  text_not_in?: String[] | String;
+  text_lt?: String;
+  text_lte?: String;
+  text_gt?: String;
+  text_gte?: String;
+  text_contains?: String;
+  text_not_contains?: String;
+  text_starts_with?: String;
+  text_not_starts_with?: String;
+  text_ends_with?: String;
+  text_not_ends_with?: String;
+  owner?: UserWhereInput;
 }
 
 export interface PostSubscriptionWhereInput {
-  AND?: PostSubscriptionWhereInput[] | PostSubscriptionWhereInput
-  OR?: PostSubscriptionWhereInput[] | PostSubscriptionWhereInput
-  NOT?: PostSubscriptionWhereInput[] | PostSubscriptionWhereInput
-  mutation_in?: MutationType[] | MutationType
-  updatedFields_contains?: String
-  updatedFields_contains_every?: String[] | String
-  updatedFields_contains_some?: String[] | String
-  node?: PostWhereInput
+  AND?: PostSubscriptionWhereInput[] | PostSubscriptionWhereInput;
+  OR?: PostSubscriptionWhereInput[] | PostSubscriptionWhereInput;
+  NOT?: PostSubscriptionWhereInput[] | PostSubscriptionWhereInput;
+  mutation_in?: MutationType[] | MutationType;
+  updatedFields_contains?: String;
+  updatedFields_contains_every?: String[] | String;
+  updatedFields_contains_some?: String[] | String;
+  node?: PostWhereInput;
 }
 
 /*
@@ -1059,14 +1059,14 @@ export interface PostSubscriptionWhereInput {
 
  */
 export interface Node {
-  id: ID_Output
+  id: ID_Output;
 }
 
 export interface PostPreviousValues {
-  id: ID_Output
-  isPublished: Boolean
-  title: String
-  text: String
+  id: ID_Output;
+  isPublished: Boolean;
+  title: String;
+  text: String;
 }
 
 /*
@@ -1074,17 +1074,17 @@ export interface PostPreviousValues {
 
  */
 export interface PageInfo {
-  hasNextPage: Boolean
-  hasPreviousPage: Boolean
-  startCursor?: String
-  endCursor?: String
+  hasNextPage: Boolean;
+  hasPreviousPage: Boolean;
+  startCursor?: String;
+  endCursor?: String;
 }
 
 export interface UserSubscriptionPayload {
-  mutation: MutationType
-  node?: User
-  updatedFields?: String[]
-  previousValues?: UserPreviousValues
+  mutation: MutationType;
+  node?: User;
+  updatedFields?: String[];
+  previousValues?: UserPreviousValues;
 }
 
 /*
@@ -1092,13 +1092,13 @@ export interface UserSubscriptionPayload {
 
  */
 export interface UserConnection {
-  pageInfo: PageInfo
-  edges: UserEdge[]
-  aggregate: AggregateUser
+  pageInfo: PageInfo;
+  edges: UserEdge[];
+  aggregate: AggregateUser;
 }
 
 export interface BatchPayload {
-  count: Long
+  count: Long;
 }
 
 /*
@@ -1106,36 +1106,36 @@ export interface BatchPayload {
 
  */
 export interface PostEdge {
-  node: Post
-  cursor: String
+  node: Post;
+  cursor: String;
 }
 
 export interface UserPreviousValues {
-  id: ID_Output
-  name: String
-  role: Role
+  id: ID_Output;
+  name: String;
+  role: Role;
 }
 
 export interface Post extends Node {
-  id: ID_Output
-  isPublished: Boolean
-  title: String
-  text: String
-  owner: User
+  id: ID_Output;
+  isPublished: Boolean;
+  title: String;
+  text: String;
+  owner: User;
 }
 
 export interface User extends Node {
-  id: ID_Output
-  name: String
-  role: Role
-  posts?: Post[]
+  id: ID_Output;
+  name: String;
+  role: Role;
+  posts?: Post[];
 }
 
 export interface PostSubscriptionPayload {
-  mutation: MutationType
-  node?: Post
-  updatedFields?: String[]
-  previousValues?: PostPreviousValues
+  mutation: MutationType;
+  node?: Post;
+  updatedFields?: String[];
+  previousValues?: PostPreviousValues;
 }
 
 /*
@@ -1143,13 +1143,13 @@ export interface PostSubscriptionPayload {
 
  */
 export interface PostConnection {
-  pageInfo: PageInfo
-  edges: PostEdge[]
-  aggregate: AggregatePost
+  pageInfo: PageInfo;
+  edges: PostEdge[];
+  aggregate: AggregatePost;
 }
 
 export interface AggregatePost {
-  count: Int
+  count: Int;
 }
 
 /*
@@ -1157,37 +1157,37 @@ export interface AggregatePost {
 
  */
 export interface UserEdge {
-  node: User
-  cursor: String
+  node: User;
+  cursor: String;
 }
 
 export interface AggregateUser {
-  count: Int
+  count: Int;
 }
 
 /*
 The `Boolean` scalar type represents `true` or `false`.
 */
-export type Boolean = boolean
+export type Boolean = boolean;
 
 /*
 The `Int` scalar type represents non-fractional signed whole numeric values. Int can represent values between -(2^31) and 2^31 - 1. 
 */
-export type Int = number
+export type Int = number;
 
 /*
 The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID.
 */
-export type ID_Input = string | number
-export type ID_Output = string
+export type ID_Input = string | number;
+export type ID_Output = string;
 
 /*
 The `Long` scalar type represents non-fractional signed whole numeric values.
 Long can represent values between -(2^63) and 2^63 - 1.
 */
-export type Long = string
+export type Long = string;
 
 /*
 The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text.
 */
-export type String = string
+export type String = string;

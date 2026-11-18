@@ -1,30 +1,30 @@
-const { ApolloServer, gql } = require('apollo-server-lambda')
-const { applyMiddleware } = require('graphql-middleware')
-const { makeExecutableSchema } = require('@graphql-tools/schema')
-const { rule, shield } = require('graphql-shield')
+const { ApolloServer, gql } = require('apollo-server-lambda');
+const { applyMiddleware } = require('graphql-middleware');
+const { makeExecutableSchema } = require('@graphql-tools/schema');
+const { rule, shield } = require('graphql-shield');
 
 const isAuthenticated = rule()(async (parent, args, ctx, info) => {
-  return ctx.user
-})
+  return ctx.user;
+});
 
 // Construct a schema, using GraphQL schema language.
-let typeDefs = gql`
+const typeDefs = gql`
   type Query {
     hello: String
   }
-`
+`;
 
 const resolvers = {
   Query: {
     hello: () => 'Hello world!',
   },
-}
+};
 
 const permissions = shield({
   Query: {
     hello: isAuthenticated,
   },
-})
+});
 
 const schema = applyMiddleware(
   makeExecutableSchema({
@@ -32,7 +32,7 @@ const schema = applyMiddleware(
     resolvers,
   }),
   permissions,
-)
+);
 
 const server = new ApolloServer({
   schema,
@@ -40,6 +40,6 @@ const server = new ApolloServer({
     origin: '*',
     methods: 'GET,HEAD,POST',
   },
-})
+});
 
-exports.graphql = server.createHandler()
+exports.graphql = server.createHandler();

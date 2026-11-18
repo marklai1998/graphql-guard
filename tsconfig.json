@@ -3,15 +3,15 @@
     "incremental": true,
     "baseUrl": ".",
 
-    "rootDir": "packages",
+    "rootDir": "src",
     "outDir": "dist",
 
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "importHelpers": true,
     "experimentalDecorators": true,
-    "module": "esnext",
-    "target": "es2018",
+    "module": "commonjs",
+    "target": "es2017",
     "lib": ["es6", "esnext", "es2015", "dom"],
     "suppressImplicitAnyIndexErrors": true,
     "moduleResolution": "node",
@@ -24,15 +24,8 @@
     "noImplicitReturns": true,
     "noUnusedLocals": false,
     "resolveJsonModule": true,
-    "skipLibCheck": true,
-
-    "paths": {
-      "@graphqlshield/*": [
-        "packages/*/src/index.ts",
-        "packages/plugins/*/src/index.ts"
-      ]
-    }
+    "skipLibCheck": true
   },
-  "include": ["packages"],
-  "exclude": ["**/dist", "**/temp"]
+  "include": ["src"],
+  "exclude": ["dist", "tests"]
 }

@@ -1,5 +1,5 @@
-import { GraphQLServer } from 'graphql-yoga'
-import { rule, shield, and, or, not } from 'graphql-shield'
+import { and, not, or, rule, shield } from 'graphql-shield';
+import { GraphQLServer } from 'graphql-yoga';
 
 const typeDefs = `
   type Query {
@@ -21,7 +21,7 @@ const typeDefs = `
     id: ID!
     basket: [Fruit!]!
   }
-`
+`;
 
 const resolvers = {
   Query: {
@@ -42,7 +42,7 @@ const resolvers = {
   Mutation: {
     addFruitToBasket: () => true,
   },
-}
+};
 
 // Auth
 
@@ -62,14 +62,14 @@ const users = {
     name: 'Johnny',
     role: 'customer',
   },
-}
+};
 
 function getUser(req) {
-  const auth = req.get('Authorization')
+  const auth = req.get('Authorization');
   if (users[auth]) {
-    return users[auth]
+    return users[auth];
   } else {
-    return null
+    return null;
   }
 }
 
@@ -77,21 +77,21 @@ function getUser(req) {
 
 const isAuthenticated = rule({ cache: 'contextual' })(
   async (parent, args, ctx, info) => {
-    return ctx.user !== null
+    return ctx.user !== null;
   },
-)
+);
 
 const isAdmin = rule({ cache: 'contextual' })(
   async (parent, args, ctx, info) => {
-    return ctx.user.role === 'admin'
+    return ctx.user.role === 'admin';
   },
-)
+);
 
 const isEditor = rule({ cache: 'contextual' })(
   async (parent, args, ctx, info) => {
-    return ctx.user.role === 'editor'
+    return ctx.user.role === 'editor';
   },
-)
+);
 
 // Permissions
 
@@ -106,7 +106,7 @@ const permissions = shield({
   },
   Fruit: isAuthenticated,
   Customer: isAdmin,
-})
+});
 
 const server = GraphQLServer({
   typeDefs,
@@ -116,6 +116,6 @@ const server = GraphQLServer({
     ...req,
     user: getUser(req),
   }),
-})
+});
 
-server.start(() => console.log('Server is running on http://localhost:4000'))
+server.start(() => console.log('Server is running on http://localhost:4000'));

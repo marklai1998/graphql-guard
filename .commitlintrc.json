@@ -1,0 +1,3 @@
+{
+  "extends": ["@marklai/shared-config-commitlint"]
+}

@@ -1,8 +1,8 @@
-import { getUserEmail, Context } from '../utils'
+import { type Context } from '../utils';
 
 export const Query = {
   viewer: () => ({}),
   products: async (parent, args, ctx: Context, info) => {
-    return ctx.db.query.products({}, info)
+    return ctx.db.query.products({}, info);
   },
-}
+};

@@ -1,13 +1,13 @@
-const path = require('path')
-const { makePrismaSchema } = require('nexus-prisma')
+const path = require('node:path');
+const { makePrismaSchema } = require('nexus-prisma');
 
-const datamodelInfo = require('../generated/nexus-prisma')
-const { prisma } = require('../generated/prisma-client')
+const datamodelInfo = require('../generated/nexus-prisma');
+const { prisma } = require('../generated/prisma-client');
 
-const { Query } = require('./queries')
-const { Mutation } = require('./mutations')
-const { types } = require('./types')
-const { inputTypes } = require('./input-types')
+const { Query } = require('./queries');
+const { Mutation } = require('./mutations');
+const { types } = require('./types');
+const { inputTypes } = require('./input-types');
 
 const schema = makePrismaSchema({
   nonNullDefaults: {
@@ -22,6 +22,6 @@ const schema = makePrismaSchema({
     datamodelInfo,
   },
   types: [Query, Mutation, ...types, ...inputTypes],
-})
+});
 
-module.exports = { schema }
+module.exports = { schema };

@@ -1,138 +1,138 @@
-import { GraphQLResolveInfo, GraphQLSchema } from 'graphql'
-import { IResolvers } from 'graphql-tools/dist/Interfaces'
-import { Options } from 'graphql-binding'
-import { makePrismaBindingClass, BasePrismaOptions } from 'prisma-binding'
+import type { GraphQLResolveInfo, GraphQLSchema } from 'graphql';
+import type { Options } from 'graphql-binding';
+import type { IResolvers } from 'graphql-tools/dist/Interfaces';
+import { type BasePrismaOptions, makePrismaBindingClass } from 'prisma-binding';
 
 export interface Query {
   grocers: <T = Grocer[]>(
     args: {
-      where?: GrocerWhereInput
-      orderBy?: GrocerOrderByInput
-      skip?: Int
-      after?: String
-      before?: String
-      first?: Int
-      last?: Int
+      where?: GrocerWhereInput;
+      orderBy?: GrocerOrderByInput;
+      skip?: Int;
+      after?: String;
+      before?: String;
+      first?: Int;
+      last?: Int;
     },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   customers: <T = Customer[]>(
     args: {
-      where?: CustomerWhereInput
-      orderBy?: CustomerOrderByInput
-      skip?: Int
-      after?: String
-      before?: String
-      first?: Int
-      last?: Int
+      where?: CustomerWhereInput;
+      orderBy?: CustomerOrderByInput;
+      skip?: Int;
+      after?: String;
+      before?: String;
+      first?: Int;
+      last?: Int;
     },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   basketItems: <T = BasketItem[]>(
     args: {
-      where?: BasketItemWhereInput
-      orderBy?: BasketItemOrderByInput
-      skip?: Int
-      after?: String
-      before?: String
-      first?: Int
-      last?: Int
+      where?: BasketItemWhereInput;
+      orderBy?: BasketItemOrderByInput;
+      skip?: Int;
+      after?: String;
+      before?: String;
+      first?: Int;
+      last?: Int;
     },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   products: <T = Product[]>(
     args: {
-      where?: ProductWhereInput
-      orderBy?: ProductOrderByInput
-      skip?: Int
-      after?: String
-      before?: String
-      first?: Int
-      last?: Int
+      where?: ProductWhereInput;
+      orderBy?: ProductOrderByInput;
+      skip?: Int;
+      after?: String;
+      before?: String;
+      first?: Int;
+      last?: Int;
     },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   grocer: <T = Grocer | null>(
     args: { where: GrocerWhereUniqueInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   customer: <T = Customer | null>(
     args: { where: CustomerWhereUniqueInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   basketItem: <T = BasketItem | null>(
     args: { where: BasketItemWhereUniqueInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   product: <T = Product | null>(
     args: { where: ProductWhereUniqueInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   grocersConnection: <T = GrocerConnection>(
     args: {
-      where?: GrocerWhereInput
-      orderBy?: GrocerOrderByInput
-      skip?: Int
-      after?: String
-      before?: String
-      first?: Int
-      last?: Int
+      where?: GrocerWhereInput;
+      orderBy?: GrocerOrderByInput;
+      skip?: Int;
+      after?: String;
+      before?: String;
+      first?: Int;
+      last?: Int;
     },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   customersConnection: <T = CustomerConnection>(
     args: {
-      where?: CustomerWhereInput
-      orderBy?: CustomerOrderByInput
-      skip?: Int
-      after?: String
-      before?: String
-      first?: Int
-      last?: Int
+      where?: CustomerWhereInput;
+      orderBy?: CustomerOrderByInput;
+      skip?: Int;
+      after?: String;
+      before?: String;
+      first?: Int;
+      last?: Int;
     },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   basketItemsConnection: <T = BasketItemConnection>(
     args: {
-      where?: BasketItemWhereInput
-      orderBy?: BasketItemOrderByInput
-      skip?: Int
-      after?: String
-      before?: String
-      first?: Int
-      last?: Int
+      where?: BasketItemWhereInput;
+      orderBy?: BasketItemOrderByInput;
+      skip?: Int;
+      after?: String;
+      before?: String;
+      first?: Int;
+      last?: Int;
     },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   productsConnection: <T = ProductConnection>(
     args: {
-      where?: ProductWhereInput
-      orderBy?: ProductOrderByInput
-      skip?: Int
-      after?: String
-      before?: String
-      first?: Int
-      last?: Int
+      where?: ProductWhereInput;
+      orderBy?: ProductOrderByInput;
+      skip?: Int;
+      after?: String;
+      before?: String;
+      first?: Int;
+      last?: Int;
     },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   node: <T = Node | null>(
     args: { id: ID_Output },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
 }
 
 export interface Mutation {
@@ -140,138 +140,138 @@ export interface Mutation {
     args: { data: GrocerCreateInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   createCustomer: <T = Customer>(
     args: { data: CustomerCreateInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   createBasketItem: <T = BasketItem>(
     args: { data: BasketItemCreateInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   createProduct: <T = Product>(
     args: { data: ProductCreateInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   updateGrocer: <T = Grocer | null>(
     args: { data: GrocerUpdateInput; where: GrocerWhereUniqueInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   updateCustomer: <T = Customer | null>(
     args: { data: CustomerUpdateInput; where: CustomerWhereUniqueInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   updateBasketItem: <T = BasketItem | null>(
     args: { data: BasketItemUpdateInput; where: BasketItemWhereUniqueInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   updateProduct: <T = Product | null>(
     args: { data: ProductUpdateInput; where: ProductWhereUniqueInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   deleteGrocer: <T = Grocer | null>(
     args: { where: GrocerWhereUniqueInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   deleteCustomer: <T = Customer | null>(
     args: { where: CustomerWhereUniqueInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   deleteBasketItem: <T = BasketItem | null>(
     args: { where: BasketItemWhereUniqueInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   deleteProduct: <T = Product | null>(
     args: { where: ProductWhereUniqueInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   upsertGrocer: <T = Grocer>(
     args: {
-      where: GrocerWhereUniqueInput
-      create: GrocerCreateInput
-      update: GrocerUpdateInput
+      where: GrocerWhereUniqueInput;
+      create: GrocerCreateInput;
+      update: GrocerUpdateInput;
     },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   upsertCustomer: <T = Customer>(
     args: {
-      where: CustomerWhereUniqueInput
-      create: CustomerCreateInput
-      update: CustomerUpdateInput
+      where: CustomerWhereUniqueInput;
+      create: CustomerCreateInput;
+      update: CustomerUpdateInput;
     },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   upsertBasketItem: <T = BasketItem>(
     args: {
-      where: BasketItemWhereUniqueInput
-      create: BasketItemCreateInput
-      update: BasketItemUpdateInput
+      where: BasketItemWhereUniqueInput;
+      create: BasketItemCreateInput;
+      update: BasketItemUpdateInput;
     },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   upsertProduct: <T = Product>(
     args: {
-      where: ProductWhereUniqueInput
-      create: ProductCreateInput
-      update: ProductUpdateInput
+      where: ProductWhereUniqueInput;
+      create: ProductCreateInput;
+      update: ProductUpdateInput;
     },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   updateManyGrocers: <T = BatchPayload>(
     args: { data: GrocerUpdateInput; where?: GrocerWhereInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   updateManyCustomers: <T = BatchPayload>(
     args: { data: CustomerUpdateInput; where?: CustomerWhereInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   updateManyBasketItems: <T = BatchPayload>(
     args: { data: BasketItemUpdateInput; where?: BasketItemWhereInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   updateManyProducts: <T = BatchPayload>(
     args: { data: ProductUpdateInput; where?: ProductWhereInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   deleteManyGrocers: <T = BatchPayload>(
     args: { where?: GrocerWhereInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   deleteManyCustomers: <T = BatchPayload>(
     args: { where?: CustomerWhereInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   deleteManyBasketItems: <T = BatchPayload>(
     args: { where?: BasketItemWhereInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
   deleteManyProducts: <T = BatchPayload>(
     args: { where?: ProductWhereInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<T>
+  ) => Promise<T>;
 }
 
 export interface Subscription {
@@ -279,62 +279,62 @@ export interface Subscription {
     args: { where?: GrocerSubscriptionWhereInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<AsyncIterator<T>>
+  ) => Promise<AsyncIterator<T>>;
   customer: <T = CustomerSubscriptionPayload | null>(
     args: { where?: CustomerSubscriptionWhereInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<AsyncIterator<T>>
+  ) => Promise<AsyncIterator<T>>;
   basketItem: <T = BasketItemSubscriptionPayload | null>(
     args: { where?: BasketItemSubscriptionWhereInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<AsyncIterator<T>>
+  ) => Promise<AsyncIterator<T>>;
   product: <T = ProductSubscriptionPayload | null>(
     args: { where?: ProductSubscriptionWhereInput },
     info?: GraphQLResolveInfo | string,
     options?: Options,
-  ) => Promise<AsyncIterator<T>>
+  ) => Promise<AsyncIterator<T>>;
 }
 
 export interface Exists {
-  Grocer: (where?: GrocerWhereInput) => Promise<boolean>
-  Customer: (where?: CustomerWhereInput) => Promise<boolean>
-  BasketItem: (where?: BasketItemWhereInput) => Promise<boolean>
-  Product: (where?: ProductWhereInput) => Promise<boolean>
+  Grocer: (where?: GrocerWhereInput) => Promise<boolean>;
+  Customer: (where?: CustomerWhereInput) => Promise<boolean>;
+  BasketItem: (where?: BasketItemWhereInput) => Promise<boolean>;
+  Product: (where?: ProductWhereInput) => Promise<boolean>;
 }
 
 export interface Prisma {
-  query: Query
-  mutation: Mutation
-  subscription: Subscription
-  exists: Exists
+  query: Query;
+  mutation: Mutation;
+  subscription: Subscription;
+  exists: Exists;
   request: <T = any>(
     query: string,
     variables?: { [key: string]: any },
-  ) => Promise<T>
+  ) => Promise<T>;
   delegate(
     operation: 'query' | 'mutation',
     fieldName: string,
     args: {
-      [key: string]: any
+      [key: string]: any;
     },
     infoOrQuery?: GraphQLResolveInfo | string,
     options?: Options,
-  ): Promise<any>
+  ): Promise<any>;
   delegateSubscription(
     fieldName: string,
     args?: {
-      [key: string]: any
+      [key: string]: any;
     },
     infoOrQuery?: GraphQLResolveInfo | string,
     options?: Options,
-  ): Promise<AsyncIterator<any>>
-  getAbstractResolvers(filterSchema?: GraphQLSchema | string): IResolvers
+  ): Promise<AsyncIterator<any>>;
+  getAbstractResolvers(filterSchema?: GraphQLSchema | string): IResolvers;
 }
 
 export interface BindingConstructor<T> {
-  new (options: BasePrismaOptions): T
+  new (options: BasePrismaOptions): T;
 }
 /**
  * Type Defs
@@ -1479,11 +1479,11 @@ type Subscription {
   basketItem(where: BasketItemSubscriptionWhereInput): BasketItemSubscriptionPayload
   product(where: ProductSubscriptionWhereInput): ProductSubscriptionPayload
 }
-`
+`;
 
 export const Prisma = makePrismaBindingClass<BindingConstructor<Prisma>>({
   typeDefs,
-})
+});
 
 /**
  * Types
@@ -1497,7 +1497,7 @@ export type CustomerOrderByInput =
   | 'updatedAt_ASC'
   | 'updatedAt_DESC'
   | 'email_ASC'
-  | 'email_DESC'
+  | 'email_DESC';
 
 export type BasketItemOrderByInput =
   | 'id_ASC'
@@ -1507,7 +1507,7 @@ export type BasketItemOrderByInput =
   | 'updatedAt_ASC'
   | 'updatedAt_DESC'
   | 'createdAt_ASC'
-  | 'createdAt_DESC'
+  | 'createdAt_DESC';
 
 export type GrocerOrderByInput =
   | 'id_ASC'
@@ -1517,7 +1517,7 @@ export type GrocerOrderByInput =
   | 'updatedAt_ASC'
   | 'updatedAt_DESC'
   | 'email_ASC'
-  | 'email_DESC'
+  | 'email_DESC';
 
 export type ProductOrderByInput =
   | 'id_ASC'
@@ -1531,410 +1531,410 @@ export type ProductOrderByInput =
   | 'description_ASC'
   | 'description_DESC'
   | 'price_ASC'
-  | 'price_DESC'
+  | 'price_DESC';
 
-export type MutationType = 'CREATED' | 'UPDATED' | 'DELETED'
+export type MutationType = 'CREATED' | 'UPDATED' | 'DELETED';
 
 export interface CustomerCreateInput {
-  email: String
-  basket?: BasketItemCreateManyWithoutCustomerInput
+  email: String;
+  basket?: BasketItemCreateManyWithoutCustomerInput;
 }
 
 export interface GrocerWhereInput {
-  AND?: GrocerWhereInput[] | GrocerWhereInput
-  OR?: GrocerWhereInput[] | GrocerWhereInput
-  NOT?: GrocerWhereInput[] | GrocerWhereInput
-  id?: ID_Input
-  id_not?: ID_Input
-  id_in?: ID_Input[] | ID_Input
-  id_not_in?: ID_Input[] | ID_Input
-  id_lt?: ID_Input
-  id_lte?: ID_Input
-  id_gt?: ID_Input
-  id_gte?: ID_Input
-  id_contains?: ID_Input
-  id_not_contains?: ID_Input
-  id_starts_with?: ID_Input
-  id_not_starts_with?: ID_Input
-  id_ends_with?: ID_Input
-  id_not_ends_with?: ID_Input
-  createdAt?: DateTime
-  createdAt_not?: DateTime
-  createdAt_in?: DateTime[] | DateTime
-  createdAt_not_in?: DateTime[] | DateTime
-  createdAt_lt?: DateTime
-  createdAt_lte?: DateTime
-  createdAt_gt?: DateTime
-  createdAt_gte?: DateTime
-  updatedAt?: DateTime
-  updatedAt_not?: DateTime
-  updatedAt_in?: DateTime[] | DateTime
-  updatedAt_not_in?: DateTime[] | DateTime
-  updatedAt_lt?: DateTime
-  updatedAt_lte?: DateTime
-  updatedAt_gt?: DateTime
-  updatedAt_gte?: DateTime
-  email?: String
-  email_not?: String
-  email_in?: String[] | String
-  email_not_in?: String[] | String
-  email_lt?: String
-  email_lte?: String
-  email_gt?: String
-  email_gte?: String
-  email_contains?: String
-  email_not_contains?: String
-  email_starts_with?: String
-  email_not_starts_with?: String
-  email_ends_with?: String
-  email_not_ends_with?: String
+  AND?: GrocerWhereInput[] | GrocerWhereInput;
+  OR?: GrocerWhereInput[] | GrocerWhereInput;
+  NOT?: GrocerWhereInput[] | GrocerWhereInput;
+  id?: ID_Input;
+  id_not?: ID_Input;
+  id_in?: ID_Input[] | ID_Input;
+  id_not_in?: ID_Input[] | ID_Input;
+  id_lt?: ID_Input;
+  id_lte?: ID_Input;
+  id_gt?: ID_Input;
+  id_gte?: ID_Input;
+  id_contains?: ID_Input;
+  id_not_contains?: ID_Input;
+  id_starts_with?: ID_Input;
+  id_not_starts_with?: ID_Input;
+  id_ends_with?: ID_Input;
+  id_not_ends_with?: ID_Input;
+  createdAt?: DateTime;
+  createdAt_not?: DateTime;
+  createdAt_in?: DateTime[] | DateTime;
+  createdAt_not_in?: DateTime[] | DateTime;
+  createdAt_lt?: DateTime;
+  createdAt_lte?: DateTime;
+  createdAt_gt?: DateTime;
+  createdAt_gte?: DateTime;
+  updatedAt?: DateTime;
+  updatedAt_not?: DateTime;
+  updatedAt_in?: DateTime[] | DateTime;
+  updatedAt_not_in?: DateTime[] | DateTime;
+  updatedAt_lt?: DateTime;
+  updatedAt_lte?: DateTime;
+  updatedAt_gt?: DateTime;
+  updatedAt_gte?: DateTime;
+  email?: String;
+  email_not?: String;
+  email_in?: String[] | String;
+  email_not_in?: String[] | String;
+  email_lt?: String;
+  email_lte?: String;
+  email_gt?: String;
+  email_gte?: String;
+  email_contains?: String;
+  email_not_contains?: String;
+  email_starts_with?: String;
+  email_not_starts_with?: String;
+  email_ends_with?: String;
+  email_not_ends_with?: String;
 }
 
 export interface BasketItemUpsertWithWhereUniqueWithoutCustomerInput {
-  where: BasketItemWhereUniqueInput
-  update: BasketItemUpdateWithoutCustomerDataInput
-  create: BasketItemCreateWithoutCustomerInput
+  where: BasketItemWhereUniqueInput;
+  update: BasketItemUpdateWithoutCustomerDataInput;
+  create: BasketItemCreateWithoutCustomerInput;
 }
 
 export interface CustomerWhereInput {
-  AND?: CustomerWhereInput[] | CustomerWhereInput
-  OR?: CustomerWhereInput[] | CustomerWhereInput
-  NOT?: CustomerWhereInput[] | CustomerWhereInput
-  id?: ID_Input
-  id_not?: ID_Input
-  id_in?: ID_Input[] | ID_Input
-  id_not_in?: ID_Input[] | ID_Input
-  id_lt?: ID_Input
-  id_lte?: ID_Input
-  id_gt?: ID_Input
-  id_gte?: ID_Input
-  id_contains?: ID_Input
-  id_not_contains?: ID_Input
-  id_starts_with?: ID_Input
-  id_not_starts_with?: ID_Input
-  id_ends_with?: ID_Input
-  id_not_ends_with?: ID_Input
-  createdAt?: DateTime
-  createdAt_not?: DateTime
-  createdAt_in?: DateTime[] | DateTime
-  createdAt_not_in?: DateTime[] | DateTime
-  createdAt_lt?: DateTime
-  createdAt_lte?: DateTime
-  createdAt_gt?: DateTime
-  createdAt_gte?: DateTime
-  updatedAt?: DateTime
-  updatedAt_not?: DateTime
-  updatedAt_in?: DateTime[] | DateTime
-  updatedAt_not_in?: DateTime[] | DateTime
-  updatedAt_lt?: DateTime
-  updatedAt_lte?: DateTime
-  updatedAt_gt?: DateTime
-  updatedAt_gte?: DateTime
-  email?: String
-  email_not?: String
-  email_in?: String[] | String
-  email_not_in?: String[] | String
-  email_lt?: String
-  email_lte?: String
-  email_gt?: String
-  email_gte?: String
-  email_contains?: String
-  email_not_contains?: String
-  email_starts_with?: String
-  email_not_starts_with?: String
-  email_ends_with?: String
-  email_not_ends_with?: String
-  basket_every?: BasketItemWhereInput
-  basket_some?: BasketItemWhereInput
-  basket_none?: BasketItemWhereInput
+  AND?: CustomerWhereInput[] | CustomerWhereInput;
+  OR?: CustomerWhereInput[] | CustomerWhereInput;
+  NOT?: CustomerWhereInput[] | CustomerWhereInput;
+  id?: ID_Input;
+  id_not?: ID_Input;
+  id_in?: ID_Input[] | ID_Input;
+  id_not_in?: ID_Input[] | ID_Input;
+  id_lt?: ID_Input;
+  id_lte?: ID_Input;
+  id_gt?: ID_Input;
+  id_gte?: ID_Input;
+  id_contains?: ID_Input;
+  id_not_contains?: ID_Input;
+  id_starts_with?: ID_Input;
+  id_not_starts_with?: ID_Input;
+  id_ends_with?: ID_Input;
+  id_not_ends_with?: ID_Input;
+  createdAt?: DateTime;
+  createdAt_not?: DateTime;
+  createdAt_in?: DateTime[] | DateTime;
+  createdAt_not_in?: DateTime[] | DateTime;
+  createdAt_lt?: DateTime;
+  createdAt_lte?: DateTime;
+  createdAt_gt?: DateTime;
+  createdAt_gte?: DateTime;
+  updatedAt?: DateTime;
+  updatedAt_not?: DateTime;
+  updatedAt_in?: DateTime[] | DateTime;
+  updatedAt_not_in?: DateTime[] | DateTime;
+  updatedAt_lt?: DateTime;
+  updatedAt_lte?: DateTime;
+  updatedAt_gt?: DateTime;
+  updatedAt_gte?: DateTime;
+  email?: String;
+  email_not?: String;
+  email_in?: String[] | String;
+  email_not_in?: String[] | String;
+  email_lt?: String;
+  email_lte?: String;
+  email_gt?: String;
+  email_gte?: String;
+  email_contains?: String;
+  email_not_contains?: String;
+  email_starts_with?: String;
+  email_not_starts_with?: String;
+  email_ends_with?: String;
+  email_not_ends_with?: String;
+  basket_every?: BasketItemWhereInput;
+  basket_some?: BasketItemWhereInput;
+  basket_none?: BasketItemWhereInput;
 }
 
 export interface ProductUpsertNestedInput {
-  update: ProductUpdateDataInput
-  create: ProductCreateInput
+  update: ProductUpdateDataInput;
+  create: ProductCreateInput;
 }
 
 export interface ProductCreateInput {
-  name: String
-  description: String
-  price: Int
+  name: String;
+  description: String;
+  price: Int;
 }
 
 export interface ProductUpdateDataInput {
-  name?: String
-  description?: String
-  price?: Int
+  name?: String;
+  description?: String;
+  price?: Int;
 }
 
 export interface ProductWhereInput {
-  AND?: ProductWhereInput[] | ProductWhereInput
-  OR?: ProductWhereInput[] | ProductWhereInput
-  NOT?: ProductWhereInput[] | ProductWhereInput
-  id?: ID_Input
-  id_not?: ID_Input
-  id_in?: ID_Input[] | ID_Input
-  id_not_in?: ID_Input[] | ID_Input
-  id_lt?: ID_Input
-  id_lte?: ID_Input
-  id_gt?: ID_Input
-  id_gte?: ID_Input
-  id_contains?: ID_Input
-  id_not_contains?: ID_Input
-  id_starts_with?: ID_Input
-  id_not_starts_with?: ID_Input
-  id_ends_with?: ID_Input
-  id_not_ends_with?: ID_Input
-  createdAt?: DateTime
-  createdAt_not?: DateTime
-  createdAt_in?: DateTime[] | DateTime
-  createdAt_not_in?: DateTime[] | DateTime
-  createdAt_lt?: DateTime
-  createdAt_lte?: DateTime
-  createdAt_gt?: DateTime
-  createdAt_gte?: DateTime
-  updatedAt?: DateTime
-  updatedAt_not?: DateTime
-  updatedAt_in?: DateTime[] | DateTime
-  updatedAt_not_in?: DateTime[] | DateTime
-  updatedAt_lt?: DateTime
-  updatedAt_lte?: DateTime
-  updatedAt_gt?: DateTime
-  updatedAt_gte?: DateTime
-  name?: String
-  name_not?: String
-  name_in?: String[] | String
-  name_not_in?: String[] | String
-  name_lt?: String
-  name_lte?: String
-  name_gt?: String
-  name_gte?: String
-  name_contains?: String
-  name_not_contains?: String
-  name_starts_with?: String
-  name_not_starts_with?: String
-  name_ends_with?: String
-  name_not_ends_with?: String
-  description?: String
-  description_not?: String
-  description_in?: String[] | String
-  description_not_in?: String[] | String
-  description_lt?: String
-  description_lte?: String
-  description_gt?: String
-  description_gte?: String
-  description_contains?: String
-  description_not_contains?: String
-  description_starts_with?: String
-  description_not_starts_with?: String
-  description_ends_with?: String
-  description_not_ends_with?: String
-  price?: Int
-  price_not?: Int
-  price_in?: Int[] | Int
-  price_not_in?: Int[] | Int
-  price_lt?: Int
-  price_lte?: Int
-  price_gt?: Int
-  price_gte?: Int
+  AND?: ProductWhereInput[] | ProductWhereInput;
+  OR?: ProductWhereInput[] | ProductWhereInput;
+  NOT?: ProductWhereInput[] | ProductWhereInput;
+  id?: ID_Input;
+  id_not?: ID_Input;
+  id_in?: ID_Input[] | ID_Input;
+  id_not_in?: ID_Input[] | ID_Input;
+  id_lt?: ID_Input;
+  id_lte?: ID_Input;
+  id_gt?: ID_Input;
+  id_gte?: ID_Input;
+  id_contains?: ID_Input;
+  id_not_contains?: ID_Input;
+  id_starts_with?: ID_Input;
+  id_not_starts_with?: ID_Input;
+  id_ends_with?: ID_Input;
+  id_not_ends_with?: ID_Input;
+  createdAt?: DateTime;
+  createdAt_not?: DateTime;
+  createdAt_in?: DateTime[] | DateTime;
+  createdAt_not_in?: DateTime[] | DateTime;
+  createdAt_lt?: DateTime;
+  createdAt_lte?: DateTime;
+  createdAt_gt?: DateTime;
+  createdAt_gte?: DateTime;
+  updatedAt?: DateTime;
+  updatedAt_not?: DateTime;
+  updatedAt_in?: DateTime[] | DateTime;
+  updatedAt_not_in?: DateTime[] | DateTime;
+  updatedAt_lt?: DateTime;
+  updatedAt_lte?: DateTime;
+  updatedAt_gt?: DateTime;
+  updatedAt_gte?: DateTime;
+  name?: String;
+  name_not?: String;
+  name_in?: String[] | String;
+  name_not_in?: String[] | String;
+  name_lt?: String;
+  name_lte?: String;
+  name_gt?: String;
+  name_gte?: String;
+  name_contains?: String;
+  name_not_contains?: String;
+  name_starts_with?: String;
+  name_not_starts_with?: String;
+  name_ends_with?: String;
+  name_not_ends_with?: String;
+  description?: String;
+  description_not?: String;
+  description_in?: String[] | String;
+  description_not_in?: String[] | String;
+  description_lt?: String;
+  description_lte?: String;
+  description_gt?: String;
+  description_gte?: String;
+  description_contains?: String;
+  description_not_contains?: String;
+  description_starts_with?: String;
+  description_not_starts_with?: String;
+  description_ends_with?: String;
+  description_not_ends_with?: String;
+  price?: Int;
+  price_not?: Int;
+  price_in?: Int[] | Int;
+  price_not_in?: Int[] | Int;
+  price_lt?: Int;
+  price_lte?: Int;
+  price_gt?: Int;
+  price_gte?: Int;
 }
 
 export interface ProductUpdateOneInput {
-  create?: ProductCreateInput
-  connect?: ProductWhereUniqueInput
-  delete?: Boolean
-  update?: ProductUpdateDataInput
-  upsert?: ProductUpsertNestedInput
+  create?: ProductCreateInput;
+  connect?: ProductWhereUniqueInput;
+  delete?: Boolean;
+  update?: ProductUpdateDataInput;
+  upsert?: ProductUpsertNestedInput;
 }
 
 export interface BasketItemSubscriptionWhereInput {
-  AND?: BasketItemSubscriptionWhereInput[] | BasketItemSubscriptionWhereInput
-  OR?: BasketItemSubscriptionWhereInput[] | BasketItemSubscriptionWhereInput
-  NOT?: BasketItemSubscriptionWhereInput[] | BasketItemSubscriptionWhereInput
-  mutation_in?: MutationType[] | MutationType
-  updatedFields_contains?: String
-  updatedFields_contains_every?: String[] | String
-  updatedFields_contains_some?: String[] | String
-  node?: BasketItemWhereInput
+  AND?: BasketItemSubscriptionWhereInput[] | BasketItemSubscriptionWhereInput;
+  OR?: BasketItemSubscriptionWhereInput[] | BasketItemSubscriptionWhereInput;
+  NOT?: BasketItemSubscriptionWhereInput[] | BasketItemSubscriptionWhereInput;
+  mutation_in?: MutationType[] | MutationType;
+  updatedFields_contains?: String;
+  updatedFields_contains_every?: String[] | String;
+  updatedFields_contains_some?: String[] | String;
+  node?: BasketItemWhereInput;
 }
 
 export interface BasketItemUpdateWithoutCustomerDataInput {
-  quantity?: Int
-  product?: ProductUpdateOneInput
+  quantity?: Int;
+  product?: ProductUpdateOneInput;
 }
 
 export interface GrocerSubscriptionWhereInput {
-  AND?: GrocerSubscriptionWhereInput[] | GrocerSubscriptionWhereInput
-  OR?: GrocerSubscriptionWhereInput[] | GrocerSubscriptionWhereInput
-  NOT?: GrocerSubscriptionWhereInput[] | GrocerSubscriptionWhereInput
-  mutation_in?: MutationType[] | MutationType
-  updatedFields_contains?: String
-  updatedFields_contains_every?: String[] | String
-  updatedFields_contains_some?: String[] | String
-  node?: GrocerWhereInput
+  AND?: GrocerSubscriptionWhereInput[] | GrocerSubscriptionWhereInput;
+  OR?: GrocerSubscriptionWhereInput[] | GrocerSubscriptionWhereInput;
+  NOT?: GrocerSubscriptionWhereInput[] | GrocerSubscriptionWhereInput;
+  mutation_in?: MutationType[] | MutationType;
+  updatedFields_contains?: String;
+  updatedFields_contains_every?: String[] | String;
+  updatedFields_contains_some?: String[] | String;
+  node?: GrocerWhereInput;
 }
 
 export interface BasketItemUpdateWithWhereUniqueWithoutCustomerInput {
-  where: BasketItemWhereUniqueInput
-  data: BasketItemUpdateWithoutCustomerDataInput
+  where: BasketItemWhereUniqueInput;
+  data: BasketItemUpdateWithoutCustomerDataInput;
 }
 
 export interface CustomerUpsertWithoutBasketInput {
-  update: CustomerUpdateWithoutBasketDataInput
-  create: CustomerCreateWithoutBasketInput
+  update: CustomerUpdateWithoutBasketDataInput;
+  create: CustomerCreateWithoutBasketInput;
 }
 
 export interface BasketItemUpdateManyWithoutCustomerInput {
   create?:
     | BasketItemCreateWithoutCustomerInput[]
-    | BasketItemCreateWithoutCustomerInput
-  connect?: BasketItemWhereUniqueInput[] | BasketItemWhereUniqueInput
-  disconnect?: BasketItemWhereUniqueInput[] | BasketItemWhereUniqueInput
-  delete?: BasketItemWhereUniqueInput[] | BasketItemWhereUniqueInput
+    | BasketItemCreateWithoutCustomerInput;
+  connect?: BasketItemWhereUniqueInput[] | BasketItemWhereUniqueInput;
+  disconnect?: BasketItemWhereUniqueInput[] | BasketItemWhereUniqueInput;
+  delete?: BasketItemWhereUniqueInput[] | BasketItemWhereUniqueInput;
   update?:
     | BasketItemUpdateWithWhereUniqueWithoutCustomerInput[]
-    | BasketItemUpdateWithWhereUniqueWithoutCustomerInput
+    | BasketItemUpdateWithWhereUniqueWithoutCustomerInput;
   upsert?:
     | BasketItemUpsertWithWhereUniqueWithoutCustomerInput[]
-    | BasketItemUpsertWithWhereUniqueWithoutCustomerInput
+    | BasketItemUpsertWithWhereUniqueWithoutCustomerInput;
 }
 
 export interface CustomerWhereUniqueInput {
-  id?: ID_Input
-  email?: String
+  id?: ID_Input;
+  email?: String;
 }
 
 export interface CustomerUpdateInput {
-  email?: String
-  basket?: BasketItemUpdateManyWithoutCustomerInput
+  email?: String;
+  basket?: BasketItemUpdateManyWithoutCustomerInput;
 }
 
 export interface ProductWhereUniqueInput {
-  id?: ID_Input
+  id?: ID_Input;
 }
 
 export interface GrocerUpdateInput {
-  email?: String
+  email?: String;
 }
 
 export interface CustomerUpdateOneWithoutBasketInput {
-  create?: CustomerCreateWithoutBasketInput
-  connect?: CustomerWhereUniqueInput
-  delete?: Boolean
-  update?: CustomerUpdateWithoutBasketDataInput
-  upsert?: CustomerUpsertWithoutBasketInput
+  create?: CustomerCreateWithoutBasketInput;
+  connect?: CustomerWhereUniqueInput;
+  delete?: Boolean;
+  update?: CustomerUpdateWithoutBasketDataInput;
+  upsert?: CustomerUpsertWithoutBasketInput;
 }
 
 export interface CustomerCreateWithoutBasketInput {
-  email: String
+  email: String;
 }
 
 export interface BasketItemWhereInput {
-  AND?: BasketItemWhereInput[] | BasketItemWhereInput
-  OR?: BasketItemWhereInput[] | BasketItemWhereInput
-  NOT?: BasketItemWhereInput[] | BasketItemWhereInput
-  id?: ID_Input
-  id_not?: ID_Input
-  id_in?: ID_Input[] | ID_Input
-  id_not_in?: ID_Input[] | ID_Input
-  id_lt?: ID_Input
-  id_lte?: ID_Input
-  id_gt?: ID_Input
-  id_gte?: ID_Input
-  id_contains?: ID_Input
-  id_not_contains?: ID_Input
-  id_starts_with?: ID_Input
-  id_not_starts_with?: ID_Input
-  id_ends_with?: ID_Input
-  id_not_ends_with?: ID_Input
-  quantity?: Int
-  quantity_not?: Int
-  quantity_in?: Int[] | Int
-  quantity_not_in?: Int[] | Int
-  quantity_lt?: Int
-  quantity_lte?: Int
-  quantity_gt?: Int
-  quantity_gte?: Int
-  customer?: CustomerWhereInput
-  product?: ProductWhereInput
+  AND?: BasketItemWhereInput[] | BasketItemWhereInput;
+  OR?: BasketItemWhereInput[] | BasketItemWhereInput;
+  NOT?: BasketItemWhereInput[] | BasketItemWhereInput;
+  id?: ID_Input;
+  id_not?: ID_Input;
+  id_in?: ID_Input[] | ID_Input;
+  id_not_in?: ID_Input[] | ID_Input;
+  id_lt?: ID_Input;
+  id_lte?: ID_Input;
+  id_gt?: ID_Input;
+  id_gte?: ID_Input;
+  id_contains?: ID_Input;
+  id_not_contains?: ID_Input;
+  id_starts_with?: ID_Input;
+  id_not_starts_with?: ID_Input;
+  id_ends_with?: ID_Input;
+  id_not_ends_with?: ID_Input;
+  quantity?: Int;
+  quantity_not?: Int;
+  quantity_in?: Int[] | Int;
+  quantity_not_in?: Int[] | Int;
+  quantity_lt?: Int;
+  quantity_lte?: Int;
+  quantity_gt?: Int;
+  quantity_gte?: Int;
+  customer?: CustomerWhereInput;
+  product?: ProductWhereInput;
 }
 
 export interface CustomerCreateOneWithoutBasketInput {
-  create?: CustomerCreateWithoutBasketInput
-  connect?: CustomerWhereUniqueInput
+  create?: CustomerCreateWithoutBasketInput;
+  connect?: CustomerWhereUniqueInput;
 }
 
 export interface CustomerSubscriptionWhereInput {
-  AND?: CustomerSubscriptionWhereInput[] | CustomerSubscriptionWhereInput
-  OR?: CustomerSubscriptionWhereInput[] | CustomerSubscriptionWhereInput
-  NOT?: CustomerSubscriptionWhereInput[] | CustomerSubscriptionWhereInput
-  mutation_in?: MutationType[] | MutationType
-  updatedFields_contains?: String
-  updatedFields_contains_every?: String[] | String
-  updatedFields_contains_some?: String[] | String
-  node?: CustomerWhereInput
+  AND?: CustomerSubscriptionWhereInput[] | CustomerSubscriptionWhereInput;
+  OR?: CustomerSubscriptionWhereInput[] | CustomerSubscriptionWhereInput;
+  NOT?: CustomerSubscriptionWhereInput[] | CustomerSubscriptionWhereInput;
+  mutation_in?: MutationType[] | MutationType;
+  updatedFields_contains?: String;
+  updatedFields_contains_every?: String[] | String;
+  updatedFields_contains_some?: String[] | String;
+  node?: CustomerWhereInput;
 }
 
 export interface GrocerCreateInput {
-  email: String
+  email: String;
 }
 
 export interface GrocerWhereUniqueInput {
-  id?: ID_Input
-  email?: String
+  id?: ID_Input;
+  email?: String;
 }
 
 export interface CustomerUpdateWithoutBasketDataInput {
-  email?: String
+  email?: String;
 }
 
 export interface ProductCreateOneInput {
-  create?: ProductCreateInput
-  connect?: ProductWhereUniqueInput
+  create?: ProductCreateInput;
+  connect?: ProductWhereUniqueInput;
 }
 
 export interface BasketItemCreateWithoutCustomerInput {
-  quantity: Int
-  product: ProductCreateOneInput
+  quantity: Int;
+  product: ProductCreateOneInput;
 }
 
 export interface BasketItemCreateManyWithoutCustomerInput {
   create?:
     | BasketItemCreateWithoutCustomerInput[]
-    | BasketItemCreateWithoutCustomerInput
-  connect?: BasketItemWhereUniqueInput[] | BasketItemWhereUniqueInput
+    | BasketItemCreateWithoutCustomerInput;
+  connect?: BasketItemWhereUniqueInput[] | BasketItemWhereUniqueInput;
 }
 
 export interface BasketItemCreateInput {
-  quantity: Int
-  customer: CustomerCreateOneWithoutBasketInput
-  product: ProductCreateOneInput
+  quantity: Int;
+  customer: CustomerCreateOneWithoutBasketInput;
+  product: ProductCreateOneInput;
 }
 
 export interface BasketItemUpdateInput {
-  quantity?: Int
-  customer?: CustomerUpdateOneWithoutBasketInput
-  product?: ProductUpdateOneInput
+  quantity?: Int;
+  customer?: CustomerUpdateOneWithoutBasketInput;
+  product?: ProductUpdateOneInput;
 }
 
 export interface BasketItemWhereUniqueInput {
-  id?: ID_Input
+  id?: ID_Input;
 }
 
 export interface ProductUpdateInput {
-  name?: String
-  description?: String
-  price?: Int
+  name?: String;
+  description?: String;
+  price?: Int;
 }
 
 export interface ProductSubscriptionWhereInput {
-  AND?: ProductSubscriptionWhereInput[] | ProductSubscriptionWhereInput
-  OR?: ProductSubscriptionWhereInput[] | ProductSubscriptionWhereInput
-  NOT?: ProductSubscriptionWhereInput[] | ProductSubscriptionWhereInput
-  mutation_in?: MutationType[] | MutationType
-  updatedFields_contains?: String
-  updatedFields_contains_every?: String[] | String
-  updatedFields_contains_some?: String[] | String
-  node?: ProductWhereInput
+  AND?: ProductSubscriptionWhereInput[] | ProductSubscriptionWhereInput;
+  OR?: ProductSubscriptionWhereInput[] | ProductSubscriptionWhereInput;
+  NOT?: ProductSubscriptionWhereInput[] | ProductSubscriptionWhereInput;
+  mutation_in?: MutationType[] | MutationType;
+  updatedFields_contains?: String;
+  updatedFields_contains_every?: String[] | String;
+  updatedFields_contains_some?: String[] | String;
+  node?: ProductWhereInput;
 }
 
 /*
@@ -1942,29 +1942,29 @@ export interface ProductSubscriptionWhereInput {
 
  */
 export interface Node {
-  id: ID_Output
+  id: ID_Output;
 }
 
 export interface Product extends Node {
-  id: ID_Output
-  createdAt: DateTime
-  updatedAt: DateTime
-  name: String
-  description: String
-  price: Int
+  id: ID_Output;
+  createdAt: DateTime;
+  updatedAt: DateTime;
+  name: String;
+  description: String;
+  price: Int;
 }
 
 export interface ProductPreviousValues {
-  id: ID_Output
-  createdAt: DateTime
-  updatedAt: DateTime
-  name: String
-  description: String
-  price: Int
+  id: ID_Output;
+  createdAt: DateTime;
+  updatedAt: DateTime;
+  name: String;
+  description: String;
+  price: Int;
 }
 
 export interface BatchPayload {
-  count: Long
+  count: Long;
 }
 
 /*
@@ -1972,20 +1972,20 @@ export interface BatchPayload {
 
  */
 export interface ProductEdge {
-  node: Product
-  cursor: String
+  node: Product;
+  cursor: String;
 }
 
 export interface AggregateProduct {
-  count: Int
+  count: Int;
 }
 
 export interface Customer extends Node {
-  id: ID_Output
-  createdAt: DateTime
-  updatedAt: DateTime
-  email: String
-  basket?: BasketItem[]
+  id: ID_Output;
+  createdAt: DateTime;
+  updatedAt: DateTime;
+  email: String;
+  basket?: BasketItem[];
 }
 
 /*
@@ -1993,13 +1993,13 @@ export interface Customer extends Node {
 
  */
 export interface ProductConnection {
-  pageInfo: PageInfo
-  edges: ProductEdge[]
-  aggregate: AggregateProduct
+  pageInfo: PageInfo;
+  edges: ProductEdge[];
+  aggregate: AggregateProduct;
 }
 
 export interface AggregateBasketItem {
-  count: Int
+  count: Int;
 }
 
 /*
@@ -2007,19 +2007,19 @@ export interface AggregateBasketItem {
 
  */
 export interface BasketItemEdge {
-  node: BasketItem
-  cursor: String
+  node: BasketItem;
+  cursor: String;
 }
 
 export interface AggregateCustomer {
-  count: Int
+  count: Int;
 }
 
 export interface BasketItem extends Node {
-  id: ID_Output
-  customer: Customer
-  product: Product
-  quantity: Int
+  id: ID_Output;
+  customer: Customer;
+  product: Product;
+  quantity: Int;
 }
 
 /*
@@ -2027,14 +2027,14 @@ export interface BasketItem extends Node {
 
  */
 export interface CustomerConnection {
-  pageInfo: PageInfo
-  edges: CustomerEdge[]
-  aggregate: AggregateCustomer
+  pageInfo: PageInfo;
+  edges: CustomerEdge[];
+  aggregate: AggregateCustomer;
 }
 
 export interface BasketItemPreviousValues {
-  id: ID_Output
-  quantity: Int
+  id: ID_Output;
+  quantity: Int;
 }
 
 /*
@@ -2042,15 +2042,15 @@ export interface BasketItemPreviousValues {
 
  */
 export interface GrocerEdge {
-  node: Grocer
-  cursor: String
+  node: Grocer;
+  cursor: String;
 }
 
 export interface GrocerSubscriptionPayload {
-  mutation: MutationType
-  node?: Grocer
-  updatedFields?: String[]
-  previousValues?: GrocerPreviousValues
+  mutation: MutationType;
+  node?: Grocer;
+  updatedFields?: String[];
+  previousValues?: GrocerPreviousValues;
 }
 
 /*
@@ -2058,45 +2058,45 @@ export interface GrocerSubscriptionPayload {
 
  */
 export interface PageInfo {
-  hasNextPage: Boolean
-  hasPreviousPage: Boolean
-  startCursor?: String
-  endCursor?: String
+  hasNextPage: Boolean;
+  hasPreviousPage: Boolean;
+  startCursor?: String;
+  endCursor?: String;
 }
 
 export interface Grocer extends Node {
-  id: ID_Output
-  createdAt: DateTime
-  updatedAt: DateTime
-  email: String
+  id: ID_Output;
+  createdAt: DateTime;
+  updatedAt: DateTime;
+  email: String;
 }
 
 export interface CustomerPreviousValues {
-  id: ID_Output
-  createdAt: DateTime
-  updatedAt: DateTime
-  email: String
+  id: ID_Output;
+  createdAt: DateTime;
+  updatedAt: DateTime;
+  email: String;
 }
 
 export interface CustomerSubscriptionPayload {
-  mutation: MutationType
-  node?: Customer
-  updatedFields?: String[]
-  previousValues?: CustomerPreviousValues
+  mutation: MutationType;
+  node?: Customer;
+  updatedFields?: String[];
+  previousValues?: CustomerPreviousValues;
 }
 
 export interface BasketItemSubscriptionPayload {
-  mutation: MutationType
-  node?: BasketItem
-  updatedFields?: String[]
-  previousValues?: BasketItemPreviousValues
+  mutation: MutationType;
+  node?: BasketItem;
+  updatedFields?: String[];
+  previousValues?: BasketItemPreviousValues;
 }
 
 export interface GrocerPreviousValues {
-  id: ID_Output
-  createdAt: DateTime
-  updatedAt: DateTime
-  email: String
+  id: ID_Output;
+  createdAt: DateTime;
+  updatedAt: DateTime;
+  email: String;
 }
 
 /*
@@ -2104,9 +2104,9 @@ export interface GrocerPreviousValues {
 
  */
 export interface BasketItemConnection {
-  pageInfo: PageInfo
-  edges: BasketItemEdge[]
-  aggregate: AggregateBasketItem
+  pageInfo: PageInfo;
+  edges: BasketItemEdge[];
+  aggregate: AggregateBasketItem;
 }
 
 /*
@@ -2114,20 +2114,20 @@ export interface BasketItemConnection {
 
  */
 export interface GrocerConnection {
-  pageInfo: PageInfo
-  edges: GrocerEdge[]
-  aggregate: AggregateGrocer
+  pageInfo: PageInfo;
+  edges: GrocerEdge[];
+  aggregate: AggregateGrocer;
 }
 
 export interface ProductSubscriptionPayload {
-  mutation: MutationType
-  node?: Product
-  updatedFields?: String[]
-  previousValues?: ProductPreviousValues
+  mutation: MutationType;
+  node?: Product;
+  updatedFields?: String[];
+  previousValues?: ProductPreviousValues;
 }
 
 export interface AggregateGrocer {
-  count: Int
+  count: Int;
 }
 
 /*
@@ -2135,35 +2135,35 @@ export interface AggregateGrocer {
 
  */
 export interface CustomerEdge {
-  node: Customer
-  cursor: String
+  node: Customer;
+  cursor: String;
 }
 
 /*
 The `Long` scalar type represents non-fractional signed whole numeric values.
 Long can represent values between -(2^63) and 2^63 - 1.
 */
-export type Long = string
+export type Long = string;
 
 /*
 The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID.
 */
-export type ID_Input = string | number
-export type ID_Output = string
+export type ID_Input = string | number;
+export type ID_Output = string;
 
 /*
 The `Boolean` scalar type represents `true` or `false`.
 */
-export type Boolean = boolean
+export type Boolean = boolean;
 
 /*
 The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text.
 */
-export type String = string
+export type String = string;
 
-export type DateTime = Date | string
+export type DateTime = Date | string;
 
 /*
 The `Int` scalar type represents non-fractional signed whole numeric values. Int can represent values between -(2^31) and 2^31 - 1. 
 */
-export type Int = number
+export type Int = number;

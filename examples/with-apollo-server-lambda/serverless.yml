@@ -10,4 +10,4 @@ plugins:
 functions:
   api:
     handler: handler.graphql
-    events: [{ http: 'ANY /graphql' }, { http: 'ANY /graphql/{proxy+}' }]
+    events: [{ http: "ANY /graphql" }, { http: "ANY /graphql/{proxy+}" }]

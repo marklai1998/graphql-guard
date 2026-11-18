@@ -30,8 +30,6 @@ tsconfig.tsbuildinfo
 .next/
 
 .idea/
-website/out/
-website/public/sitemap.xml
 
 # Bob the bundler
 .bob/

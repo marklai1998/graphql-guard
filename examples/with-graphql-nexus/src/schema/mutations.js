@@ -1,6 +1,6 @@
-const { arg } = require('nexus')
-const { prismaObjectType } = require('nexus-prisma')
-const { login, signup } = require('../lib/resolvers/mutations')
+const { arg } = require('nexus');
+const { prismaObjectType } = require('nexus-prisma');
+const { login, signup } = require('../lib/resolvers/mutations');
 
 const Mutation = prismaObjectType({
   name: 'Mutation',
@@ -9,7 +9,7 @@ const Mutation = prismaObjectType({
       args: t.prismaType.createUser.args,
       resolve: signup,
       type: 'User',
-    })
+    });
     t.field('login', {
       args: {
         data: arg({
@@ -18,10 +18,10 @@ const Mutation = prismaObjectType({
       },
       resolve: login,
       type: 'User',
-    })
+    });
   },
-})
+});
 
 module.exports = {
   Mutation,
-}
+};
