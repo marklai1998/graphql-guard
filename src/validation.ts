@@ -1,6 +1,12 @@
 import type { GuardRule, LogicRule, Rule, Rules } from './types.js';
 import { flattenObjectOf, isLogicRule, isRuleFunction } from './utils.js';
 
+export class ValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
 const extractLogicRules = (rule: LogicRule): Rule[] => {
   return rule.getRules().reduce<Rule[]>((acc, guardRule) => {
     if (isLogicRule(guardRule)) {
@@ -25,9 +31,7 @@ const extractRules = (ruleTree: Rules): Rule[] => {
   return rules;
 };
 
-export const validateRuleTree = (
-  ruleTree: Rules,
-): { status: 'ok' } | { status: 'err'; message: string } => {
+export const validateRuleTree = (ruleTree: Rules): void => {
   const rules = extractRules(ruleTree);
 
   const valid = rules.reduce<{ map: Map<string, Rule>; duplicates: string[] }>(
@@ -49,19 +53,9 @@ export const validateRuleTree = (
     { map: new Map<string, Rule>(), duplicates: [] },
   );
 
-  if (valid.duplicates.length === 0) {
-    return { status: 'ok' };
-  } else {
-    const duplicates = valid.duplicates.join(', ');
-    return {
-      status: 'err',
-      message: `There seem to be multiple definitions of these rules: ${duplicates}`,
-    };
+  if (valid.duplicates.length > 0) {
+    throw new ValidationError(
+      `There seem to be multiple definitions of these rules: ${valid.duplicates.join(', ')}`,
+    );
   }
 };
-
-export class ValidationError extends Error {
-  constructor(message: string) {
-    super(message);
-  }
-}

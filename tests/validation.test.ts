@@ -2,7 +2,7 @@ import { makeExecutableSchema } from '@graphql-tools/schema';
 import { applyMiddleware } from 'graphql-middleware';
 import { allow, guard, rule } from '../src/';
 import { and } from '../src/constructors';
-import { validateRuleTree } from '../src/validation';
+import { ValidationError, validateRuleTree } from '../src/validation';
 
 describe('correctly helps developer', () => {
   test('Finds a type missing in schema and warns developer.', async () => {
@@ -99,11 +99,13 @@ describe('rule tree validation', () => {
 
     /* Tests */
 
-    expect(validateRuleTree(correctRuleTree)).toEqual({ status: 'ok' });
-    expect(validateRuleTree(incorrectRuleTree)).toEqual({
-      status: 'err',
-      message: `There seem to be multiple definitions of these rules: one, two`,
-    });
+    expect(() => validateRuleTree(correctRuleTree)).not.toThrow();
+    expect(() => validateRuleTree(incorrectRuleTree)).toThrow(ValidationError);
+    expect(() => validateRuleTree(incorrectRuleTree)).toThrow(
+      new ValidationError(
+        'There seem to be multiple definitions of these rules: one, two',
+      ),
+    );
   });
 });
 
