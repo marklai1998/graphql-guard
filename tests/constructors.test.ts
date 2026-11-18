@@ -1,4 +1,4 @@
-import type * as Yup from 'yup';
+import type * as z from 'zod';
 import {
   allow,
   and,
@@ -83,10 +83,10 @@ describe('rule constructor', () => {
 describe('input rules constructor', () => {
   test('correnctly constructs an input rule with name', async () => {
     const name = Math.random().toString();
-    let schema: Yup.ObjectSchema<{}>;
+    let schema: z.ZodObject;
 
-    const rule = inputRule(name)((yup) => {
-      schema = yup.object().shape({}).required();
+    const rule = inputRule(name)((z) => {
+      schema = z.object({});
       return schema;
     });
     expect(JSON.stringify(rule)).toEqual(
@@ -98,10 +98,10 @@ describe('input rules constructor', () => {
     const n = Math.random();
     vi.spyOn(Math, 'random').mockReturnValue(n);
 
-    let schema: Yup.ObjectSchema<{}>;
+    let schema: z.ZodObject;
 
-    const rule = inputRule()((yup) => {
-      schema = yup.object().shape({}).required();
+    const rule = inputRule()((z) => {
+      schema = z.object({});
       return schema;
     });
     expect(JSON.stringify(rule)).toEqual(
@@ -113,11 +113,11 @@ describe('input rules constructor', () => {
     const n = Math.random();
     vi.spyOn(Math, 'random').mockReturnValue(n);
 
-    let schema: Yup.ObjectSchema<{}>;
-    const options = { abortEarly: false };
+    let schema: z.ZodObject;
+    const options = { reportInput: true };
 
-    const rule = inputRule()((yup) => {
-      schema = yup.object().shape({}).required();
+    const rule = inputRule()((z) => {
+      schema = z.object({});
       return schema;
     }, options);
     expect(JSON.stringify(rule)).toEqual(

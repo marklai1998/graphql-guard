@@ -1,4 +1,4 @@
-import type * as Yup from 'yup';
+import type * as z from 'zod';
 import {
   InputRule,
   Rule,
@@ -39,8 +39,8 @@ export const rule =
 export const inputRule =
   <T>(name?: string) =>
   (
-    schema: (yup: typeof Yup, ctx: ShieldContext) => Yup.BaseSchema<T>,
-    options?: Parameters<Yup.BaseSchema<T>['validate']>[1],
+    schema: (zod: typeof z, ctx: ShieldContext) => z.ZodType<T>,
+    options?: Parameters<z.ZodType<T>['safeParseAsync']>[1],
   ) => {
     if (typeof name === 'string') {
       return new InputRule(name, schema, options);

@@ -1,5 +1,5 @@
 import type { GraphQLResolveInfo } from 'graphql';
-import * as Yup from 'yup';
+import * as z from 'zod';
 import type {
   Cache,
   CacheConstructorOptions,
@@ -162,18 +162,23 @@ export class Rule implements RuleType {
 export class InputRule<T> extends Rule {
   constructor(
     name: string,
-    schema: (yup: typeof Yup, ctx: ShieldContext) => Yup.BaseSchema<T>,
-    options?: Parameters<Yup.BaseSchema<T>['validate']>[1],
+    schema: (zod: typeof z, ctx: ShieldContext) => z.ZodType<T>,
+    options?: Parameters<z.ZodType<T>['safeParseAsync']>[1],
   ) {
-    const validationFunction: RuleFunction = (
+    const validationFunction: RuleFunction = async (
       _parent: object,
       args: object,
       ctx: ShieldContext,
-    ) =>
-      schema(Yup, ctx)
-        .validate(args, options)
-        .then(() => true)
-        .catch((err) => err);
+    ) => {
+      const result = await schema(z, ctx).safeParseAsync(args, options);
+      if (result.success) return true;
+      return new Error(
+        result.error.issues[0]?.message ?? result.error.message,
+        {
+          cause: result.error,
+        },
+      );
+    };
 
     super(name, validationFunction, { cache: 'strict', fragment: undefined });
   }

@@ -309,19 +309,20 @@ Wraps a validation function into a reusable rule. Return `true` to allow, `false
 
 ### `inputRule`
 
-Validates arguments with a [Yup](https://github.com/jquense/yup) schema. Yup receives the entire `args` object, so start the schema with an object.
+Validates arguments with a [Zod](https://zod.dev) schema. The callback receives `z` and the context, and the schema is checked against the entire `args` object, so start the schema with an object.
 
 ```ts
 import { inputRule } from 'graphql-guard';
 
-const isValidEmail = inputRule()(
-  (yup) =>
-    yup.object({
-      email: yup.string().email('It has to be an email!').required(),
-    }),
-  { abortEarly: false },
+const isValidSignup = inputRule()((z, ctx) =>
+  z.object({
+    email: z.email('It has to be an email!'),
+    age: z.number().min(18, 'Must be an adult!'),
+  }),
 );
 ```
+
+When validation fails, the rule fails with the first issue's message (e.g. `It has to be an email!`). The full `ZodError`, with every issue, is available as the error's `cause`.
 
 ### `allow` / `deny`
 

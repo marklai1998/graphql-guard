@@ -1,12 +1,12 @@
 # Migrate from `graphql-shield`
 
-GraphQL Guard is a fork of `graphql-shield@7.6.5`. The runtime behaviour is the same: rules, caching, logic rules, fallbacks and error handling all work as before. Most projects only need to update the package name and the requirements below.
+GraphQL Guard is a fork of `graphql-shield@7.6.5`. Rules, caching, logic rules, fallbacks and error handling all work as before. Apart from `inputRule`, which now validates with Zod instead of Yup, most projects only need to update the package name and the requirements below.
 
 - [Requirement](#requirement)
 - [Update Import](#update-import)
 - [Rename Types](#rename-types)
 - [Type Aliases Instead of Interfaces](#type-aliases-instead-of-interfaces)
-- [Removed `@types/yup` Dependency](#removed-typesyup-dependency)
+- [Replace Yup with Zod in `inputRule`](#replace-yup-with-zod-in-inputrule)
 - [Package Entry Points](#package-entry-points)
 
 ## Requirement
@@ -85,9 +85,42 @@ type DescribedRule = Rule & {
 const describe = (rule: DescribedRule) => rule.description;
 ```
 
-## Removed `@types/yup` Dependency
+## Replace Yup with Zod in `inputRule`
 
-`graphql-shield` installed the outdated `@types/yup@0.29` as a runtime dependency. `yup@0.32` ships its own types, so GraphQL Guard no longer installs it. If your project relied on it being installed through `graphql-shield`, use the types from `yup` directly or add `@types/yup` to your own dependencies.
+`inputRule` validates with [Zod](https://zod.dev) instead of Yup. `yup` and `@types/yup` are no longer installed.
+
+- The callback receives `z` instead of `yup` and must return a Zod schema
+- The optional second argument takes Zod's parse options instead of Yup's validate options. `abortEarly` has no equivalent
+- On failure, the error message is the first issue's message, like Yup's default. The full `ZodError` is available as the error's `cause`
+
+Before
+
+```ts
+import { inputRule } from 'graphql-shield';
+
+const isValidSignup = inputRule()(
+  (yup) =>
+    yup.object({
+      email: yup.string().email('It has to be an email!').required(),
+      age: yup.number().min(18, 'Must be an adult!').required(),
+    }),
+  { abortEarly: false },
+);
+```
+
+After
+
+```ts
+import { inputRule } from 'graphql-guard';
+
+// Fields are required by default in Zod
+const isValidSignup = inputRule()((z) =>
+  z.object({
+    email: z.email('It has to be an email!'),
+    age: z.number().min(18, 'Must be an adult!'),
+  }),
+);
+```
 
 ## Package Entry Points
 
