@@ -1,7 +1,7 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { ApolloServer, gql } from 'apollo-server';
 import { applyMiddleware } from 'graphql-middleware';
-import fetch from 'node-fetch';
+import wretch from 'wretch';
 
 import { allow, deny, shield } from '../src';
 
@@ -51,11 +51,9 @@ describe('integration tests', () => {
       }
     `;
 
-    const res = await fetch(uri, {
-      method: 'POST',
-      body: JSON.stringify({ query }),
-      headers: { 'Content-Type': 'application/json' },
-    }).then((res) => res.json());
+    const res = await wretch(uri)
+      .post({ query })
+      .json<{ data: unknown; errors: unknown[] }>();
 
     expect(res.data).toEqual({
       allow: 'allow',
