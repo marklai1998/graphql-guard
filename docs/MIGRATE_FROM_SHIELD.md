@@ -1,6 +1,6 @@
 # Migrate from `graphql-shield`
 
-GraphQL Guard is a fork of `graphql-shield@7.6.5`. Rules, caching, logic rules, fallbacks and error handling all work as before. Apart from `inputRule`, which now validates with Zod instead of Yup, most projects only need to update the package name, rename `shield` to `guard` and check the requirements below.
+GraphQL Guard 1.x is a fork of `graphql-shield@7.x` (based on `7.6.5`, the latest 7.x release). Rules, caching, logic rules, fallbacks and error handling all work as before. Apart from `inputRule`, which now validates with Zod instead of Yup, most projects only need to update the package name, rename `shield` to `guard` and check the requirements below.
 
 - [Requirement](#requirement)
 - [Update Import](#update-import)

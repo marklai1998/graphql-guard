@@ -5,7 +5,7 @@
 
 <div align="center">
 
-GraphQL server permissions as another layer of abstraction. Fork of [graphql-shield](https://www.npmjs.com/package/graphql-shield)
+GraphQL server permissions as another layer of abstraction. GraphQL Guard 1.x is a fork of [graphql-shield](https://www.npmjs.com/package/graphql-shield) 7.x
 
 GraphQL Guard helps you create a permission layer for your application. Using an intuitive rule API, every request runs through the guard engine, and smart caching keeps the extra load low. This keeps your application fast and makes sure no internal data is exposed.
 
