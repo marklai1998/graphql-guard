@@ -2,7 +2,7 @@ import { makeExecutableSchema } from '@graphql-tools/schema';
 import { graphql } from 'graphql';
 import { applyMiddleware } from 'graphql-middleware';
 import { rule, shield } from '../src/index';
-import type { IHashFunction } from '../src/types';
+import type { HashFunction } from '../src/types';
 
 describe('caching:', () => {
   test('Strict cache - Rule is called multiple times, based on different parent.', async () => {
@@ -369,7 +369,7 @@ test('Customize hash function', async () => {
 
   const allowMock = vi.fn().mockResolvedValue(true);
 
-  const hashFunction: IHashFunction = vi.fn((opts) => JSON.stringify(opts));
+  const hashFunction: HashFunction = vi.fn((opts) => JSON.stringify(opts));
 
   const permissions = shield(
     {

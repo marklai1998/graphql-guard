@@ -1,11 +1,16 @@
 import { LogicRule, Rule } from './rules.js';
-import type { ILogicRule, IRule, IRuleFieldMap, ShieldRule } from './types.js';
+import type {
+  LogicRule as LogicRuleType,
+  RuleFieldMap,
+  Rule as RuleType,
+  ShieldRule,
+} from './types.js';
 
-export function isRule(x: any): x is IRule {
+export function isRule(x: any): x is RuleType {
   return x instanceof Rule || (x?.constructor && x.constructor.name === 'Rule');
 }
 
-export function isLogicRule(x: any): x is ILogicRule {
+export function isLogicRule(x: any): x is LogicRuleType {
   return (
     x instanceof LogicRule ||
     (x?.constructor &&
@@ -23,7 +28,7 @@ export function isRuleFunction(x: any): x is ShieldRule {
   return isRule(x) || isLogicRule(x);
 }
 
-export function isRuleFieldMap(x: any): x is IRuleFieldMap {
+export function isRuleFieldMap(x: any): x is RuleFieldMap {
   return (
     typeof x === 'object' &&
     Object.values(x).every((rule) => isRuleFunction(rule))

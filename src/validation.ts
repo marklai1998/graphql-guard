@@ -1,12 +1,12 @@
-import type { ILogicRule, IRule, IRules, ShieldRule } from './types.js';
+import type { LogicRule, Rule, Rules, ShieldRule } from './types.js';
 import { flattenObjectOf, isLogicRule, isRuleFunction } from './utils.js';
 
 export function validateRuleTree(
-  ruleTree: IRules,
+  ruleTree: Rules,
 ): { status: 'ok' } | { status: 'err'; message: string } {
   const rules = extractRules(ruleTree);
 
-  const valid = rules.reduce<{ map: Map<string, IRule>; duplicates: string[] }>(
+  const valid = rules.reduce<{ map: Map<string, Rule>; duplicates: string[] }>(
     ({ map, duplicates }, rule) => {
       if (!map.has(rule.name)) {
         return { map: map.set(rule.name, rule), duplicates };
@@ -22,7 +22,7 @@ export function validateRuleTree(
         return { map, duplicates };
       }
     },
-    { map: new Map<string, IRule>(), duplicates: [] },
+    { map: new Map<string, Rule>(), duplicates: [] },
   );
 
   if (valid.duplicates.length === 0) {
@@ -36,10 +36,10 @@ export function validateRuleTree(
   }
 
   /* Helper functions */
-  function extractRules(ruleTree: IRules): IRule[] {
+  function extractRules(ruleTree: Rules): Rule[] {
     const resolvers = flattenObjectOf<ShieldRule>(ruleTree, isRuleFunction);
 
-    const rules = resolvers.reduce<IRule[]>((rules, rule) => {
+    const rules = resolvers.reduce<Rule[]>((rules, rule) => {
       if (isLogicRule(rule)) {
         return [...rules, ...extractLogicRules(rule)];
       } else {
@@ -50,8 +50,8 @@ export function validateRuleTree(
     return rules;
   }
 
-  function extractLogicRules(rule: ILogicRule): IRule[] {
-    return rule.getRules().reduce<IRule[]>((acc, shieldRule) => {
+  function extractLogicRules(rule: LogicRule): Rule[] {
+    return rule.getRules().reduce<Rule[]>((acc, shieldRule) => {
       if (isLogicRule(shieldRule)) {
         return [...acc, ...extractLogicRules(shieldRule)];
       } else {

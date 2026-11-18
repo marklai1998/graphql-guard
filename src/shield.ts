@@ -3,17 +3,17 @@ import hash from 'object-hash';
 import { allow } from './constructors.js';
 import { generateMiddlewareGeneratorFromRuleTree } from './generator.js';
 import type {
-  IFallbackErrorType,
-  IHashFunction,
-  IOptions,
-  IOptionsConstructor,
-  IRules,
+  FallbackErrorType,
+  HashFunction,
+  Options,
+  OptionsConstructor,
+  Rules,
   ShieldRule,
 } from './types.js';
 import { withDefault } from './utils.js';
 import { ValidationError, validateRuleTree } from './validation.js';
 
-function normalizeOptions(options: IOptionsConstructor): IOptions {
+function normalizeOptions(options: OptionsConstructor): Options {
   if (typeof options.fallbackError === 'string') {
     options.fallbackError = new Error(options.fallbackError);
   }
@@ -22,16 +22,16 @@ function normalizeOptions(options: IOptionsConstructor): IOptions {
     debug: options.debug !== undefined ? options.debug : false,
     allowExternalErrors: withDefault(false)(options.allowExternalErrors),
     fallbackRule: withDefault<ShieldRule>(allow)(options.fallbackRule),
-    fallbackError: withDefault<IFallbackErrorType>(
-      new Error('Not Authorised!'),
-    )(options.fallbackError),
-    hashFunction: withDefault<IHashFunction>(hash)(options.hashFunction),
+    fallbackError: withDefault<FallbackErrorType>(new Error('Not Authorised!'))(
+      options.fallbackError,
+    ),
+    hashFunction: withDefault<HashFunction>(hash)(options.hashFunction),
   };
 }
 
 export function shield<TSource = any, TContext = any, TArgs = any>(
-  ruleTree: IRules,
-  options: IOptionsConstructor = {},
+  ruleTree: Rules,
+  options: OptionsConstructor = {},
 ): IMiddlewareGenerator<TSource, TContext, TArgs> {
   const normalizedOptions = normalizeOptions(options);
   const ruleTreeValidity = validateRuleTree(ruleTree);

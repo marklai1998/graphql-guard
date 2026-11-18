@@ -1,32 +1,32 @@
 import type { GraphQLResolveInfo } from 'graphql';
 import * as Yup from 'yup';
 import type {
-  ICache,
-  ICacheContructorOptions,
-  IFragment,
-  ILogicRule,
-  IOptions,
-  IRule,
-  IRuleConstructorOptions,
-  IRuleFunction,
-  IRuleOptions,
-  IRuleResult,
-  IShieldContext,
+  Cache,
+  CacheConstructorOptions,
+  Fragment,
+  LogicRule as LogicRuleType,
+  Options,
+  RuleConstructorOptions,
+  RuleFunction,
+  RuleOptions,
+  RuleResult,
+  Rule as RuleType,
+  ShieldContext,
   ShieldRule,
 } from './types.js';
 import { isLogicRule } from './utils.js';
 
-export class Rule implements IRule {
+export class Rule implements RuleType {
   readonly name: string;
 
-  private cache: ICache;
-  private fragment?: IFragment;
-  private func: IRuleFunction;
+  private cache: Cache;
+  private fragment?: Fragment;
+  private func: RuleFunction;
 
   constructor(
     name: string,
-    func: IRuleFunction,
-    constructorOptions: IRuleConstructorOptions,
+    func: RuleFunction,
+    constructorOptions: RuleConstructorOptions,
   ) {
     const options = this.normalizeOptions(constructorOptions);
 
@@ -39,10 +39,10 @@ export class Rule implements IRule {
   async resolve(
     parent: object,
     args: object,
-    ctx: IShieldContext,
+    ctx: ShieldContext,
     info: GraphQLResolveInfo,
-    options: IOptions,
-  ): Promise<IRuleResult> {
+    options: Options,
+  ): Promise<RuleResult> {
     try {
       /* Resolve */
       const res = await this.executeRule(parent, args, ctx, info, options);
@@ -69,11 +69,11 @@ export class Rule implements IRule {
     return this.func === rule.func;
   }
 
-  extractFragment(): IFragment | undefined {
+  extractFragment(): Fragment | undefined {
     return this.fragment;
   }
 
-  private normalizeOptions(options: IRuleConstructorOptions): IRuleOptions {
+  private normalizeOptions(options: RuleConstructorOptions): RuleOptions {
     return {
       cache:
         options.cache !== undefined
@@ -83,7 +83,7 @@ export class Rule implements IRule {
     };
   }
 
-  private normalizeCacheOption(cache: ICacheContructorOptions): ICache {
+  private normalizeCacheOption(cache: CacheConstructorOptions): Cache {
     switch (cache) {
       case true: {
         return 'strict';
@@ -100,10 +100,10 @@ export class Rule implements IRule {
   private executeRule(
     parent: object,
     args: object,
-    ctx: IShieldContext,
+    ctx: ShieldContext,
     info: GraphQLResolveInfo,
-    options: IOptions,
-  ): string | boolean | Error | Promise<IRuleResult> {
+    options: Options,
+  ): string | boolean | Error | Promise<RuleResult> {
     switch (typeof this.cache) {
       case 'function': {
         /* User defined cache function. */
@@ -147,9 +147,9 @@ export class Rule implements IRule {
   ): (
     parent: object,
     args: object,
-    ctx: IShieldContext,
+    ctx: ShieldContext,
     info: GraphQLResolveInfo,
-  ) => string | boolean | Error | Promise<IRuleResult> {
+  ) => string | boolean | Error | Promise<RuleResult> {
     return (parent, args, ctx, info) => {
       if (!ctx._shield.cache[key]) {
         ctx._shield.cache[key] = this.func(parent, args, ctx, info);
@@ -162,13 +162,13 @@ export class Rule implements IRule {
 export class InputRule<T> extends Rule {
   constructor(
     name: string,
-    schema: (yup: typeof Yup, ctx: IShieldContext) => Yup.BaseSchema<T>,
+    schema: (yup: typeof Yup, ctx: ShieldContext) => Yup.BaseSchema<T>,
     options?: Parameters<Yup.BaseSchema<T>['validate']>[1],
   ) {
-    const validationFunction: IRuleFunction = (
+    const validationFunction: RuleFunction = (
       _parent: object,
       args: object,
-      ctx: IShieldContext,
+      ctx: ShieldContext,
     ) =>
       schema(Yup, ctx)
         .validate(args, options)
@@ -179,7 +179,7 @@ export class InputRule<T> extends Rule {
   }
 }
 
-export class LogicRule implements ILogicRule {
+export class LogicRule implements LogicRuleType {
   private rules: ShieldRule[];
 
   constructor(rules: ShieldRule[]) {
@@ -189,20 +189,20 @@ export class LogicRule implements ILogicRule {
   async resolve(
     _parent: object,
     _args: object,
-    _ctx: IShieldContext,
+    _ctx: ShieldContext,
     _info: GraphQLResolveInfo,
-    _options: IOptions,
-  ): Promise<IRuleResult> {
+    _options: Options,
+  ): Promise<RuleResult> {
     return false;
   }
 
   async evaluate(
     parent: object,
     args: object,
-    ctx: IShieldContext,
+    ctx: ShieldContext,
     info: GraphQLResolveInfo,
-    options: IOptions,
-  ): Promise<IRuleResult[]> {
+    options: Options,
+  ): Promise<RuleResult[]> {
     const rules = this.getRules();
     const tasks = rules.map((rule) =>
       rule.resolve(parent, args, ctx, info, options),
@@ -215,8 +215,8 @@ export class LogicRule implements ILogicRule {
     return this.rules;
   }
 
-  extractFragments(): IFragment[] {
-    const fragments = this.rules.reduce<IFragment[]>((fragments, rule) => {
+  extractFragments(): Fragment[] {
+    const fragments = this.rules.reduce<Fragment[]>((fragments, rule) => {
       if (isLogicRule(rule)) {
         return fragments.concat(...rule.extractFragments());
       }
@@ -241,10 +241,10 @@ export class RuleOr extends LogicRule {
   override async resolve(
     parent: object,
     args: object,
-    ctx: IShieldContext,
+    ctx: ShieldContext,
     info: GraphQLResolveInfo,
-    options: IOptions,
-  ): Promise<IRuleResult> {
+    options: Options,
+  ): Promise<RuleResult> {
     const result = await this.evaluate(parent, args, ctx, info, options);
 
     if (result.every((res) => res !== true)) {
@@ -264,10 +264,10 @@ export class RuleAnd extends LogicRule {
   override async resolve(
     parent: object,
     args: object,
-    ctx: IShieldContext,
+    ctx: ShieldContext,
     info: GraphQLResolveInfo,
-    options: IOptions,
-  ): Promise<IRuleResult> {
+    options: Options,
+  ): Promise<RuleResult> {
     const result = await this.evaluate(parent, args, ctx, info, options);
 
     if (result.some((res) => res !== true)) {
@@ -287,10 +287,10 @@ export class RuleChain extends LogicRule {
   override async resolve(
     parent: object,
     args: object,
-    ctx: IShieldContext,
+    ctx: ShieldContext,
     info: GraphQLResolveInfo,
-    options: IOptions,
-  ): Promise<IRuleResult> {
+    options: Options,
+  ): Promise<RuleResult> {
     const result = await this.evaluate(parent, args, ctx, info, options);
 
     if (result.some((res) => res !== true)) {
@@ -304,16 +304,16 @@ export class RuleChain extends LogicRule {
   override async evaluate(
     parent: object,
     args: object,
-    ctx: IShieldContext,
+    ctx: ShieldContext,
     info: GraphQLResolveInfo,
-    options: IOptions,
-  ): Promise<IRuleResult[]> {
+    options: Options,
+  ): Promise<RuleResult[]> {
     const rules = this.getRules();
 
     return iterate(rules);
 
     async function iterate([rule, ...otherRules]: ShieldRule[]): Promise<
-      IRuleResult[]
+      RuleResult[]
     > {
       if (rule === undefined) return [];
       return rule.resolve(parent, args, ctx, info, options).then((res) => {
@@ -335,10 +335,10 @@ export class RuleRace extends LogicRule {
   override async resolve(
     parent: object,
     args: object,
-    ctx: IShieldContext,
+    ctx: ShieldContext,
     info: GraphQLResolveInfo,
-    options: IOptions,
-  ): Promise<IRuleResult> {
+    options: Options,
+  ): Promise<RuleResult> {
     const result = await this.evaluate(parent, args, ctx, info, options);
 
     if (result.some((res) => res === true)) {
@@ -352,16 +352,16 @@ export class RuleRace extends LogicRule {
   override async evaluate(
     parent: object,
     args: object,
-    ctx: IShieldContext,
+    ctx: ShieldContext,
     info: GraphQLResolveInfo,
-    options: IOptions,
-  ): Promise<IRuleResult[]> {
+    options: Options,
+  ): Promise<RuleResult[]> {
     const rules = this.getRules();
 
     return iterate(rules);
 
     async function iterate([rule, ...otherRules]: ShieldRule[]): Promise<
-      IRuleResult[]
+      RuleResult[]
     > {
       if (rule === undefined) return [];
       return rule.resolve(parent, args, ctx, info, options).then((res) => {
@@ -386,10 +386,10 @@ export class RuleNot extends LogicRule {
   override async resolve(
     parent: object,
     args: object,
-    ctx: IShieldContext,
+    ctx: ShieldContext,
     info: GraphQLResolveInfo,
-    options: IOptions,
-  ): Promise<IRuleResult> {
+    options: Options,
+  ): Promise<RuleResult> {
     const [res] = await this.evaluate(parent, args, ctx, info, options);
 
     if (res instanceof Error) {
@@ -408,7 +408,7 @@ export class RuleTrue extends LogicRule {
     super([]);
   }
 
-  override async resolve(): Promise<IRuleResult> {
+  override async resolve(): Promise<RuleResult> {
     return true;
   }
 }
@@ -418,7 +418,7 @@ export class RuleFalse extends LogicRule {
     super([]);
   }
 
-  override async resolve(): Promise<IRuleResult> {
+  override async resolve(): Promise<RuleResult> {
     return false;
   }
 }

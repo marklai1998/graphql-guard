@@ -3,120 +3,120 @@ import type { IMiddlewareGenerator } from 'graphql-middleware';
 
 // Rule
 
-export type ShieldRule = IRule | ILogicRule;
+export type ShieldRule = Rule | LogicRule;
 
-export type IRule = {
+export type Rule = {
   readonly name: string;
 
-  equals(rule: IRule): boolean;
-  extractFragment(): IFragment | undefined;
+  equals(rule: Rule): boolean;
+  extractFragment(): Fragment | undefined;
   resolve(
     parent: object,
     args: object,
-    ctx: IShieldContext,
+    ctx: ShieldContext,
     info: GraphQLResolveInfo,
-    options: IOptions,
-  ): Promise<IRuleResult>;
+    options: Options,
+  ): Promise<RuleResult>;
 };
 
-export type IRuleOptions = {
-  cache: ICache;
-  fragment?: IFragment;
+export type RuleOptions = {
+  cache: Cache;
+  fragment?: Fragment;
 };
 
-export type ILogicRule = {
+export type LogicRule = {
   getRules(): ShieldRule[];
-  extractFragments(): IFragment[];
+  extractFragments(): Fragment[];
   evaluate(
     parent: object,
     args: object,
-    ctx: IShieldContext,
+    ctx: ShieldContext,
     info: GraphQLResolveInfo,
-    options: IOptions,
-  ): Promise<IRuleResult[]>;
+    options: Options,
+  ): Promise<RuleResult[]>;
   resolve(
     parent: object,
     args: object,
-    ctx: IShieldContext,
+    ctx: ShieldContext,
     info: GraphQLResolveInfo,
-    options: IOptions,
-  ): Promise<IRuleResult>;
+    options: Options,
+  ): Promise<RuleResult>;
 };
 
-export type IFragment = string;
-export type ICache = 'strict' | 'contextual' | 'no_cache' | ICacheKeyFn;
-export type ICacheKeyFn = (
+export type Fragment = string;
+export type Cache = 'strict' | 'contextual' | 'no_cache' | CacheKeyFn;
+export type CacheKeyFn = (
   parent: any,
   args: any,
   ctx: any,
   info: GraphQLResolveInfo,
 ) => string;
-export type IRuleResult = boolean | string | Error;
-export type IRuleFunction = (
+export type RuleResult = boolean | string | Error;
+export type RuleFunction = (
   parent: any,
   args: any,
   ctx: any,
   info: GraphQLResolveInfo,
-) => IRuleResult | Promise<IRuleResult>;
+) => RuleResult | Promise<RuleResult>;
 
 // Rule Constructor Options
 
-export type ICacheContructorOptions = ICache | boolean;
+export type CacheConstructorOptions = Cache | boolean;
 
-export type IRuleConstructorOptions = {
-  cache?: ICacheContructorOptions;
-  fragment?: IFragment;
+export type RuleConstructorOptions = {
+  cache?: CacheConstructorOptions;
+  fragment?: Fragment;
 };
 
 // Rules Definition Tree
 
-export type IRuleTypeMap = {
-  [key: string]: ShieldRule | IRuleFieldMap;
+export type RuleTypeMap = {
+  [key: string]: ShieldRule | RuleFieldMap;
 };
 
-export type IRuleFieldMap = {
+export type RuleFieldMap = {
   [key: string]: ShieldRule;
 };
 
-export type IRules = ShieldRule | IRuleTypeMap;
+export type Rules = ShieldRule | RuleTypeMap;
 
-export type IHashFunction = (arg: { parent: any; args: any }) => string;
+export type HashFunction = (arg: { parent: any; args: any }) => string;
 
-export type IFallbackErrorMapperType = (
+export type FallbackErrorMapperType = (
   err: unknown,
   parent: object,
   args: object,
-  ctx: IShieldContext,
+  ctx: ShieldContext,
   info: GraphQLResolveInfo,
 ) => Promise<Error> | Error;
 
-export type IFallbackErrorType = Error | IFallbackErrorMapperType;
+export type FallbackErrorType = Error | FallbackErrorMapperType;
 
 // Generator Options
 
-export type IOptions = {
+export type Options = {
   debug: boolean;
   allowExternalErrors: boolean;
   fallbackRule: ShieldRule;
-  fallbackError?: IFallbackErrorType;
-  hashFunction: IHashFunction;
+  fallbackError?: FallbackErrorType;
+  hashFunction: HashFunction;
 };
 
-export type IOptionsConstructor = {
+export type OptionsConstructor = {
   debug?: boolean;
   allowExternalErrors?: boolean;
   fallbackRule?: ShieldRule;
-  fallbackError?: string | IFallbackErrorType;
-  hashFunction?: IHashFunction;
+  fallbackError?: string | FallbackErrorType;
+  hashFunction?: HashFunction;
 };
 
 export declare function shield<TSource = any, TContext = any, TArgs = any>(
-  ruleTree: IRules,
-  options: IOptions,
+  ruleTree: Rules,
+  options: Options,
 ): IMiddlewareGenerator<TSource, TContext, TArgs>;
 
-export type IShieldContext = {
+export type ShieldContext = {
   _shield: {
-    cache: { [key: string]: IRuleResult | Promise<IRuleResult> };
+    cache: { [key: string]: RuleResult | Promise<RuleResult> };
   };
 };

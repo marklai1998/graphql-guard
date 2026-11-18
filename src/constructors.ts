@@ -11,18 +11,15 @@ import {
   RuleTrue,
 } from './rules.js';
 import type {
-  IRuleConstructorOptions,
-  IRuleFunction,
-  IShieldContext,
+  RuleConstructorOptions,
+  RuleFunction,
+  ShieldContext,
   ShieldRule,
 } from './types.js';
 
 export const rule =
-  (
-    name?: string | IRuleConstructorOptions,
-    options?: IRuleConstructorOptions,
-  ) =>
-  (func: IRuleFunction): Rule => {
+  (name?: string | RuleConstructorOptions, options?: RuleConstructorOptions) =>
+  (func: RuleFunction): Rule => {
     if (typeof name === 'object') {
       options = name;
       name = Math.random().toString();
@@ -42,7 +39,7 @@ export const rule =
 export const inputRule =
   <T>(name?: string) =>
   (
-    schema: (yup: typeof Yup, ctx: IShieldContext) => Yup.BaseSchema<T>,
+    schema: (yup: typeof Yup, ctx: ShieldContext) => Yup.BaseSchema<T>,
     options?: Parameters<Yup.BaseSchema<T>['validate']>[1],
   ) => {
     if (typeof name === 'string') {
