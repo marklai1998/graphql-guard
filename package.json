@@ -1,6 +1,17 @@
 {
   "name": "graphql-guard",
   "description": "GraphQL Server permissions as another layer of abstraction!",
+  "keywords": [
+    "graphql",
+    "graphql-shield",
+    "graphql-middleware",
+    "permissions",
+    "authorization",
+    "auth",
+    "rules",
+    "security",
+    "middleware"
+  ],
   "version": "0.0.0",
   "author": "Mark Lai <marklai1998@pm.me>",
   "license": "MIT",
