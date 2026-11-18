@@ -22,14 +22,14 @@ import {
 
 describe('rule constructor', () => {
   beforeEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   test('correctly constructs from no arguments', async () => {
     /* Mocks */
 
     const n = Math.random();
-    jest.spyOn(Math, 'random').mockReturnValue(n);
+    vi.spyOn(Math, 'random').mockReturnValue(n);
 
     /* Tests */
 
@@ -60,7 +60,7 @@ describe('rule constructor', () => {
   test('correctly constructs with options', async () => {
     /* Mocks */
     const n = Math.random();
-    jest.spyOn(Math, 'random').mockReturnValue(n);
+    vi.spyOn(Math, 'random').mockReturnValue(n);
 
     /* Tests */
 
@@ -96,7 +96,7 @@ describe('input rules constructor', () => {
 
   test('correnctly constructs an input rule', async () => {
     const n = Math.random();
-    jest.spyOn(Math, 'random').mockReturnValue(n);
+    vi.spyOn(Math, 'random').mockReturnValue(n);
 
     let schema: Yup.ObjectSchema<{}>;
 
@@ -111,7 +111,7 @@ describe('input rules constructor', () => {
 
   test('correctly contructs an input rule with validation options', async () => {
     const n = Math.random();
-    jest.spyOn(Math, 'random').mockReturnValue(n);
+    vi.spyOn(Math, 'random').mockReturnValue(n);
 
     let schema: Yup.ObjectSchema<{}>;
     const options = { abortEarly: false };

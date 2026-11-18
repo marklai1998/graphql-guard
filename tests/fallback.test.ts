@@ -567,7 +567,7 @@ describe('fallbackRule correctly applies fallback rule', () => {
 
     /* Permissions */
 
-    const fallbackRuleMock = jest.fn().mockResolvedValue(true);
+    const fallbackRuleMock = vi.fn().mockResolvedValue(true);
     const fallbackRule = rule({ cache: 'no_cache' })(fallbackRuleMock);
 
     const permissions = shield(

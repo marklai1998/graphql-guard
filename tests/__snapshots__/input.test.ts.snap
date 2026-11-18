@@ -1,7 +1,7 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`input rule schema validation works as expected 1`] = `
-Array [
+exports[`input rule > schema validation works as expected 1`] = `
+[
   [GraphQLError: It has to be an email!],
 ]
 `;
