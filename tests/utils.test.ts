@@ -1,10 +1,5 @@
 import { and, rule } from '../src/constructors.js';
-import {
-  isLogicRule,
-  isRule,
-  isRuleFieldMap,
-  isRuleFunction,
-} from '../src/utils.js';
+import { isLogicRule, isRule, isRuleFunction } from '../src/utils.js';
 
 // Objects from graphql-shield have the same class names but are not rules.
 const shieldLike = {
@@ -55,21 +50,5 @@ describe('type identifiers', () => {
     expect(isLogicRule(rule()(() => true))).toBeFalsy();
     expect(isLogicRule(false)).toBeFalsy();
     expect(isLogicRule(new shieldLike.RuleAnd())).toBeFalsy();
-  });
-
-  test('isRuleFieldMap finds rule field map.', async () => {
-    expect(
-      isRuleFieldMap({
-        foo: rule()(() => true),
-        bar: and(),
-      }),
-    ).toBeTruthy();
-
-    expect(
-      isRuleFieldMap({
-        foo: rule()(() => true),
-        bar: false,
-      }),
-    ).toBeFalsy();
   });
 });
