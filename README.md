@@ -108,7 +108,7 @@ The rule tree passed to `guard` must match your schema definition. Rules apply t
 - **a single field**: `Query: { customers: isAdmin }`
 - **every field of a type without its own rule**: use the `'*'` wildcard
 
-Rules on interfaces and unions throw a `ValidationError`. Apply them to the object types that implement or belong to them instead.
+Rules on interfaces and unions throw a `ValidationError`. Apply them to the object types that implement or belong to them instead. Rules on introspection types (`__Schema`, `__Type`, ...) also throw, because Guard never wraps them; disable introspection in your server to restrict it.
 
 ```ts
 const guardedSchema = guard(
@@ -155,7 +155,7 @@ const guardedSchema = guard(schema, {
 });
 ```
 
-Every rule must have a unique name. Names are generated automatically, but if you build rules with a factory function that takes external data, give each rule its own name:
+Every rule must have a unique name. Names are generated automatically (`anonymous-rule-1`, `anonymous-rule-2`, ...), but if you build rules with a factory function that takes external data, give each rule its own name:
 
 ```ts
 const hasRole = (role) =>
@@ -163,6 +163,21 @@ const hasRole = (role) =>
     async (parent, args, ctx) => ctx.user.role === role,
   );
 ```
+
+#### TypeScript
+
+`rule` takes optional type parameters for the context, arguments and parent, in that order. They type the rule function and a `cache` key function:
+
+```ts
+type Context = { user: { id: string; role: string } };
+type Post = { authorId: string };
+
+const canEditPost = rule<Context, { postId: string }, Post>({
+  cache: (parent, args) => args.postId,
+})(async (parent, args, ctx) => ctx.user.id === parent.authorId);
+```
+
+Without them, `parent`, `args` and `ctx` are `any`. `inputRule<Context>()` types `ctx` the same way. The types used by the API (`Options`, `GuardRule`, `RuleFunction`, `GuardContext`, `FallbackErrorMapperType`, ...) are exported from `graphql-guard`.
 
 ### Caching
 
@@ -295,7 +310,7 @@ One run of an operation. The cache is keyed by the context object and the run, s
 
 ### `guard`
 
-Returns a new schema with the rules from `ruleTree` applied to every field. The original schema is not changed. Throws a `ValidationError` when the rule tree doesn't match the schema.
+Returns a new schema with the rules from `ruleTree` applied to every field. The original schema is not changed. Throws a `ValidationError` when the rule tree or `fallbackRule` isn't valid or doesn't match the schema. `ValidationError` is exported, so you can check for it with `instanceof`.
 
 ```ts
 import { guard } from 'graphql-guard';
@@ -317,17 +332,18 @@ const guardedSchema = guard(schema, ruleTree, options);
 ### `rule`
 
 ```ts
-rule(
+rule<Context = any, Args = any, Parent = any>(
   name?: string,
   options?: {
     cache?:
       | 'no_cache'
       | 'contextual'
       | 'strict'
-      | ((parent, args, ctx, info) => string);
+      | ((parent: Parent, args: Args, ctx: Context, info) => string);
   },
 )(
-  (parent, args, ctx, info) => boolean | string | Error | Promise<boolean | string | Error>,
+  (parent: Parent, args: Args, ctx: Context, info) =>
+    boolean | string | Error | Promise<boolean | string | Error>,
 )
 ```
 

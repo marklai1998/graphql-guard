@@ -16,7 +16,7 @@ export const guard = (
   ruleTree: Rules,
   options: Options = {},
 ): GraphQLSchema => {
-  validateRuleTree(ruleTree);
+  validateRuleTree(ruleTree, options.fallbackRule);
 
   return applyRulesToSchema(schema, ruleTree, {
     debug: options.debug ?? false,

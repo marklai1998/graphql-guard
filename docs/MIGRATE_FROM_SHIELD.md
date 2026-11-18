@@ -83,6 +83,10 @@ The `I` prefix is removed from type names.
 
 - `IRule` => `Rule`
 - `IRules` => `Rules`
+- `IOptions` => `Options`
+- `ShieldRule` => `GuardRule`
+- `IRuleFunction` => `RuleFunction`
+- `IFallbackErrorMapperType` => `FallbackErrorMapperType`
 
 Before
 
@@ -152,7 +156,7 @@ A plain `Error` returned from a rule or a custom `fallbackError` is still passed
 
 ## Only graphql-guard Rules Are Accepted
 
-Every value in the rule tree must be a rule created with graphql-guard (`rule`, `inputRule`, `allow`, `deny` or a logic rule). Anything else throws a `ValidationError` that names the field, for example `It seems like Query.users is not a graphql-guard rule.`
+Every value in the rule tree, and `fallbackRule`, must be a rule created with graphql-guard (`rule`, `inputRule`, `allow`, `deny` or a logic rule). Anything else throws a `ValidationError` that names the field, for example `It seems like Query.users is not a graphql-guard rule.`
 
 - Rules created with graphql-shield are not accepted. Recreate them with graphql-guard. Mixing the two never worked: graphql-shield rules with a contextual or strict cache always denied the request, because their cache lives on `ctx._shield`
 - `graphql-shield` replaced the whole type with the fallback rule when one value wasn't a rule, which let every field of that type through by default. GraphQL Guard throws instead

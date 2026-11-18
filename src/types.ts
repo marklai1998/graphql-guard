@@ -39,27 +39,43 @@ export type LogicRule = {
   ): Promise<RuleResult>;
 };
 
-export type Cache = 'strict' | 'contextual' | 'no_cache' | CacheKeyFn;
-export type CacheKeyFn = (
-  parent: any,
-  args: any,
-  ctx: any,
+export type Cache<TContext = GuardContext, TArgs = any, TParent = any> =
+  | 'strict'
+  | 'contextual'
+  | 'no_cache'
+  | CacheKeyFn<TContext, TArgs, TParent>;
+export type CacheKeyFn<TContext = GuardContext, TArgs = any, TParent = any> = (
+  parent: TParent,
+  args: TArgs,
+  ctx: TContext,
   info: GraphQLResolveInfo,
 ) => string;
 export type RuleResult = boolean | string | Error;
-export type RuleFunction = (
-  parent: any,
-  args: any,
-  ctx: any,
+export type RuleFunction<
+  TContext = GuardContext,
+  TArgs = any,
+  TParent = any,
+> = (
+  parent: TParent,
+  args: TArgs,
+  ctx: TContext,
   info: GraphQLResolveInfo,
 ) => RuleResult | Promise<RuleResult>;
 
 // Rule Constructor Options
 
-export type CacheConstructorOptions = Cache | boolean;
+export type CacheConstructorOptions<
+  TContext = GuardContext,
+  TArgs = any,
+  TParent = any,
+> = Cache<TContext, TArgs, TParent> | boolean;
 
-export type RuleConstructorOptions = {
-  cache?: CacheConstructorOptions;
+export type RuleConstructorOptions<
+  TContext = GuardContext,
+  TArgs = any,
+  TParent = any,
+> = {
+  cache?: CacheConstructorOptions<TContext, TArgs, TParent>;
 };
 
 // Rules Definition Tree

@@ -21,21 +21,22 @@ import {
 } from '../src/rules.js';
 
 describe('rule constructor', () => {
-  beforeEach(() => {
-    vi.restoreAllMocks();
+  test('correctly constructs from no arguments', async () => {
+    const func = () => true;
+    const result = rule()(func);
+
+    expect(result.name).toMatch(/^anonymous-rule-\d+$/);
+    expect(result).toEqual(new Rule(result.name, func, {}));
   });
 
-  test('correctly constructs from no arguments', async () => {
-    /* Mocks */
+  test('gives every anonymous rule a distinct, sequential name', async () => {
+    const a = rule()(() => true);
+    const b = rule()(() => true);
+    const c = rule({ cache: 'strict' })(() => true);
 
-    const n = Math.random();
-    vi.spyOn(Math, 'random').mockReturnValue(n);
-
-    /* Tests */
-
-    const func = () => true;
-
-    expect(rule()(func)).toEqual(new Rule(n.toString(), func, {}));
+    const n = Number(a.name.split('-').at(-1));
+    expect(b.name).toBe(`anonymous-rule-${n + 1}`);
+    expect(c.name).toBe(`anonymous-rule-${n + 2}`);
   });
 
   test('correctly constructs with name and options', async () => {
@@ -55,20 +56,12 @@ describe('rule constructor', () => {
   });
 
   test('correctly constructs with options', async () => {
-    /* Mocks */
-    const n = Math.random();
-    vi.spyOn(Math, 'random').mockReturnValue(n);
-
-    /* Tests */
-
     const func = () => true;
+    const result = rule({ cache: 'contextual' })(func);
 
-    expect(
-      rule({
-        cache: 'contextual',
-      })(func),
-    ).toEqual(
-      new Rule(n.toString(), func, {
+    expect(result.name).toMatch(/^anonymous-rule-\d+$/);
+    expect(result).toEqual(
+      new Rule(result.name, func, {
         cache: 'contextual',
       }),
     );
@@ -90,24 +83,19 @@ describe('input rules constructor', () => {
   });
 
   test('correnctly constructs an input rule', async () => {
-    const n = Math.random();
-    vi.spyOn(Math, 'random').mockReturnValue(n);
-
     let schema: z.ZodObject;
 
     const rule = inputRule()((z) => {
       schema = z.object({});
       return schema;
     });
+    expect(rule.name).toMatch(/^anonymous-input-rule-\d+$/);
     expect(JSON.stringify(rule)).toEqual(
-      JSON.stringify(new InputRule(n.toString(), () => schema)),
+      JSON.stringify(new InputRule(rule.name, () => schema)),
     );
   });
 
   test('correctly contructs an input rule with validation options', async () => {
-    const n = Math.random();
-    vi.spyOn(Math, 'random').mockReturnValue(n);
-
     let schema: z.ZodObject;
     const options = { reportInput: true };
 
@@ -115,9 +103,15 @@ describe('input rules constructor', () => {
       schema = z.object({});
       return schema;
     }, options);
+    expect(rule.name).toMatch(/^anonymous-input-rule-\d+$/);
     expect(JSON.stringify(rule)).toEqual(
-      JSON.stringify(new InputRule(n.toString(), () => schema, options)),
+      JSON.stringify(new InputRule(rule.name, () => schema, options)),
     );
+  });
+
+  test('infers the schema type', async () => {
+    const r = inputRule()((z) => z.object({ email: z.string() }));
+    expectTypeOf(r).toEqualTypeOf<InputRule<{ email: string }>>();
   });
 });
 

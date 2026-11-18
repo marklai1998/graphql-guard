@@ -19,3 +19,14 @@ export const createGuardError = (
         undefined,
         { code },
       );
+
+/**
+ * Thrown by `guard` when the rule tree or its options are invalid, for example
+ * a rule on a type that isn't in the schema or two rules sharing a name.
+ */
+export class ValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ValidationError';
+  }
+}

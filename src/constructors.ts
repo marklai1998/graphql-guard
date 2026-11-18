@@ -12,42 +12,57 @@ import {
   RuleTrue,
 } from './rules.js';
 import type {
+  CacheConstructorOptions,
   GuardContext,
   GuardRule,
   RuleConstructorOptions,
   RuleFunction,
 } from './types.js';
 
+// Anonymous rules get readable, sequential names. The counter lives on
+// globalThis under a Symbol.for key so copies of graphql-guard loaded side by
+// side (for example its ESM and CommonJS builds) never hand out the same name.
+const counterKey = Symbol.for('graphql-guard/anonymous-rule-counter');
+const globalCounter = globalThis as { [counterKey]?: number };
+
+const anonymousName = (kind: string): string => {
+  const n = (globalCounter[counterKey] ?? 0) + 1;
+  globalCounter[counterKey] = n;
+  return `anonymous-${kind}-${n}`;
+};
+
 export const rule =
-  (name?: string | RuleConstructorOptions, options?: RuleConstructorOptions) =>
-  (func: RuleFunction): Rule => {
+  <TContext = GuardContext, TArgs = any, TParent = any>(
+    name?: string | RuleConstructorOptions<TContext, TArgs, TParent>,
+    options?: RuleConstructorOptions<TContext, TArgs, TParent>,
+  ) =>
+  (func: RuleFunction<TContext, TArgs, TParent>): Rule => {
     if (typeof name === 'object') {
       options = name;
-      name = Math.random().toString();
+      name = anonymousName('rule');
     } else if (typeof name === 'string') {
       options = options || {};
     } else {
-      name = Math.random().toString();
+      name = anonymousName('rule');
       options = {};
     }
 
-    return new Rule(name, func, {
-      cache: options.cache,
+    return new Rule(name, func as RuleFunction, {
+      cache: options.cache as CacheConstructorOptions,
     });
   };
 
 export const inputRule =
-  <T>(name?: string) =>
-  (
-    schema: (zod: typeof z, ctx: GuardContext) => z.ZodType<T>,
+  <TContext = GuardContext>(name?: string) =>
+  <T>(
+    schema: (zod: typeof z, ctx: TContext) => z.ZodType<T>,
     options?: Parameters<z.ZodType<T>['safeParseAsync']>[1],
-  ) => {
-    if (typeof name === 'string') {
-      return new InputRule(name, schema, options);
-    } else {
-      return new InputRule(Math.random().toString(), schema, options);
-    }
-  };
+  ): InputRule<T> =>
+    new InputRule<T>(
+      typeof name === 'string' ? name : anonymousName('input-rule'),
+      schema,
+      options,
+    );
 
 export const and = (...rules: GuardRule[]): RuleAnd => {
   return new RuleAnd(rules);
