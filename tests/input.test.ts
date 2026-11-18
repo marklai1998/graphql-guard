@@ -97,9 +97,11 @@ describe('input rule errors', () => {
     });
 
     expect(res.data).toEqual({ signup: null });
-    expect(res.errors?.[0].message).toBe('It has to be an email!');
+    expect(res.errors).toHaveLength(1);
+    const [error] = res.errors ?? [];
+    expect(error.message).toBe('It has to be an email!');
 
-    const cause = (res.errors?.[0].originalError as Error).cause as {
+    const cause = (error.originalError as Error).cause as {
       issues: { message: string }[];
     };
     expect(cause.issues.map((issue) => issue.message)).toEqual([
