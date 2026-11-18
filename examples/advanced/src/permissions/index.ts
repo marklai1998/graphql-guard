@@ -1,7 +1,7 @@
-import { shield } from 'graphql-shield';
-import * as rules from './rules';
+import type { Rules } from 'graphql-guard';
+import * as rules from './rules.js';
 
-export const permissions = shield({
+export const permissions: Rules = {
   Query: {
     viewer: rules.isCustomer,
   },
@@ -14,4 +14,4 @@ export const permissions = shield({
   Product: {
     price: rules.isAuthenticated,
   },
-});
+};

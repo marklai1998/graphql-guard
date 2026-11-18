@@ -1,15 +1,10 @@
-import { prismaObjectType } from 'nexus-prisma';
+import { objectType } from 'nexus';
+import { me, users } from '../lib/resolvers/queries/index.js';
 
-import { me } from '../lib/resolvers/queries';
-
-export const Query = prismaObjectType({
+export const Query = objectType({
   name: 'Query',
   definition(t) {
-    t.prismaFields(['*']);
-    t.field('me', {
-      nullable: true,
-      resolve: me,
-      type: 'User',
-    });
+    t.field('me', { type: 'User', resolve: me });
+    t.nonNull.list.nonNull.field('users', { type: 'User', resolve: users });
   },
 });

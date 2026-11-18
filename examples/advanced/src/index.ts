@@ -1,19 +1,27 @@
-import { GraphQLServer } from 'graphql-yoga';
-import { Prisma } from './generated/prisma';
-import { permissions } from './permissions';
-import { resolvers } from './resolvers';
+import { readFileSync } from 'node:fs';
+import { createServer } from 'node:http';
+import { guard } from 'graphql-guard';
+import { createSchema, createYoga } from 'graphql-yoga';
+import { db } from './db.js';
+import { permissions } from './permissions/index.js';
+import { resolvers } from './resolvers/index.js';
+import { type Context, getUserEmail } from './utils.js';
 
-const server = new GraphQLServer({
-  typeDefs: './src/schema.graphql',
-  resolvers,
-  middlewares: [permissions],
-  context: (req) => ({
-    ...req,
-    db: new Prisma({
-      endpoint: process.env.PRISMA_ENDPOINT,
-      debug: false,
-      secret: process.env.PRISMA_SECRET,
-    }),
-  }),
+const typeDefs = readFileSync(
+  new URL('./schema.graphql', import.meta.url),
+  'utf8',
+);
+
+// Pass resolver errors such as an unknown product through to the client.
+const schema = guard(createSchema({ typeDefs, resolvers }), permissions, {
+  allowExternalErrors: true,
 });
-server.start(() => console.log(`Server is running on http://localhost:4000`));
+
+const yoga = createYoga({
+  schema,
+  context: ({ request }): Context => ({ db, email: getUserEmail(request) }),
+});
+
+createServer(yoga).listen(4000, () => {
+  console.log('Server is running on http://localhost:4000/graphql');
+});

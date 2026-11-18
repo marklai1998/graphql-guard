@@ -1,26 +1,21 @@
-import { or, rule } from 'graphql-shield';
-import { type Context, getUserEmail } from '../utils';
+import { or, rule } from 'graphql-guard';
+import type { Context } from '../utils.js';
 
-// Uncomment the comments below to see the number of executions of each rule.
-// Magic, right!
-
-// To see the effect with no cache, set { cache: false } in isCustomer rule.
+// Uncomment the console.log calls below to see how many times each rule runs.
+// With `cache: 'contextual'`, each rule runs at most once per request.
+// To see the effect with no cache, set { cache: false } in the isCustomer rule.
 
 export const isGrocer = rule({ cache: 'contextual' })(
-  async (parent, args, ctx: Context, info) => {
-    // console.log('SHIELD: IsGrocer?')
-
-    const email = getUserEmail(ctx);
-    return ctx.db.exists.Grocer({ email });
+  async (_parent, _args, ctx: Context) => {
+    // console.log('GUARD: IsGrocer?');
+    return ctx.email !== null && ctx.db.isGrocer(ctx.email);
   },
 );
 
 export const isCustomer = rule({ cache: 'contextual' })(
-  async (parent, args, ctx: Context, info) => {
-    // console.log('SHIELD: IsCustomer?')
-
-    const email = getUserEmail(ctx);
-    return ctx.db.exists.Customer({ email });
+  async (_parent, _args, ctx: Context) => {
+    // console.log('GUARD: IsCustomer?');
+    return ctx.email !== null && ctx.db.isCustomer(ctx.email);
   },
 );
 

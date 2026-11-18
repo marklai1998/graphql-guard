@@ -380,13 +380,9 @@ Combine rules into more complex requirements.
 ## 🧪 Examples
 
 - [Basic](examples/basic) - a minimal server with a few rules.
-- [Advanced](examples/advanced) - a fuller app powered by Prisma.
-- [Apollo Server Lambda](examples/with-apollo-server-lambda) - using GraphQL Guard with `apollo-server-lambda`.
-- [GraphQL Nexus](examples/with-graphql-nexus) - using GraphQL Guard with Nexus and Prisma.
-- [GraphQL Middleware Forward Binding](examples/with-graphql-middleware-forward-binding) - forwarding to a remote schema.
-
-> [!NOTE]
-> The examples still install and import `graphql-shield`, from before the fork.
+- [Advanced](examples/advanced) - a small groceries shop with cached rules and an in-memory store.
+- [Apollo Server Lambda](examples/with-apollo-server-lambda) - using GraphQL Guard with Apollo Server on AWS Lambda.
+- [GraphQL Nexus](examples/with-graphql-nexus) - using GraphQL Guard with a Nexus schema and JWT authentication.
 
 ## 🤝 Contributing
 

@@ -1,14 +1,21 @@
+import { ApolloServer } from '@apollo/server';
+import {
+  handlers,
+  startServerAndCreateLambdaHandler,
+} from '@as-integrations/aws-lambda';
 import { makeExecutableSchema } from '@graphql-tools/schema';
-import { ApolloServer, gql } from 'apollo-server-lambda';
-import { applyMiddleware } from 'graphql-middleware';
-import { rule, shield } from 'graphql-shield';
+import { guard, rule } from 'graphql-guard';
 
-const isAuthenticated = rule()(async (parent, args, ctx, info) => {
-  return ctx.user;
-});
+type Context = {
+  user: string | null;
+};
+
+const isAuthenticated = rule()(
+  async (_parent, _args, ctx: Context) => ctx.user !== null,
+);
 
 // Construct a schema, using GraphQL schema language.
-const typeDefs = gql`
+const typeDefs = /* GraphQL */ `
   type Query {
     hello: String
   }
@@ -16,30 +23,26 @@ const typeDefs = gql`
 
 const resolvers = {
   Query: {
-    hello: () => 'Hello world!',
+    hello: (_parent: unknown, _args: unknown, ctx: Context) =>
+      `Hello ${ctx.user}!`,
   },
 };
 
-const permissions = shield({
+const schema = guard(makeExecutableSchema({ typeDefs, resolvers }), {
   Query: {
     hello: isAuthenticated,
   },
 });
 
-const schema = applyMiddleware(
-  makeExecutableSchema({
-    typeDefs,
-    resolvers,
-  }),
-  permissions,
-);
+const server = new ApolloServer<Context>({ schema });
 
-const server = new ApolloServer({
-  schema,
-  cors: {
-    origin: '*',
-    methods: 'GET,HEAD,POST',
+export const graphql = startServerAndCreateLambdaHandler(
+  server,
+  handlers.createAPIGatewayProxyEventV2RequestHandler(),
+  {
+    // For demonstration only: the Authorization header is just a user name.
+    context: async ({ event }) => ({
+      user: event.headers.authorization ?? null,
+    }),
   },
-});
-
-export const graphql = server.createHandler();
+);

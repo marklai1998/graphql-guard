@@ -2,16 +2,19 @@
   "name": "basic",
   "private": true,
   "version": "1.0.0",
+  "type": "module",
   "main": "index.ts",
   "license": "MIT",
   "scripts": {
     "start": "tsx index.ts"
   },
   "dependencies": {
-    "graphql-shield": "7.5.0",
-    "graphql-yoga": "1.18.3"
+    "graphql": "^16.15.0",
+    "graphql-guard": "file:../..",
+    "graphql-yoga": "^6.1.0"
   },
   "devDependencies": {
+    "@types/node": "^22.20.5",
     "tsx": "^4.23.15",
     "typescript": "^5.9.3"
   }
