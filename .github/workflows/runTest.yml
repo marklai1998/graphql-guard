@@ -36,7 +36,12 @@ jobs:
         run: pnpm tsc
 
   run-test:
+    name: run-test (graphql ${{ matrix.graphql }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        graphql: ["16", "17"]
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -54,6 +59,10 @@ jobs:
 
       - name: Install dependencies
         run: pnpm i --frozen-lockfile
+
+      - name: Use graphql ${{ matrix.graphql }}
+        if: matrix.graphql != '16'
+        run: pnpm add -D graphql@${{ matrix.graphql }}
 
       - name: Test Code
         run: pnpm test
