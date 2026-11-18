@@ -1,7 +1,7 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { graphql } from 'graphql';
-import { applyMiddleware } from 'graphql-middleware';
-import { guard, inputRule } from '../src';
+import { inputRule } from '../src';
+import { applyGuard } from './helpers';
 
 describe('input rule', () => {
   test('schema validation works as expected', async () => {
@@ -27,7 +27,8 @@ describe('input rule', () => {
     const schema = makeExecutableSchema({ typeDefs, resolvers });
 
     // Permissions
-    const permissions = guard({
+
+    const schemaWithPermissions = applyGuard(schema, {
       Mutation: {
         login: inputRule()((z) =>
           z.object({
@@ -36,8 +37,6 @@ describe('input rule', () => {
         ),
       },
     });
-
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
 
     /* Execution */
 
@@ -80,19 +79,17 @@ describe('input rule errors', () => {
       },
     });
 
-    const permissions = guard({
-      Mutation: {
-        signup: inputRule()((z) =>
-          z.object({
-            email: z.email('It has to be an email!'),
-            age: z.number().min(18, 'Must be an adult!'),
-          }),
-        ),
-      },
-    });
-
     const res = await graphql({
-      schema: applyMiddleware(schema, permissions),
+      schema: applyGuard(schema, {
+        Mutation: {
+          signup: inputRule()((z) =>
+            z.object({
+              email: z.email('It has to be an email!'),
+              age: z.number().min(18, 'Must be an adult!'),
+            }),
+          ),
+        },
+      }),
       source: 'mutation { signup(email: "notemail", age: 3) }',
     });
 

@@ -1,4 +1,3 @@
-import { testLogicRule, testSimpleRule } from 'graphql-shield-rules';
 import { and, rule } from '../src/constructors';
 import {
   isLogicRule,
@@ -6,6 +5,15 @@ import {
   isRuleFieldMap,
   isRuleFunction,
 } from '../src/utils';
+
+// Rules created by another copy of the library (e.g. a duplicate install)
+// fail `instanceof`, so they are recognised by class name instead.
+const foreignRules = {
+  Rule: class Rule {},
+  RuleAnd: class RuleAnd {},
+};
+const testSimpleRule = new foreignRules.Rule();
+const testLogicRule = new foreignRules.RuleAnd();
 
 describe('type identifiers', () => {
   test('isRuleFunction finds rule function.', async () => {

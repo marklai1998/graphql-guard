@@ -1,7 +1,7 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { graphql } from 'graphql';
-import { applyMiddleware } from 'graphql-middleware';
-import { guard, rule } from '../src';
+import { deny, rule } from '../src';
+import { applyGuard } from './helpers';
 
 describe('generates correct middleware', () => {
   test('correctly applies schema rule to schema', async () => {
@@ -32,9 +32,11 @@ describe('generates correct middleware', () => {
     /* Permissions */
 
     const allowMock = vi.fn().mockResolvedValue(true);
-    const permissions = guard(rule({ cache: 'no_cache' })(allowMock));
 
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
+    const schemaWithPermissions = applyGuard(
+      schema,
+      rule({ cache: 'no_cache' })(allowMock),
+    );
 
     /* Execution */
     const query = `
@@ -92,11 +94,10 @@ describe('generates correct middleware', () => {
     /* Permissions */
 
     const allowMock = vi.fn().mockResolvedValue(true);
-    const permissions = guard({
+
+    const schemaWithPermissions = applyGuard(schema, {
       Query: rule({ cache: 'no_cache' })(allowMock),
     });
-
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
 
     /* Execution */
     const query = `
@@ -154,11 +155,10 @@ describe('generates correct middleware', () => {
     /* Permissions */
 
     const allowMock = vi.fn().mockResolvedValue(true);
-    const permissions = guard({
+
+    const schemaWithPermissions = applyGuard(schema, {
       Query: { a: rule({ cache: 'no_cache' })(allowMock) },
     });
-
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
 
     /* Execution */
     const query = `
@@ -222,7 +222,7 @@ describe('generates correct middleware', () => {
     const defaultQueryMock = vi.fn().mockResolvedValue(true);
     const defaultTypeMock = vi.fn().mockResolvedValue(true);
 
-    const permissions = guard({
+    const schemaWithPermissions = applyGuard(schema, {
       Query: {
         a: rule({ cache: 'no_cache' })(allowMock),
         type: rule({ cache: 'no_cache' })(vi.fn().mockResolvedValue(true)),
@@ -232,8 +232,6 @@ describe('generates correct middleware', () => {
         '*': rule({ cache: 'no_cache' })(defaultTypeMock),
       },
     });
-
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
 
     /* Execution */
     const query = `
@@ -303,7 +301,7 @@ describe('generates correct middleware', () => {
     const defaultQueryMock = vi.fn().mockResolvedValue(true);
     const defaultTypeMock = vi.fn().mockResolvedValue(true);
 
-    const permissions = guard({
+    const rules = {
       Query: {
         a: rule({ cache: 'no_cache' })(allowMock),
         type: rule({ cache: 'no_cache' })(vi.fn().mockResolvedValue(true)),
@@ -312,13 +310,13 @@ describe('generates correct middleware', () => {
       Type: {
         '*': rule({ cache: 'no_cache' })(defaultTypeMock),
       },
-    });
+    };
 
     /* First usage */
-    applyMiddleware(schema, permissions);
+    applyGuard(schema, rules);
 
     /* Second usage */
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
+    const schemaWithPermissions = applyGuard(schema, rules);
 
     /* Execution */
     const query = `
@@ -352,5 +350,24 @@ describe('generates correct middleware', () => {
     expect(allowMock).toBeCalledTimes(1);
     expect(defaultQueryMock).toBeCalledTimes(1);
     expect(defaultTypeMock).toBeCalledTimes(2);
+  });
+});
+
+describe('schema', () => {
+  test('returns a new schema and leaves the original unguarded', async () => {
+    const schema = makeExecutableSchema({
+      typeDefs: 'type Query { secret: String }',
+      resolvers: { Query: { secret: () => 'secret' } },
+    });
+
+    const guarded = applyGuard(schema, { Query: { secret: deny } });
+
+    expect(guarded).not.toBe(schema);
+    expect(
+      await graphql({ schema: guarded, source: '{ secret }' }),
+    ).toMatchObject({ data: { secret: null } });
+    expect(await graphql({ schema, source: '{ secret }' })).toEqual({
+      data: { secret: 'secret' },
+    });
   });
 });

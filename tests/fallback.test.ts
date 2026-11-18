@@ -1,7 +1,7 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { graphql } from 'graphql';
-import { applyMiddleware } from 'graphql-middleware';
-import { allow, defaultFallbackError, deny, guard, rule } from '../src/index';
+import { allow, defaultFallbackError, deny, rule } from '../src/index';
+import { applyGuard } from './helpers';
 
 describe('fallbackError correctly handles errors', () => {
   test('error in resolver returns fallback error.', async () => {
@@ -29,7 +29,8 @@ describe('fallbackError correctly handles errors', () => {
 
     const fallbackError = new Error('fallback');
 
-    const permissions = guard(
+    const schemaWithPermissions = applyGuard(
+      schema,
       {
         Query: allow,
       },
@@ -37,8 +38,6 @@ describe('fallbackError correctly handles errors', () => {
         fallbackError,
       },
     );
-
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
 
     /* Execution */
 
@@ -77,7 +76,8 @@ describe('fallbackError correctly handles errors', () => {
       throw new Error();
     });
 
-    const permissions = guard(
+    const schemaWithPermissions = applyGuard(
+      schema,
       {
         Query: allow,
       },
@@ -85,8 +85,6 @@ describe('fallbackError correctly handles errors', () => {
         fallbackError,
       },
     );
-
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
 
     /* Execution */
 
@@ -128,7 +126,9 @@ describe('fallbackError correctly handles errors', () => {
     /* Permissions */
 
     const fallbackMessage = Math.random().toString();
-    const permissions = guard(
+
+    const schemaWithPermissions = applyGuard(
+      schema,
       {
         Query: allow,
       },
@@ -136,8 +136,6 @@ describe('fallbackError correctly handles errors', () => {
         fallbackError: fallbackMessage,
       },
     );
-
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
 
     /* Execution */
     const query = `
@@ -175,7 +173,8 @@ describe('fallbackError correctly handles errors', () => {
       throw new Error();
     });
 
-    const permissions = guard(
+    const schemaWithPermissions = applyGuard(
+      schema,
       {
         Query: allow,
       },
@@ -183,8 +182,6 @@ describe('fallbackError correctly handles errors', () => {
         fallbackError,
       },
     );
-
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
 
     /* Execution */
 
@@ -229,7 +226,8 @@ describe('fallbackError correctly handles errors', () => {
 
     const fallbackError = () => new Error('fallback');
 
-    const permissions = guard(
+    const schemaWithPermissions = applyGuard(
+      schema,
       {
         Query: allow,
       },
@@ -237,8 +235,6 @@ describe('fallbackError correctly handles errors', () => {
         fallbackError,
       },
     );
-
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
 
     /* Execution */
 
@@ -281,7 +277,8 @@ describe('external errors can be controled correctly', () => {
 
     /* Permissions */
 
-    const permissions = guard(
+    const schemaWithPermissions = applyGuard(
+      schema,
       {
         Query: allow,
       },
@@ -289,8 +286,6 @@ describe('external errors can be controled correctly', () => {
         allowExternalErrors: true,
       },
     );
-
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
 
     /* Execution */
 
@@ -326,7 +321,8 @@ describe('external errors can be controled correctly', () => {
       throw new Error('external');
     });
 
-    const permissions = guard(
+    const schemaWithPermissions = applyGuard(
+      schema,
       {
         Query: allow,
       },
@@ -334,8 +330,6 @@ describe('external errors can be controled correctly', () => {
         allowExternalErrors: true,
       },
     );
-
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
 
     /* Execution */
 
@@ -373,7 +367,8 @@ describe('debug mode works as expected', () => {
       throw new Error('debug');
     });
 
-    const permissions = guard(
+    const schemaWithPermissions = applyGuard(
+      schema,
       {
         Query: allow,
       },
@@ -381,8 +376,6 @@ describe('debug mode works as expected', () => {
         debug: true,
       },
     );
-
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
 
     /* Execution */
 
@@ -423,7 +416,8 @@ describe('debug mode works as expected', () => {
 
     /* Permissions */
 
-    const permissions = guard(
+    const schemaWithPermissions = applyGuard(
+      schema,
       {
         Query: allow,
       },
@@ -431,8 +425,6 @@ describe('debug mode works as expected', () => {
         debug: true,
       },
     );
-
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
 
     /* Execution */
 
@@ -468,13 +460,12 @@ describe('custom errors work as expected', () => {
     /* Permissions */
 
     const error = new Error(`${Math.random()}`);
-    const permissions = guard({
+
+    const schemaWithPermissions = applyGuard(schema, {
       Query: rule()(() => {
         return error;
       }),
     });
-
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
 
     /* Execution */
     const query = `
@@ -508,13 +499,11 @@ describe('custom errors work as expected', () => {
 
     const error = `${Math.random()}`;
 
-    const permissions = guard({
+    const schemaWithPermissions = applyGuard(schema, {
       Query: rule()(() => {
         return error;
       }),
     });
-
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
 
     /* Execution */
     const query = `
@@ -570,7 +559,8 @@ describe('fallbackRule correctly applies fallback rule', () => {
     const fallbackRuleMock = vi.fn().mockResolvedValue(true);
     const fallbackRule = rule({ cache: 'no_cache' })(fallbackRuleMock);
 
-    const permissions = guard(
+    const schemaWithPermissions = applyGuard(
+      schema,
       {
         Query: {
           a: allow,
@@ -581,8 +571,6 @@ describe('fallbackRule correctly applies fallback rule', () => {
         fallbackRule: fallbackRule,
       },
     );
-
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
 
     /* Execution */
 
@@ -634,10 +622,8 @@ describe('defaultFallbackError', () => {
   });
 
   test('is the error returned when no fallbackError is set', async () => {
-    const permissions = guard({ Query: { open: allow, closed: deny } });
-
     const res = await graphql({
-      schema: applyMiddleware(schema, permissions),
+      schema: applyGuard(schema, { Query: { open: allow, closed: deny } }),
       source: '{ open closed }',
     });
 
@@ -649,16 +635,15 @@ describe('defaultFallbackError', () => {
   });
 
   test('can be reused in a custom fallbackError', async () => {
-    const permissions = guard(
-      { Query: { open: allow, closed: deny } },
-      {
-        fallbackError: async (thrown) =>
-          thrown instanceof Error ? thrown : defaultFallbackError,
-      },
-    );
-
     const res = await graphql({
-      schema: applyMiddleware(schema, permissions),
+      schema: applyGuard(
+        schema,
+        { Query: { open: allow, closed: deny } },
+        {
+          fallbackError: async (thrown) =>
+            thrown instanceof Error ? thrown : defaultFallbackError,
+        },
+      ),
       source: '{ open closed }',
     });
 
@@ -677,7 +662,7 @@ describe('options', () => {
     const options = { fallbackError: 'Denied!' };
 
     const res = await graphql({
-      schema: applyMiddleware(schema, guard({ Query: deny }, options)),
+      schema: applyGuard(schema, { Query: deny }, options),
       source: '{ closed }',
     });
 

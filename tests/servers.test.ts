@@ -1,10 +1,10 @@
 import { ApolloServer } from '@apollo/server';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import type { GraphQLSchema } from 'graphql';
-import { applyMiddleware } from 'graphql-middleware';
 import { createYoga } from 'graphql-yoga';
 
-import { allow, and, deny, guard, inputRule, or, rule } from '../src';
+import { allow, and, deny, inputRule, or, rule } from '../src';
+import { applyGuard } from './helpers';
 
 /* Users and context */
 
@@ -74,30 +74,28 @@ const isSelf = rule({ cache: 'strict' })(
 );
 
 const createGuardedSchema = (): GraphQLSchema =>
-  applyMiddleware(
+  applyGuard(
     makeExecutableSchema({ typeDefs, resolvers }),
-    guard(
-      {
-        Query: {
-          publicInfo: allow,
-          me: isAuthenticated,
-          team: isAuthenticated,
-          adminOnly: and(isAuthenticated, isAdmin),
-          broken: allow,
-        },
-        User: {
-          id: allow,
-          name: allow,
-          email: or(isAdmin, isSelf),
-        },
-        Mutation: {
-          signup: inputRule()((z) =>
-            z.object({ email: z.email('It has to be an email!') }),
-          ),
-        },
+    {
+      Query: {
+        publicInfo: allow,
+        me: isAuthenticated,
+        team: isAuthenticated,
+        adminOnly: and(isAuthenticated, isAdmin),
+        broken: allow,
       },
-      { fallbackRule: deny },
-    ),
+      User: {
+        id: allow,
+        name: allow,
+        email: or(isAdmin, isSelf),
+      },
+      Mutation: {
+        signup: inputRule()((z) =>
+          z.object({ email: z.email('It has to be an email!') }),
+        ),
+      },
+    },
+    { fallbackRule: deny },
   );
 
 /* Servers */

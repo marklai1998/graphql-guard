@@ -1,10 +1,10 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { type GraphQLResolveInfo, graphql } from 'graphql';
-import { applyMiddleware } from 'graphql-middleware';
 
-import { allow, and, deny, guard, not, or, rule } from '../src';
+import { allow, and, deny, not, or, rule } from '../src';
 import { chain, race } from '../src/constructors';
 import { LogicRule } from '../src/rules';
+import { applyGuard } from './helpers';
 
 describe('logic rules', () => {
   test('allow, deny work as expeted', async () => {
@@ -25,14 +25,13 @@ describe('logic rules', () => {
     const schema = makeExecutableSchema({ typeDefs, resolvers });
 
     // Permissions
-    const permissions = guard({
+
+    const schemaWithPermissions = applyGuard(schema, {
       Query: {
         allow: allow,
         deny: deny,
       },
     });
-
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
 
     /* Execution */
 
@@ -81,15 +80,13 @@ describe('logic rules', () => {
       throw new Error();
     });
 
-    const permissions = guard({
+    const schemaWithPermissions = applyGuard(schema, {
       Query: {
         allow: and(allow, allow),
         deny: and(allow, deny),
         ruleError: and(allow, ruleWithError),
       },
     });
-
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
 
     /* Execution */
 
@@ -160,15 +157,13 @@ describe('logic rules', () => {
       throw new Error('error');
     });
 
-    const permissions = guard({
+    const schemaWithPermissions = applyGuard(schema, {
       Query: {
         allow: chain(allowRuleA, allowRuleB, allowRuleC),
         deny: chain(denyRule, denyRule, denyRule),
         ruleError: chain(ruleWithError, ruleWithError, ruleWithError),
       },
     });
-
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
 
     /* Execution */
 
@@ -242,15 +237,13 @@ describe('logic rules', () => {
       throw new Error('error');
     });
 
-    const permissions = guard({
+    const schemaWithPermissions = applyGuard(schema, {
       Query: {
         allow: race(denyRuleA, allowRuleB, allowRuleC),
         deny: race(denyRule, denyRule, denyRule),
         ruleError: race(ruleWithError, ruleWithError, ruleWithError),
       },
     });
-
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
 
     /* Execution */
 
@@ -298,14 +291,12 @@ describe('logic rules', () => {
 
     /* Permissions */
 
-    const permissions = guard({
+    const schemaWithPermissions = applyGuard(schema, {
       Query: {
         allow: or(allow, deny),
         deny: or(deny, deny),
       },
     });
-
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
 
     /* Execution */
 
@@ -370,7 +361,7 @@ describe('logic rules', () => {
       return 'error_string_pass';
     });
 
-    const permissions = guard({
+    const schemaWithPermissions = applyGuard(schema, {
       Query: {
         allow: not(deny),
         deny: not(allow),
@@ -380,8 +371,6 @@ describe('logic rules', () => {
         customRuleErrorString: not(ruleWithCustomErrorString),
       },
     });
-
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
 
     /* Execution */
 
@@ -431,13 +420,11 @@ describe('logic rules', () => {
 
     /* Permissions */
 
-    const permissions = guard({
+    const schemaWithPermissions = applyGuard(schema, {
       Query: {
         not: not(allow, 'This is a custom not message.'),
       },
     });
-
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
 
     /* Execution */
 
@@ -500,13 +487,11 @@ describe('internal execution', () => {
 
     const ruleDeny = rule()(() => false);
 
-    const permissions = guard({
+    const schemaWithPermissions = applyGuard(schema, {
       Query: {
         deny: ruleDeny,
       },
     });
-
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
 
     /* Execution */
 
