@@ -6,11 +6,11 @@ import type {
   ShieldRule,
 } from './types.js';
 
-export function isRule(x: any): x is RuleType {
+export const isRule = (x: any): x is RuleType => {
   return x instanceof Rule || (x?.constructor && x.constructor.name === 'Rule');
-}
+};
 
-export function isLogicRule(x: any): x is LogicRuleType {
+export const isLogicRule = (x: any): x is LogicRuleType => {
   return (
     x instanceof LogicRule ||
     (x?.constructor &&
@@ -22,23 +22,23 @@ export function isLogicRule(x: any): x is LogicRuleType {
         x.constructor.name === 'RuleTrue' ||
         x.constructor.name === 'RuleFalse'))
   );
-}
+};
 
-export function isRuleFunction(x: any): x is ShieldRule {
+export const isRuleFunction = (x: any): x is ShieldRule => {
   return isRule(x) || isLogicRule(x);
-}
+};
 
-export function isRuleFieldMap(x: any): x is RuleFieldMap {
+export const isRuleFieldMap = (x: any): x is RuleFieldMap => {
   return (
     typeof x === 'object' &&
     Object.values(x).every((rule) => isRuleFunction(rule))
   );
-}
+};
 
-export function flattenObjectOf<T>(
+export const flattenObjectOf = <T>(
   obj: { [key: string]: any },
   f: (x: any) => boolean,
-): T[] {
+): T[] => {
   const values = Object.keys(obj).reduce<T[]>((acc, key) => {
     const val = obj[key];
     if (f(val)) {
@@ -50,11 +50,11 @@ export function flattenObjectOf<T>(
     }
   }, []);
   return values;
-}
+};
 
-export function withDefault<T>(fallback: T): (value: T | undefined) => T {
+export const withDefault = <T>(fallback: T): ((value: T | undefined) => T) => {
   return (value) => {
     if (value === undefined) return fallback;
     return value;
   };
-}
+};

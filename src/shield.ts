@@ -13,7 +13,7 @@ import type {
 import { withDefault } from './utils.js';
 import { ValidationError, validateRuleTree } from './validation.js';
 
-function normalizeOptions(options: OptionsConstructor): Options {
+const normalizeOptions = (options: OptionsConstructor): Options => {
   if (typeof options.fallbackError === 'string') {
     options.fallbackError = new Error(options.fallbackError);
   }
@@ -27,12 +27,12 @@ function normalizeOptions(options: OptionsConstructor): Options {
     ),
     hashFunction: withDefault<HashFunction>(hash)(options.hashFunction),
   };
-}
+};
 
-export function shield<TSource = any, TContext = any, TArgs = any>(
+export const shield = <TSource = any, TContext = any, TArgs = any>(
   ruleTree: Rules,
   options: OptionsConstructor = {},
-): IMiddlewareGenerator<TSource, TContext, TArgs> {
+): IMiddlewareGenerator<TSource, TContext, TArgs> => {
   const normalizedOptions = normalizeOptions(options);
   const ruleTreeValidity = validateRuleTree(ruleTree);
 
@@ -47,4 +47,4 @@ export function shield<TSource = any, TContext = any, TArgs = any>(
   } else {
     throw new ValidationError(ruleTreeValidity.message);
   }
-}
+};

@@ -27,11 +27,11 @@ import {
 } from './utils.js';
 import { ValidationError } from './validation.js';
 
-function generateFieldMiddlewareFromRule(
+const generateFieldMiddlewareFromRule = (
   rule: ShieldRule,
   options: Options,
-): IMiddlewareFunction<object, object, ShieldContext> {
-  async function middleware(
+): IMiddlewareFunction<object, object, ShieldContext> => {
+  const middleware = async (
     resolve: (
       parent: object,
       args: object,
@@ -42,7 +42,7 @@ function generateFieldMiddlewareFromRule(
     args: { [key: string]: any },
     ctx: ShieldContext,
     info: GraphQLResolveInfo,
-  ) {
+  ) => {
     // Cache
     if (!ctx) {
       ctx = {} as ShieldContext;
@@ -80,7 +80,7 @@ function generateFieldMiddlewareFromRule(
         return options.fallbackError;
       }
     }
-  }
+  };
 
   if (isRule(rule) && rule.extractFragment()) {
     return {
@@ -97,13 +97,13 @@ function generateFieldMiddlewareFromRule(
   }
 
   return middleware as IMiddlewareFunction<object, object, ShieldContext>;
-}
+};
 
-function applyRuleToType(
+const applyRuleToType = (
   type: GraphQLObjectType,
   rules: ShieldRule | RuleFieldMap,
   options: Options,
-): IMiddleware {
+): IMiddleware => {
   if (isRuleFunction(rules)) {
     /* Apply defined rule function to every field */
     const fieldMap = type.getFields();
@@ -164,13 +164,13 @@ function applyRuleToType(
 
     return middleware;
   }
-}
+};
 
-function applyRuleToSchema(
+const applyRuleToSchema = (
   schema: GraphQLSchema,
   rule: ShieldRule,
   options: Options,
-): IMiddleware {
+): IMiddleware => {
   const typeMap = schema.getTypeMap();
 
   const middleware = Object.keys(typeMap)
@@ -189,13 +189,13 @@ function applyRuleToSchema(
     }, {});
 
   return middleware;
-}
+};
 
-function generateMiddlewareFromSchemaAndRuleTree(
+const generateMiddlewareFromSchemaAndRuleTree = (
   schema: GraphQLSchema,
   rules: Rules,
   options: Options,
-): IMiddleware {
+): IMiddleware => {
   if (isRuleFunction(rules)) {
     /* Applies rule to entire schema. */
     return applyRuleToSchema(schema, rules, options);
@@ -233,16 +233,16 @@ function generateMiddlewareFromSchemaAndRuleTree(
 
     return middleware;
   }
-}
+};
 
-export function generateMiddlewareGeneratorFromRuleTree<
+export const generateMiddlewareGeneratorFromRuleTree = <
   TSource = any,
   TContext = any,
   TArgs = any,
 >(
   ruleTree: Rules,
   options: Options,
-): IMiddlewareGeneratorConstructor<TSource, TContext, TArgs> {
+): IMiddlewareGeneratorConstructor<TSource, TContext, TArgs> => {
   return (schema: GraphQLSchema) =>
     generateMiddlewareFromSchemaAndRuleTree(schema, ruleTree, options);
-}
+};

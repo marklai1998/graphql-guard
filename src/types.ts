@@ -1,5 +1,4 @@
 import type { GraphQLResolveInfo } from 'graphql';
-import type { IMiddlewareGenerator } from 'graphql-middleware';
 
 // Rule
 
@@ -109,11 +108,6 @@ export type OptionsConstructor = {
   fallbackError?: string | FallbackErrorType;
   hashFunction?: HashFunction;
 };
-
-export declare function shield<TSource = any, TContext = any, TArgs = any>(
-  ruleTree: Rules,
-  options: Options,
-): IMiddlewareGenerator<TSource, TContext, TArgs>;
 
 export type ShieldContext = {
   _shield: {

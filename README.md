@@ -208,7 +208,7 @@ const permissions = shield(rules, {
 });
 
 const permissions = shield(rules, {
-  async fallbackError(thrownThing, parent, args, context, info) {
+  fallbackError: async (thrownThing, parent, args, context, info) => {
     if (thrownThing instanceof Error) {
       console.error(thrownThing); // report unexpected errors
     }

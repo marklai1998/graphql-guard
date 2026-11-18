@@ -310,11 +310,9 @@ export class RuleChain extends LogicRule {
   ): Promise<RuleResult[]> {
     const rules = this.getRules();
 
-    return iterate(rules);
-
-    async function iterate([rule, ...otherRules]: ShieldRule[]): Promise<
+    const iterate = async ([rule, ...otherRules]: ShieldRule[]): Promise<
       RuleResult[]
-    > {
+    > => {
       if (rule === undefined) return [];
       return rule.resolve(parent, args, ctx, info, options).then((res) => {
         if (res !== true) {
@@ -323,7 +321,9 @@ export class RuleChain extends LogicRule {
           return iterate(otherRules).then((ress) => ress.concat(res));
         }
       });
-    }
+    };
+
+    return iterate(rules);
   }
 }
 
@@ -358,11 +358,9 @@ export class RuleRace extends LogicRule {
   ): Promise<RuleResult[]> {
     const rules = this.getRules();
 
-    return iterate(rules);
-
-    async function iterate([rule, ...otherRules]: ShieldRule[]): Promise<
+    const iterate = async ([rule, ...otherRules]: ShieldRule[]): Promise<
       RuleResult[]
-    > {
+    > => {
       if (rule === undefined) return [];
       return rule.resolve(parent, args, ctx, info, options).then((res) => {
         if (res === true) {
@@ -371,7 +369,9 @@ export class RuleRace extends LogicRule {
           return iterate(otherRules).then((ress) => ress.concat(res));
         }
       });
-    }
+    };
+
+    return iterate(rules);
   }
 }
 
