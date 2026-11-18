@@ -10,4 +10,4 @@ export {
   rule,
 } from './constructors.js';
 export { shield } from './shield.js';
-export { IRule, IRules } from './types.js';
+export type { IRule, IRules } from './types.js';
