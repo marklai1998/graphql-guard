@@ -561,3 +561,59 @@ test('Contextual cache - a context object reused across requests does not leak r
   expect(adminRes.data).toEqual({ secret: 'secret' });
   expect(viewerRes.data).toEqual({ secret: null });
 });
+
+test('Contextual cache - a falsy result is cached too', async () => {
+  const schema = makeExecutableSchema({
+    typeDefs: `
+      type Query {
+        a: String
+        b: String
+        c: String
+      }
+    `,
+    resolvers: { Query: { a: () => 'a', b: () => 'b', c: () => 'c' } },
+  });
+
+  const denyMock = vi.fn().mockReturnValue(false);
+  const deny = rule({ cache: 'contextual' })(denyMock);
+
+  const res = await graphql({
+    schema: applyGuard(schema, { Query: { a: deny, b: deny, c: deny } }),
+    source: '{ a b c }',
+    contextValue: {},
+  });
+
+  expect(res.data).toEqual({ a: null, b: null, c: null });
+  expect(denyMock).toBeCalledTimes(1);
+});
+
+test('Cache keys of different rules never collide', async () => {
+  const schema = makeExecutableSchema({
+    typeDefs: `
+      type Query {
+        a: String
+        b: String
+      }
+    `,
+    resolvers: { Query: { a: () => 'a', b: () => 'b' } },
+  });
+
+  const allowMock = vi.fn().mockReturnValue(true);
+  const denyMock = vi.fn().mockReturnValue(false);
+
+  const res = await graphql({
+    schema: applyGuard(schema, {
+      Query: {
+        // Used to share the cache key `a-b`.
+        a: rule('a-b', { cache: 'contextual' })(allowMock),
+        b: rule('a', { cache: () => 'b' })(denyMock),
+      },
+    }),
+    source: '{ a b }',
+    contextValue: {},
+  });
+
+  expect(res.data).toEqual({ a: 'a', b: null });
+  expect(allowMock).toBeCalledTimes(1);
+  expect(denyMock).toBeCalledTimes(1);
+});

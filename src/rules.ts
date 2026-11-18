@@ -111,7 +111,7 @@ export class Rule implements RuleType {
     switch (typeof this.cache) {
       case 'function': {
         /* User defined cache function. */
-        const key = `${this.name}-${this.cache(parent, args, ctx, info)}`;
+        const key = String(this.cache(parent, args, ctx, info));
         return this.writeToCache(key)(parent, args, ctx, info);
       }
       case 'string': {
@@ -120,15 +120,10 @@ export class Rule implements RuleType {
           case 'strict': {
             const key = options.hashFunction({ parent, args });
 
-            return this.writeToCache(`${this.name}-${key}`)(
-              parent,
-              args,
-              ctx,
-              info,
-            );
+            return this.writeToCache(key)(parent, args, ctx, info);
           }
           case 'contextual': {
-            return this.writeToCache(this.name)(parent, args, ctx, info);
+            return this.writeToCache()(parent, args, ctx, info);
           }
           case 'no_cache': {
             return this.func(parent, args, ctx, info);
@@ -146,8 +141,13 @@ export class Rule implements RuleType {
     }
   }
 
+  /**
+   * Caches the rule result under the rule name and an optional key. The pair is
+   * encoded as a JSON array so that no name and key combination can collide
+   * with another, e.g. rule `a-b` (contextual) and rule `a` with key `b`.
+   */
   private writeToCache(
-    key: string,
+    key?: string,
   ): (
     parent: object,
     args: object,
@@ -156,10 +156,13 @@ export class Rule implements RuleType {
   ) => string | boolean | Error | Promise<RuleResult> {
     return (parent, args, ctx, info) => {
       const cache = getRuleCache(ctx, info);
-      if (!cache.has(key)) {
-        cache.set(key, this.func(parent, args, ctx, info));
+      const cacheKey = JSON.stringify(
+        key === undefined ? [this.name] : [this.name, key],
+      );
+      if (!cache.has(cacheKey)) {
+        cache.set(cacheKey, this.func(parent, args, ctx, info));
       }
-      return cache.get(key) as RuleResult | Promise<RuleResult>;
+      return cache.get(cacheKey) as RuleResult | Promise<RuleResult>;
     };
   }
 }
