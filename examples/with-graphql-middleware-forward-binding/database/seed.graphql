@@ -1,4 +1,4 @@
-mutation {
+mutation Anny {
   anny: createUser(
     data: {
       name: "Anny"

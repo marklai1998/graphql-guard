@@ -1,38 +1,7 @@
 {
+  "extends": "@marklai/shared-config-typescript",
   "compilerOptions": {
-    "incremental": true,
-    "baseUrl": ".",
-
-    "rootDir": "packages",
-    "outDir": "dist",
-
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "importHelpers": true,
-    "experimentalDecorators": true,
-    "module": "esnext",
-    "target": "es2018",
-    "lib": ["es6", "esnext", "es2015", "dom"],
-    "suppressImplicitAnyIndexErrors": true,
-    "moduleResolution": "node",
-    "emitDecoratorMetadata": true,
-    "sourceMap": true,
-    "declaration": true,
-    "noImplicitThis": true,
-    "strict": true,
-    "alwaysStrict": true,
-    "noImplicitReturns": true,
-    "noUnusedLocals": false,
-    "resolveJsonModule": true,
-    "skipLibCheck": true,
-
-    "paths": {
-      "@graphqlshield/*": [
-        "packages/*/src/index.ts",
-        "packages/plugins/*/src/index.ts"
-      ]
-    }
+    "types": ["vitest/globals", "node"]
   },
-  "include": ["packages"],
-  "exclude": ["**/dist", "**/temp"]
+  "include": ["src"]
 }

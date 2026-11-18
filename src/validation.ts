@@ -1,0 +1,61 @@
+import type { GuardRule, LogicRule, Rule, Rules } from './types.js';
+import { flattenObjectOf, isLogicRule, isRuleFunction } from './utils.js';
+
+export class ValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
+const extractLogicRules = (rule: LogicRule): Rule[] => {
+  return rule.getRules().reduce<Rule[]>((acc, guardRule) => {
+    if (isLogicRule(guardRule)) {
+      return [...acc, ...extractLogicRules(guardRule)];
+    } else {
+      return [...acc, guardRule];
+    }
+  }, []);
+};
+
+const extractRules = (ruleTree: Rules): Rule[] => {
+  const resolvers = flattenObjectOf<GuardRule>(ruleTree, isRuleFunction);
+
+  const rules = resolvers.reduce<Rule[]>((rules, rule) => {
+    if (isLogicRule(rule)) {
+      return [...rules, ...extractLogicRules(rule)];
+    } else {
+      return [...rules, rule];
+    }
+  }, []);
+
+  return rules;
+};
+
+export const validateRuleTree = (ruleTree: Rules): void => {
+  const rules = extractRules(ruleTree);
+
+  const valid = rules.reduce<{ map: Map<string, Rule>; duplicates: string[] }>(
+    ({ map, duplicates }, rule) => {
+      if (!map.has(rule.name)) {
+        return { map: map.set(rule.name, rule), duplicates };
+      } else if (
+        !map.get(rule.name)!.equals(rule) &&
+        !duplicates.includes(rule.name)
+      ) {
+        return {
+          map: map.set(rule.name, rule),
+          duplicates: [...duplicates, rule.name],
+        };
+      } else {
+        return { map, duplicates };
+      }
+    },
+    { map: new Map<string, Rule>(), duplicates: [] },
+  );
+
+  if (valid.duplicates.length > 0) {
+    throw new ValidationError(
+      `There seem to be multiple definitions of these rules: ${valid.duplicates.join(', ')}`,
+    );
+  }
+};

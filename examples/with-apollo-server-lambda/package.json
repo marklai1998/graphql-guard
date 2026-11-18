@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "handler.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/doitadrian/example-shield-apollo-server-lambda.git"
@@ -23,11 +23,12 @@
     "graphql-tools": "^4.0.3"
   },
   "devDependencies": {
-    "prettier": "^1.15.3",
     "serverless": "^1.35.1",
-    "serverless-offline": "^5.12.0"
+    "serverless-offline": "^5.12.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
   },
   "scripts": {
-    "start": "sls offline start"
+    "start": "NODE_OPTIONS=\"--require tsx/cjs\" sls offline start"
   }
 }

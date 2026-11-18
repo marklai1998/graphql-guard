@@ -1,9 +1,8 @@
-import { GraphQLServer } from 'graphql-yoga'
-import { forward } from 'graphql-middleware-forward-binding'
-import { shield, rule, or, and } from 'graphql-shield'
-import { Prisma } from './generated/prisma'
-import { Context } from './utils'
-import { IMiddleware } from 'graphql-middleware'
+import { forward } from 'graphql-middleware-forward-binding';
+import { and, or, rule, shield } from 'graphql-shield';
+import { GraphQLServer } from 'graphql-yoga';
+import { Prisma } from './generated/prisma';
+import type { Context } from './utils';
 
 // Forwarding
 
@@ -13,7 +12,7 @@ const forwardMiddleware = forward(
   'Mutation.createPost',
   'Mutation.updatePost',
   'Mutation.deletePost',
-)('db')
+)('db');
 
 // Rules
 
@@ -21,27 +20,27 @@ const isAuthenticated = rule({ cache: 'contextual' })(
   async (parent, args, ctx: Context, info) => {
     return ctx.db.exists.User({
       name: ctx.request.headers.authorization,
-    })
+    });
   },
-)
+);
 
 const isAdmin = rule({ cache: 'contextual' })(
   async (parent, args, ctx: Context, info) => {
     return ctx.db.exists.User({
       name: ctx.request.headers.authorization,
       role: 'ADMIN',
-    })
+    });
   },
-)
+);
 
 const isEditor = rule({ cache: 'contextual' })(
   async (parent, args, ctx: Context, info) => {
     return ctx.db.exists.User({
       name: ctx.request.headers.authorization,
       role: 'EDITOR',
-    })
+    });
   },
-)
+);
 
 const isOwnerOfPost = rule({ cache: 'strict' })(
   async ({ id }, args, ctx: Context, info) => {
@@ -50,9 +49,9 @@ const isOwnerOfPost = rule({ cache: 'strict' })(
       owner: {
         name: ctx.request.headers.authorization,
       },
-    })
+    });
   },
-)
+);
 
 // Permissions
 
@@ -71,7 +70,7 @@ const permissions = shield(
   {
     debug: process.env.NODE_ENV !== 'production',
   },
-)
+);
 
 // Server
 
@@ -86,5 +85,5 @@ const server = new GraphQLServer({
       debug: process.env.NODE_ENV !== 'production',
     }),
   }),
-})
-server.start(() => console.log('Server is running on http://localhost:4000'))
+});
+server.start(() => console.log('Server is running on http://localhost:4000'));

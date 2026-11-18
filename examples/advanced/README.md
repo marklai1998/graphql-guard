@@ -100,4 +100,4 @@ mutation DeleteProduct($id: ID!) {
 
 ## License
 
-MIT @ Matic Zavadlal
+MIT @ Mark Lai

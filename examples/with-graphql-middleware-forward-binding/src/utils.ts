@@ -1,7 +1,7 @@
-import { Prisma } from './generated/prisma'
-import { Request } from 'express'
+import type { Request } from 'express';
+import type { Prisma } from './generated/prisma';
 
-export interface Context {
-  db: Prisma
-  request: Request
-}
+export type Context = {
+  db: Prisma;
+  request: Request;
+};

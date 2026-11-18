@@ -1,4 +1,4 @@
-mutation {
+mutation Johnny {
   johnny: createCustomer(
     data: {
       email: "johnny@shield.com"

@@ -1,3 +1,6 @@
-packages:
-  - 'packages/*'
-  - website
+allowBuilds:
+  "@apollo/protobufjs": false
+  "@biomejs/biome": true
+  esbuild: true
+  fsevents: false
+  lefthook: true
