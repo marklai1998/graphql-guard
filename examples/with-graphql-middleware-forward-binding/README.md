@@ -39,4 +39,4 @@ mutation CreatePost {
 
 ## License
 
-MIT @ Matic Zavadlal
+MIT @ Mark Lai
