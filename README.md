@@ -265,6 +265,8 @@ const guardedSchema = guard(
 
 Rules on `Subscription` fields run once, when the client subscribes. A denied subscription returns the error instead of starting the stream.
 
+If the field has a custom `resolve`, the rule runs for every event instead, with the event as `parent`, so it can check the payload. A denied event resolves to `null` with the error, and the stream continues.
+
 ### Troubleshooting
 
 **A single field is `Not Authorised!` and the whole parent object returns `null`.**
