@@ -129,9 +129,11 @@ export class Rule implements IRule {
           case 'no_cache': {
             return this.func(parent, args, ctx, info);
           }
+          /* istanbul ignore next */
+          default: {
+            throw new Error(`Unsupported cache format: ${typeof this.cache}`);
+          }
         }
-        /* istanbul ignore next */
-        throw new Error(`Unsupported cache format: ${typeof this.cache}`);
       }
       /* istanbul ignore next */
       default: {
@@ -164,7 +166,7 @@ export class InputRule<T> extends Rule {
     options?: Parameters<Yup.BaseSchema<T>['validate']>[1],
   ) {
     const validationFunction: IRuleFunction = (
-      parent: object,
+      _parent: object,
       args: object,
       ctx: IShieldContext,
     ) =>
@@ -185,11 +187,11 @@ export class LogicRule implements ILogicRule {
   }
 
   async resolve(
-    parent: object,
-    args: object,
-    ctx: IShieldContext,
-    info: GraphQLResolveInfo,
-    options: IOptions,
+    _parent: object,
+    _args: object,
+    _ctx: IShieldContext,
+    _info: GraphQLResolveInfo,
+    _options: IOptions,
   ): Promise<IRuleResult> {
     return false;
   }
@@ -236,7 +238,7 @@ export class RuleOr extends LogicRule {
     super(rules);
   }
 
-  async resolve(
+  override async resolve(
     parent: object,
     args: object,
     ctx: IShieldContext,
@@ -259,7 +261,7 @@ export class RuleAnd extends LogicRule {
     super(rules);
   }
 
-  async resolve(
+  override async resolve(
     parent: object,
     args: object,
     ctx: IShieldContext,
@@ -282,7 +284,7 @@ export class RuleChain extends LogicRule {
     super(rules);
   }
 
-  async resolve(
+  override async resolve(
     parent: object,
     args: object,
     ctx: IShieldContext,
@@ -299,7 +301,7 @@ export class RuleChain extends LogicRule {
     }
   }
 
-  async evaluate(
+  override async evaluate(
     parent: object,
     args: object,
     ctx: IShieldContext,
@@ -330,7 +332,7 @@ export class RuleRace extends LogicRule {
     super(rules);
   }
 
-  async resolve(
+  override async resolve(
     parent: object,
     args: object,
     ctx: IShieldContext,
@@ -347,7 +349,7 @@ export class RuleRace extends LogicRule {
     }
   }
 
-  async evaluate(
+  override async evaluate(
     parent: object,
     args: object,
     ctx: IShieldContext,
@@ -381,7 +383,7 @@ export class RuleNot extends LogicRule {
     this.error = error;
   }
 
-  async resolve(
+  override async resolve(
     parent: object,
     args: object,
     ctx: IShieldContext,
@@ -406,7 +408,7 @@ export class RuleTrue extends LogicRule {
     super([]);
   }
 
-  async resolve(): Promise<IRuleResult> {
+  override async resolve(): Promise<IRuleResult> {
     return true;
   }
 }
@@ -416,7 +418,7 @@ export class RuleFalse extends LogicRule {
     super([]);
   }
 
-  async resolve(): Promise<IRuleResult> {
+  override async resolve(): Promise<IRuleResult> {
     return false;
   }
 }

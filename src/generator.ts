@@ -10,7 +10,7 @@ import type {
   IMiddlewareFunction,
   IMiddlewareGeneratorConstructor,
 } from 'graphql-middleware';
-import type { IMiddlewareWithOptions } from 'graphql-middleware/dist/types';
+import type { IMiddlewareWithOptions } from 'graphql-middleware/types';
 import type {
   IOptions,
   IRuleFieldMap,
