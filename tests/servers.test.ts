@@ -102,7 +102,11 @@ const createGuardedSchema = (): GraphQLSchema =>
 
 type Result = {
   data?: Record<string, unknown> | null;
-  errors?: { message: string; path?: (string | number)[] }[];
+  errors?: {
+    message: string;
+    path?: (string | number)[];
+    extensions?: Record<string, unknown>;
+  }[];
 };
 
 type Execute = (
@@ -119,8 +123,7 @@ const servers: { name: string; create: (schema: GraphQLSchema) => Execute }[] =
           schema,
           context: ({ request }) =>
             contextFromHeader(request.headers.get('authorization')),
-          // Show the real error messages, like Apollo Server does by default
-          maskedErrors: false,
+          // Default error masking stays on: guard errors must still reach the client
           logging: false,
         });
         return async (query, { as, variables } = {}) => {
@@ -165,7 +168,12 @@ describe.each(servers)('$name', ({ create }) => {
     const result = await execute('{ publicInfo adminOnly }');
 
     expect(result.data).toEqual({ publicInfo: 'public', adminOnly: null });
-    expect(messages(result)).toEqual(['Not Authorised!']);
+    expect(result.errors).toEqual([
+      expect.objectContaining({
+        message: 'Not Authorised!',
+        extensions: expect.objectContaining({ code: 'FORBIDDEN' }),
+      }),
+    ]);
   });
 
   test('evaluates rules against each request context', async () => {
@@ -242,7 +250,12 @@ describe.each(servers)('$name', ({ create }) => {
 
     expect(valid.data).toEqual({ signup: 'signed up' });
     expect(invalid.data).toEqual({ signup: null });
-    expect(messages(invalid)).toEqual(['It has to be an email!']);
+    expect(invalid.errors).toEqual([
+      expect.objectContaining({
+        message: 'It has to be an email!',
+        extensions: expect.objectContaining({ code: 'BAD_USER_INPUT' }),
+      }),
+    ]);
   });
 
   test('runs fields of one request in parallel without mixing results', async () => {
@@ -259,4 +272,26 @@ describe.each(servers)('$name', ({ create }) => {
     });
     expect(messages(result)).toEqual(['Not Authorised!', 'Not Authorised!']);
   });
+});
+
+describe('custom rule errors', () => {
+  const schema = applyGuard(makeExecutableSchema({ typeDefs, resolvers }), {
+    Query: {
+      publicInfo: rule()(() => 'Custom string error'),
+      adminOnly: rule()(() => new Error('Custom plain error')),
+    },
+  });
+
+  test.each(servers)(
+    '$name shows string errors from rules',
+    async ({ create }) => {
+      const result = await create(schema)('{ publicInfo }');
+      expect(result.errors).toEqual([
+        expect.objectContaining({
+          message: 'Custom string error',
+          extensions: expect.objectContaining({ code: 'FORBIDDEN' }),
+        }),
+      ]);
+    },
+  );
 });

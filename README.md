@@ -17,29 +17,27 @@ GraphQL Guard helps you create a permission layer for your application. Using an
 
 ## 📦 Installation
 
-GraphQL Guard runs on top of [GraphQL Middleware](https://www.npmjs.com/package/graphql-middleware), so install both.
-
 ### NPM
 
 ```bash
-npm i graphql-guard graphql-middleware
+npm i graphql-guard
 ```
 
 ### Yarn
 
 ```
-yarn add graphql-guard graphql-middleware
+yarn add graphql-guard
 ```
 
 ### PNPM
 
 ```
-pnpm i graphql-guard graphql-middleware
+pnpm i graphql-guard
 ```
 
 ## 🚀 Quick Start
 
-Define your rules (permissions.ts) and build a permission tree that matches your schema.
+Define your rules and a permission tree that matches your schema, then apply it with `guard`. It returns a new schema with every field guarded, which works with any GraphQL server.
 
 ```ts
 import { guard, rule, and, or, not } from 'graphql-guard';
@@ -62,7 +60,7 @@ const isEditor = rule({ cache: 'contextual' })(
   },
 );
 
-export const permissions = guard({
+export const guardedSchema = guard(schema, {
   Query: {
     frontPage: not(isAuthenticated),
     fruits: and(isAuthenticated, or(isAdmin, isEditor)),
@@ -76,15 +74,20 @@ export const permissions = guard({
 });
 ```
 
-then apply it to your schema
+then serve the guarded schema as usual, for example with [GraphQL Yoga](https://the-guild.dev/graphql/yoga-server)
 
 ```ts
-import { applyMiddleware } from 'graphql-middleware';
-import { permissions } from './permissions';
+import { createYoga } from 'graphql-yoga';
 
-const schemaWithPermissions = applyMiddleware(schema, permissions);
+const yoga = createYoga({ schema: guardedSchema });
+```
 
-// use the new schema as before
+or [Apollo Server](https://www.apollographql.com/docs/apollo-server)
+
+```ts
+import { ApolloServer } from '@apollo/server';
+
+const server = new ApolloServer({ schema: guardedSchema });
 ```
 
 ## 📖 Usage
@@ -94,19 +97,22 @@ const schemaWithPermissions = applyMiddleware(schema, permissions);
 - [Caching](#caching)
 - [Custom errors](#custom-errors)
 - [Locking down your schema](#locking-down-your-schema)
-- [Fragments](#fragments)
+- [Subscriptions](#subscriptions)
 - [Troubleshooting](#troubleshooting)
 
 ### Permission tree
 
-The rule tree passed to `guard` must match your schema definition. A rule can apply to:
+The rule tree passed to `guard` must match your schema definition. Rules apply to object types (including `Query`, `Mutation` and `Subscription`). A rule can apply to:
 
 - **a whole type**: `Customer: isAdmin`
 - **a single field**: `Query: { customers: isAdmin }`
 - **every field of a type without its own rule**: use the `'*'` wildcard
 
+Rules on interfaces and unions throw a `ValidationError`. Apply them to the object types that implement or belong to them instead.
+
 ```ts
-const permissions = guard(
+const guardedSchema = guard(
+  schema,
   {
     Query: {
       '*': deny, // every Query field except query1 and query2 is denied
@@ -136,7 +142,7 @@ const isOwner = rule()(async (parent, args, ctx, info) => {
   return ctx.user.items.some((id) => id === parent.id);
 });
 
-const permissions = guard({
+const guardedSchema = guard(schema, {
   Query: {
     users: or(isAdmin, isEditor),
   },
@@ -189,32 +195,39 @@ const canSeeUserSensitiveData = rule({ cache: 'strict' })(
 
 By default, GraphQL Guard catches every error thrown during execution and replaces it with `Not Authorised!`, so internal details never reach the client.
 
+Errors created by GraphQL Guard are `GraphQLError`s with a `code` extension: `FORBIDDEN` for a denial and `BAD_USER_INPUT` for a failed [`inputRule`](#inputrule). Servers that hide unexpected errors, like GraphQL Yoga's default error masking, still show them to the client.
+
 To send a custom message, **return** an `Error` (or a string) from a rule instead of throwing it. A rule that returns an error counts as failing, so the resolver doesn't run.
 
 ```ts
 const ruleWithCustomError = rule()(async (parent, args, ctx, info) => {
-  return new Error('Custom error from rule.');
+  return new GraphQLError('Custom error from rule.', {
+    extensions: { code: 'FORBIDDEN' },
+  });
 });
 
 const ruleWithCustomErrorMessage = rule()(async (parent, args, ctx, info) => {
-  return 'Custom error message from rule.';
+  return 'Custom error message from rule.'; // becomes a FORBIDDEN GraphQLError
 });
 ```
 
 Resolvers can do the same by returning an `Error`.
 
+> [!NOTE]
+> A plain `Error` returned from a rule is passed through as is. GraphQL Yoga's default error masking hides plain errors, so return a string or a `GraphQLError` to show the message to the client.
+
 To change the default error globally, set `fallbackError` to a string, an `Error`, or a function:
 
 ```ts
-const permissions = guard(rules, {
+const guardedSchema = guard(schema, rules, {
   fallbackError: 'You shall not pass!',
 });
 
-const permissions = guard(rules, {
+const guardedSchema = guard(schema, rules, {
   fallbackError: async (thrownThing, parent, args, context, info) => {
     if (thrownThing instanceof Error) {
       console.error(thrownThing); // report unexpected errors
-      return new Error('Internal server error');
+      return new GraphQLError('Internal server error');
     }
     return defaultFallbackError; // plain denial: keep the default error
   },
@@ -231,7 +244,8 @@ The default error is exported as [`defaultFallbackError`](#defaultfallbackerror)
 Set `fallbackRule` to `deny` so any field without a rule is blocked. New fields stay private until you explicitly allow them.
 
 ```ts
-const permissions = guard(
+const guardedSchema = guard(
+  schema,
   {
     Query: {
       users: allow,
@@ -247,24 +261,9 @@ const permissions = guard(
 );
 ```
 
-### Fragments
+### Subscriptions
 
-If your server forwards queries to another GraphQL server, a rule may need fields the client didn't request (for example `id` for an ownership check). Declare them with a fragment:
-
-```ts
-const isItemOwner = rule({
-  cache: 'strict',
-  fragment: 'fragment ItemID on Item { id }',
-})(async ({ id }, args, ctx, info) => {
-  return ctx.db.exists.Item({ id, owner: { id: ctx.user.id } });
-});
-```
-
-Then pass the generated `fragmentReplacements` to your server's communication library:
-
-```ts
-const { schema, fragmentReplacements } = applyMiddleware(schema, permissions);
-```
+Rules on `Subscription` fields run once, when the client subscribes. A denied subscription returns the error instead of starting the stream.
 
 ### Troubleshooting
 
@@ -285,12 +284,12 @@ This is caching. `contextual` rules are cached per request regardless of `parent
 
 ### `guard`
 
-Generates a GraphQL Middleware layer from your rule tree.
+Returns a new schema with the rules from `ruleTree` applied to every field. The original schema is not changed. Throws a `ValidationError` when the rule tree doesn't match the schema.
 
 ```ts
 import { guard } from 'graphql-guard';
 
-const permissions = guard(ruleTree, options);
+const guardedSchema = guard(schema, ruleTree, options);
 ```
 
 | Option              | Default                                              | Description                                                 |
@@ -304,7 +303,7 @@ const permissions = guard(ruleTree, options);
 ### `rule`
 
 ```ts
-rule(name?: string, options?: { cache?: 'no_cache' | 'contextual' | 'strict', fragment?: string })(
+rule(name?: string, options?: { cache?: 'no_cache' | 'contextual' | 'strict' })(
   (parent, args, ctx, info) => boolean | string | Error | Promise<boolean | string | Error>,
 )
 ```
@@ -334,7 +333,7 @@ Predefined rules that always pass or always fail.
 
 ### `defaultFallbackError`
 
-The `Error('Not Authorised!')` returned when a rule denies access and no `fallbackError` is set. Return it from a custom `fallbackError`, or check for it to tell a denial apart from other errors.
+The `GraphQLError('Not Authorised!')` (code `FORBIDDEN`) returned when a rule denies access and no `fallbackError` is set. Return it from a custom `fallbackError`, or check for it to tell a denial apart from other errors.
 
 ```ts
 import type { GraphQLError } from 'graphql';

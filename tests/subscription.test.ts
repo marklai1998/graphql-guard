@@ -85,3 +85,49 @@ describe('subscriptions', () => {
     expect(subscribeRule).toHaveBeenCalledTimes(1);
   });
 });
+
+test('checks the rule once for a subscription with a custom resolve', async () => {
+  const subscribeRule = vi.fn();
+  const resolveEvent = vi.fn((event: { count: number }) => event.count * 10);
+  const schema = applyGuard(
+    makeExecutableSchema({
+      typeDefs,
+      resolvers: {
+        Query: { ok: () => true },
+        Subscription: {
+          count: {
+            subscribe: async function* () {
+              for (const count of [1, 2]) yield { count };
+            },
+            resolve: resolveEvent,
+          },
+        },
+      },
+    }),
+    {
+      Query: allow,
+      Subscription: {
+        count: rule()(() => {
+          subscribeRule();
+          return true;
+        }),
+      },
+    },
+  );
+
+  const result = await subscribe({
+    schema,
+    document: parse('subscription { count }'),
+    contextValue: {},
+  });
+  const events: ExecutionResult[] = [];
+  for await (const event of result as AsyncIterable<ExecutionResult>) {
+    events.push(event);
+  }
+
+  expect(events.map((event) => event.data)).toEqual([
+    { count: 10 },
+    { count: 20 },
+  ]);
+  expect(subscribeRule).toHaveBeenCalledTimes(1);
+});

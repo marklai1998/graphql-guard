@@ -1,4 +1,5 @@
 import type * as z from 'zod';
+import { createGuardError } from './errors.js';
 import {
   InputRule,
   Rule,
@@ -31,7 +32,6 @@ export const rule =
     }
 
     return new Rule(name, func, {
-      fragment: options.fragment,
       cache: options.cache,
     });
   };
@@ -66,7 +66,9 @@ export const or = (...rules: GuardRule[]): RuleOr => {
 };
 
 export const not = (rule: GuardRule, error?: string | Error): RuleNot => {
-  if (typeof error === 'string') return new RuleNot(rule, new Error(error));
+  if (typeof error === 'string') {
+    return new RuleNot(rule, createGuardError(error, 'FORBIDDEN'));
+  }
   return new RuleNot(rule, error);
 };
 
