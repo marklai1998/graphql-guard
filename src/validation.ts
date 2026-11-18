@@ -1,11 +1,8 @@
+import { ValidationError } from './errors.js';
 import type { GuardRule, LogicRule, Rule, Rules } from './types.js';
 import { flattenObjectOf, isLogicRule, isRuleFunction } from './utils.js';
 
-export class ValidationError extends Error {
-  constructor(message: string) {
-    super(message);
-  }
-}
+export { ValidationError };
 
 const extractLogicRules = (rule: LogicRule): Rule[] => {
   return rule.getRules().reduce<Rule[]>((acc, guardRule) => {
@@ -18,7 +15,9 @@ const extractLogicRules = (rule: LogicRule): Rule[] => {
 };
 
 const extractRules = (ruleTree: Rules): Rule[] => {
-  const resolvers = flattenObjectOf<GuardRule>(ruleTree, isRuleFunction);
+  const resolvers = isRuleFunction(ruleTree)
+    ? [ruleTree]
+    : flattenObjectOf<GuardRule>(ruleTree, isRuleFunction);
 
   const rules = resolvers.reduce<Rule[]>((rules, rule) => {
     if (isLogicRule(rule)) {
@@ -59,10 +58,19 @@ const validateRuleTreeShape = (ruleTree: unknown): void => {
   }
 };
 
-export const validateRuleTree = (ruleTree: Rules): void => {
+export const validateRuleTree = (
+  ruleTree: Rules,
+  fallbackRule?: GuardRule,
+): void => {
   validateRuleTreeShape(ruleTree);
+  if (fallbackRule !== undefined && !isRuleFunction(fallbackRule)) {
+    throw notARule('options.fallbackRule');
+  }
 
-  const rules = extractRules(ruleTree);
+  const rules = [
+    ...extractRules(ruleTree),
+    ...(fallbackRule !== undefined ? extractRules(fallbackRule) : []),
+  ];
 
   const valid = rules.reduce<{ map: Map<string, Rule>; duplicates: string[] }>(
     ({ map, duplicates }, rule) => {

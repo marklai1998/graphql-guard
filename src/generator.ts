@@ -6,6 +6,7 @@ import {
   isIntrospectionType,
   isObjectType,
 } from 'graphql';
+import { ValidationError } from './errors.js';
 import type {
   GuardContext,
   GuardRule,
@@ -13,7 +14,6 @@ import type {
   Rules,
 } from './types.js';
 import { isRuleFunction } from './utils.js';
-import { ValidationError } from './validation.js';
 
 type Resolver = GraphQLFieldResolver<any, any, any>;
 
@@ -86,6 +86,17 @@ const validateRulesAgainstSchema = (schema: GraphQLSchema, rules: Rules) => {
     );
   }
 
+  // Introspection types (__Schema, __Type, ...) are never wrapped, so a rule
+  // on them would silently do nothing.
+  const introspectionTypes = Object.keys(rules).filter((typeName) =>
+    isIntrospectionType(typeMap[typeName]),
+  );
+  if (introspectionTypes.length > 0) {
+    throw new ValidationError(
+      `It seems like you have applied rules to ${introspectionTypes.join(', ')} types but Guard cannot apply rules to introspection types. To restrict introspection, disable it in your server instead.`,
+    );
+  }
+
   const nonObjectTypes = Object.keys(rules).filter(
     (typeName) => !isObjectType(typeMap[typeName]),
   );
@@ -96,8 +107,8 @@ const validateRulesAgainstSchema = (schema: GraphQLSchema, rules: Rules) => {
   }
 
   for (const [typeName, type] of Object.entries(typeMap)) {
-    if (!isObjectType(type) || isIntrospectionType(type)) continue;
     if (!Object.hasOwn(rules, typeName)) continue;
+    if (!isObjectType(type)) continue;
     const typeRules = rules[typeName];
     if (isRuleFunction(typeRules)) continue;
 
