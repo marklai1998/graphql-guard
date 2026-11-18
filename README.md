@@ -214,11 +214,14 @@ const permissions = guard(rules, {
   fallbackError: async (thrownThing, parent, args, context, info) => {
     if (thrownThing instanceof Error) {
       console.error(thrownThing); // report unexpected errors
+      return new Error('Internal server error');
     }
-    return new Error('Internal server error');
+    return defaultFallbackError; // plain denial: keep the default error
   },
 });
 ```
+
+The default error is exported as [`defaultFallbackError`](#defaultfallbackerror), so you can reuse it or check for it.
 
 > [!TIP]
 > Set `debug: true` to see errors thrown in resolvers, or `allowExternalErrors: true` to pass them through to the client.
@@ -277,6 +280,7 @@ This is caching. `contextual` rules are cached per request regardless of `parent
 - [rule](#rule)
 - [inputRule](#inputrule)
 - [allow / deny](#allow--deny)
+- [defaultFallbackError](#defaultfallbackerror)
 - [Logic rules](#logic-rules)
 
 ### `guard`
@@ -294,7 +298,7 @@ const permissions = guard(ruleTree, options);
 | allowExternalErrors | `false`                                              | Pass errors thrown in resolvers through to the client.      |
 | debug               | `false`                                              | Toggle debug mode.                                          |
 | fallbackRule        | `allow`                                              | Rule for every field without one.                           |
-| fallbackError       | `Error('Not Authorised!')`                           | Error returned on denial. A string, `Error`, or a function. |
+| fallbackError       | [`defaultFallbackError`](#defaultfallbackerror)      | Error returned on denial. A string, `Error`, or a function. |
 | hashFunction        | [object-hash](https://github.com/puleos/object-hash) | Hashing function used by the `strict` cache.                |
 
 ### `rule`
@@ -327,6 +331,18 @@ When validation fails, the rule fails with the first issue's message (e.g. `It h
 ### `allow` / `deny`
 
 Predefined rules that always pass or always fail.
+
+### `defaultFallbackError`
+
+The `Error('Not Authorised!')` returned when a rule denies access and no `fallbackError` is set. Return it from a custom `fallbackError`, or check for it to tell a denial apart from other errors.
+
+```ts
+import type { GraphQLError } from 'graphql';
+import { defaultFallbackError } from 'graphql-guard';
+
+const isDenied = (error: GraphQLError) =>
+  error.originalError === defaultFallbackError;
+```
 
 ### Logic rules
 

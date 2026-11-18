@@ -5,6 +5,8 @@ import { generateMiddlewareGeneratorFromRuleTree } from './generator.js';
 import type { Options, PopulatedOptions, Rules } from './types.js';
 import { ValidationError, validateRuleTree } from './validation.js';
 
+export const defaultFallbackError = new Error('Not Authorised!');
+
 const normalizeOptions = (options: Options): PopulatedOptions => {
   if (typeof options.fallbackError === 'string') {
     options.fallbackError = new Error(options.fallbackError);
@@ -14,7 +16,7 @@ const normalizeOptions = (options: Options): PopulatedOptions => {
     debug: options.debug ?? false,
     allowExternalErrors: options.allowExternalErrors ?? false,
     fallbackRule: options.fallbackRule ?? allow,
-    fallbackError: options.fallbackError ?? new Error('Not Authorised!'),
+    fallbackError: options.fallbackError ?? defaultFallbackError,
     hashFunction: options.hashFunction ?? hash,
   };
 };

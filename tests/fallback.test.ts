@@ -1,7 +1,7 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { graphql } from 'graphql';
 import { applyMiddleware } from 'graphql-middleware';
-import { allow, guard, rule } from '../src/index';
+import { allow, defaultFallbackError, deny, guard, rule } from '../src/index';
 
 describe('fallbackError correctly handles errors', () => {
   test('error in resolver returns fallback error.', async () => {
@@ -614,5 +614,56 @@ describe('fallbackRule correctly applies fallback rule', () => {
       },
     });
     expect(fallbackRuleMock).toBeCalledTimes(3);
+  });
+});
+
+describe('defaultFallbackError', () => {
+  const schema = makeExecutableSchema({
+    typeDefs: `
+      type Query {
+        open: String
+        closed: String
+      }
+    `,
+    resolvers: {
+      Query: {
+        open: () => 'open',
+        closed: () => 'closed',
+      },
+    },
+  });
+
+  test('is the error returned when no fallbackError is set', async () => {
+    const permissions = guard({ Query: { open: allow, closed: deny } });
+
+    const res = await graphql({
+      schema: applyMiddleware(schema, permissions),
+      source: '{ open closed }',
+    });
+
+    expect(res.data).toEqual({ open: 'open', closed: null });
+    expect(res.errors).toHaveLength(1);
+    const [error] = res.errors ?? [];
+    expect(error.message).toBe('Not Authorised!');
+    expect(error.originalError).toBe(defaultFallbackError);
+  });
+
+  test('can be reused in a custom fallbackError', async () => {
+    const permissions = guard(
+      { Query: { open: allow, closed: deny } },
+      {
+        fallbackError: async (thrown) =>
+          thrown instanceof Error ? thrown : defaultFallbackError,
+      },
+    );
+
+    const res = await graphql({
+      schema: applyMiddleware(schema, permissions),
+      source: '{ open closed }',
+    });
+
+    expect(res.data).toEqual({ open: 'open', closed: null });
+    const [error] = res.errors ?? [];
+    expect(error.originalError).toBe(defaultFallbackError);
   });
 });
