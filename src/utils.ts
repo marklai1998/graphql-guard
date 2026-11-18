@@ -1,4 +1,4 @@
-import { LogicRule, Rule } from './rules.js';
+import { logicRuleBrand, ruleBrand } from './brand.js';
 import type {
   GuardRule,
   LogicRule as LogicRuleType,
@@ -6,23 +6,10 @@ import type {
   Rule as RuleType,
 } from './types.js';
 
-export const isRule = (x: any): x is RuleType => {
-  return x instanceof Rule || (x?.constructor && x.constructor.name === 'Rule');
-};
+export const isRule = (x: any): x is RuleType => x?.[ruleBrand] === true;
 
-export const isLogicRule = (x: any): x is LogicRuleType => {
-  return (
-    x instanceof LogicRule ||
-    (x?.constructor &&
-      (x.constructor.name === 'RuleOr' ||
-        x.constructor.name === 'RuleAnd' ||
-        x.constructor.name === 'RuleChain' ||
-        x.constructor.name === 'RuleRace' ||
-        x.constructor.name === 'RuleNot' ||
-        x.constructor.name === 'RuleTrue' ||
-        x.constructor.name === 'RuleFalse'))
-  );
-};
+export const isLogicRule = (x: any): x is LogicRuleType =>
+  x?.[logicRuleBrand] === true;
 
 export const isRuleFunction = (x: any): x is GuardRule => {
   return isRule(x) || isLogicRule(x);

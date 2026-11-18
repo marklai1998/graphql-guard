@@ -1,5 +1,6 @@
 import type { GraphQLResolveInfo } from 'graphql';
 import * as z from 'zod';
+import { logicRuleBrand, ruleBrand } from './brand.js';
 import { createGuardError } from './errors.js';
 import type {
   Cache,
@@ -16,6 +17,10 @@ import type {
 } from './types.js';
 
 export class Rule implements RuleType {
+  get [ruleBrand](): true {
+    return true;
+  }
+
   readonly name: string;
 
   private cache: Cache;
@@ -176,6 +181,10 @@ export class InputRule<T> extends Rule {
 }
 
 export class LogicRule implements LogicRuleType {
+  get [logicRuleBrand](): true {
+    return true;
+  }
+
   private rules: GuardRule[];
 
   constructor(rules: GuardRule[]) {
