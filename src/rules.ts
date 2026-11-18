@@ -1,5 +1,5 @@
 import type { GraphQLResolveInfo } from 'graphql';
-import * as z from 'zod';
+import type * as z from 'zod';
 import { logicRuleBrand, ruleBrand } from './brand.js';
 import { createGuardError } from './errors.js';
 import type {
@@ -167,7 +167,8 @@ export class InputRule<T> extends Rule {
       args: object,
       ctx: GuardContext,
     ) => {
-      const result = await schema(z, ctx).safeParseAsync(args, options);
+      const zod = await import('zod');
+      const result = await schema(zod, ctx).safeParseAsync(args, options);
       if (result.success) return true;
       const error = createGuardError(
         result.error.issues[0]?.message ?? result.error.message,
