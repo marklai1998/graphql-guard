@@ -56,13 +56,15 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "@types/yup": "0.29.13",
     "object-hash": "^3.0.0",
     "yup": "^0.32.0"
   },
   "peerDependencies": {
-    "graphql": "^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0",
+    "graphql": "^14.0.0 || ^15.0.0 || ^16.0.0",
     "graphql-middleware": "^2.0.0 || ^3.0.0 || ^4.0.0 || ^6.0.0"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.7",
