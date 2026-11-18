@@ -7,13 +7,13 @@ import type {
   GuardRule,
   HashFunction,
   Options,
-  OptionsConstructor,
+  PopulatedOptions,
   Rules,
 } from './types.js';
 import { withDefault } from './utils.js';
 import { ValidationError, validateRuleTree } from './validation.js';
 
-const normalizeOptions = (options: OptionsConstructor): Options => {
+const normalizeOptions = (options: Options): PopulatedOptions => {
   if (typeof options.fallbackError === 'string') {
     options.fallbackError = new Error(options.fallbackError);
   }
@@ -31,7 +31,7 @@ const normalizeOptions = (options: OptionsConstructor): Options => {
 
 export const guard = <TSource = any, TContext = any, TArgs = any>(
   ruleTree: Rules,
-  options: OptionsConstructor = {},
+  options: Options = {},
 ): IMiddlewareGenerator<TSource, TContext, TArgs> => {
   const normalizedOptions = normalizeOptions(options);
   const ruleTreeValidity = validateRuleTree(ruleTree);

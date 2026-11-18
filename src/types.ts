@@ -14,7 +14,7 @@ export type Rule = {
     args: object,
     ctx: GuardContext,
     info: GraphQLResolveInfo,
-    options: Options,
+    options: PopulatedOptions,
   ): Promise<RuleResult>;
 };
 
@@ -31,14 +31,14 @@ export type LogicRule = {
     args: object,
     ctx: GuardContext,
     info: GraphQLResolveInfo,
-    options: Options,
+    options: PopulatedOptions,
   ): Promise<RuleResult[]>;
   resolve(
     parent: object,
     args: object,
     ctx: GuardContext,
     info: GraphQLResolveInfo,
-    options: Options,
+    options: PopulatedOptions,
   ): Promise<RuleResult>;
 };
 
@@ -93,7 +93,7 @@ export type FallbackErrorType = Error | FallbackErrorMapperType;
 
 // Generator Options
 
-export type Options = {
+export type PopulatedOptions = {
   debug: boolean;
   allowExternalErrors: boolean;
   fallbackRule: GuardRule;
@@ -101,7 +101,7 @@ export type Options = {
   hashFunction: HashFunction;
 };
 
-export type OptionsConstructor = {
+export type Options = {
   debug?: boolean;
   allowExternalErrors?: boolean;
   fallbackRule?: GuardRule;

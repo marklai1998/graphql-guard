@@ -14,7 +14,7 @@ import type { IMiddlewareWithOptions } from 'graphql-middleware/types';
 import type {
   GuardContext,
   GuardRule,
-  Options,
+  PopulatedOptions,
   RuleFieldMap,
   Rules,
 } from './types.js';
@@ -29,7 +29,7 @@ import { ValidationError } from './validation.js';
 
 const generateFieldMiddlewareFromRule = (
   rule: GuardRule,
-  options: Options,
+  options: PopulatedOptions,
 ): IMiddlewareFunction<object, object, GuardContext> => {
   const middleware = async (
     resolve: (
@@ -102,7 +102,7 @@ const generateFieldMiddlewareFromRule = (
 const applyRuleToType = (
   type: GraphQLObjectType,
   rules: GuardRule | RuleFieldMap,
-  options: Options,
+  options: PopulatedOptions,
 ): IMiddleware => {
   if (isRuleFunction(rules)) {
     /* Apply defined rule function to every field */
@@ -169,7 +169,7 @@ const applyRuleToType = (
 const applyRuleToSchema = (
   schema: GraphQLSchema,
   rule: GuardRule,
-  options: Options,
+  options: PopulatedOptions,
 ): IMiddleware => {
   const typeMap = schema.getTypeMap();
 
@@ -194,7 +194,7 @@ const applyRuleToSchema = (
 const generateMiddlewareFromSchemaAndRuleTree = (
   schema: GraphQLSchema,
   rules: Rules,
-  options: Options,
+  options: PopulatedOptions,
 ): IMiddleware => {
   if (isRuleFunction(rules)) {
     /* Applies rule to entire schema. */
@@ -241,7 +241,7 @@ export const generateMiddlewareGeneratorFromRuleTree = <
   TArgs = any,
 >(
   ruleTree: Rules,
-  options: Options,
+  options: PopulatedOptions,
 ): IMiddlewareGeneratorConstructor<TSource, TContext, TArgs> => {
   return (schema: GraphQLSchema) =>
     generateMiddlewareFromSchemaAndRuleTree(schema, ruleTree, options);

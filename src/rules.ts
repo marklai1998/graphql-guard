@@ -7,7 +7,7 @@ import type {
   GuardContext,
   GuardRule,
   LogicRule as LogicRuleType,
-  Options,
+  PopulatedOptions,
   RuleConstructorOptions,
   RuleFunction,
   RuleOptions,
@@ -41,7 +41,7 @@ export class Rule implements RuleType {
     args: object,
     ctx: GuardContext,
     info: GraphQLResolveInfo,
-    options: Options,
+    options: PopulatedOptions,
   ): Promise<RuleResult> {
     try {
       /* Resolve */
@@ -102,7 +102,7 @@ export class Rule implements RuleType {
     args: object,
     ctx: GuardContext,
     info: GraphQLResolveInfo,
-    options: Options,
+    options: PopulatedOptions,
   ): string | boolean | Error | Promise<RuleResult> {
     switch (typeof this.cache) {
       case 'function': {
@@ -196,7 +196,7 @@ export class LogicRule implements LogicRuleType {
     _args: object,
     _ctx: GuardContext,
     _info: GraphQLResolveInfo,
-    _options: Options,
+    _options: PopulatedOptions,
   ): Promise<RuleResult> {
     return false;
   }
@@ -206,7 +206,7 @@ export class LogicRule implements LogicRuleType {
     args: object,
     ctx: GuardContext,
     info: GraphQLResolveInfo,
-    options: Options,
+    options: PopulatedOptions,
   ): Promise<RuleResult[]> {
     const rules = this.getRules();
     const tasks = rules.map((rule) =>
@@ -248,7 +248,7 @@ export class RuleOr extends LogicRule {
     args: object,
     ctx: GuardContext,
     info: GraphQLResolveInfo,
-    options: Options,
+    options: PopulatedOptions,
   ): Promise<RuleResult> {
     const result = await this.evaluate(parent, args, ctx, info, options);
 
@@ -271,7 +271,7 @@ export class RuleAnd extends LogicRule {
     args: object,
     ctx: GuardContext,
     info: GraphQLResolveInfo,
-    options: Options,
+    options: PopulatedOptions,
   ): Promise<RuleResult> {
     const result = await this.evaluate(parent, args, ctx, info, options);
 
@@ -294,7 +294,7 @@ export class RuleChain extends LogicRule {
     args: object,
     ctx: GuardContext,
     info: GraphQLResolveInfo,
-    options: Options,
+    options: PopulatedOptions,
   ): Promise<RuleResult> {
     const result = await this.evaluate(parent, args, ctx, info, options);
 
@@ -311,7 +311,7 @@ export class RuleChain extends LogicRule {
     args: object,
     ctx: GuardContext,
     info: GraphQLResolveInfo,
-    options: Options,
+    options: PopulatedOptions,
   ): Promise<RuleResult[]> {
     const rules = this.getRules();
 
@@ -342,7 +342,7 @@ export class RuleRace extends LogicRule {
     args: object,
     ctx: GuardContext,
     info: GraphQLResolveInfo,
-    options: Options,
+    options: PopulatedOptions,
   ): Promise<RuleResult> {
     const result = await this.evaluate(parent, args, ctx, info, options);
 
@@ -359,7 +359,7 @@ export class RuleRace extends LogicRule {
     args: object,
     ctx: GuardContext,
     info: GraphQLResolveInfo,
-    options: Options,
+    options: PopulatedOptions,
   ): Promise<RuleResult[]> {
     const rules = this.getRules();
 
@@ -393,7 +393,7 @@ export class RuleNot extends LogicRule {
     args: object,
     ctx: GuardContext,
     info: GraphQLResolveInfo,
-    options: Options,
+    options: PopulatedOptions,
   ): Promise<RuleResult> {
     const [res] = await this.evaluate(parent, args, ctx, info, options);
 
