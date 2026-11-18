@@ -1,8 +1,8 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
-import { applyMiddleware } from 'graphql-middleware';
 import { allow, guard, rule } from '../src/';
 import { and } from '../src/constructors';
 import { ValidationError, validateRuleTree } from '../src/validation';
+import { applyGuard } from './helpers';
 
 describe('correctly helps developer', () => {
   test('Finds a type missing in schema and warns developer.', async () => {
@@ -21,14 +21,12 @@ describe('correctly helps developer', () => {
 
     // Permissions
 
-    const permissions = guard({
-      Query: allow,
-      Fail1: allow,
-      Fail2: allow,
-    });
-
     expect(() => {
-      applyMiddleware(schema, permissions);
+      applyGuard(schema, {
+        Query: allow,
+        Fail1: allow,
+        Fail2: allow,
+      });
     }).toThrow(
       `It seems like you have applied rules to Fail1, Fail2 types but Guard cannot find them in your schema.`,
     );
@@ -49,16 +47,14 @@ describe('correctly helps developer', () => {
 
     // Permissions
 
-    const permissions = guard({
-      Query: {
-        a: allow,
-        b: allow,
-        c: allow,
-      },
-    });
-
     expect(() => {
-      applyMiddleware(schema, permissions);
+      applyGuard(schema, {
+        Query: {
+          a: allow,
+          b: allow,
+          c: allow,
+        },
+      });
     }).toThrow(
       'It seems like you have applied rules to Query.b, Query.c fields but Guard cannot find them in your schema.',
     );

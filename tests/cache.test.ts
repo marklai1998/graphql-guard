@@ -1,8 +1,8 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { graphql } from 'graphql';
-import { applyMiddleware } from 'graphql-middleware';
-import { guard, rule } from '../src/index';
+import { rule } from '../src/index';
 import type { HashFunction } from '../src/types';
+import { applyGuard } from './helpers';
 
 describe('caching:', () => {
   test('Strict cache - Rule is called multiple times, based on different parent.', async () => {
@@ -35,11 +35,10 @@ describe('caching:', () => {
     /* Permissions */
 
     const allowMock = vi.fn().mockResolvedValue(true);
-    const permissions = guard({
+
+    const schemaWithPermissions = applyGuard(schema, {
       Test: rule({ cache: 'strict' })(allowMock),
     });
-
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
 
     /* Execution */
 
@@ -95,11 +94,9 @@ describe('caching:', () => {
 
     const allowMock = vi.fn().mockResolvedValue(true);
 
-    const permissions = guard({
+    const schemaWithPermissions = applyGuard(schema, {
       Query: rule({ cache: 'strict' })(allowMock),
     });
-
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
 
     /* Execution */
 
@@ -169,7 +166,7 @@ describe('caching:', () => {
     const ruleTwoMock = vi.fn().mockResolvedValue(true);
     const ruleTwo = rule({ cache: 'contextual' })(ruleTwoMock);
 
-    const permissions = guard({
+    const schemaWithPermissions = applyGuard(schema, {
       Query: {
         a: ruleOne,
         b: ruleOne,
@@ -178,8 +175,6 @@ describe('caching:', () => {
         e: ruleTwo,
       },
     });
-
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
 
     // Execution
     const query = `
@@ -244,11 +239,9 @@ describe('caching:', () => {
     const allowMock = vi.fn().mockResolvedValue(true);
     const allow = rule({ cache: 'no_cache' })(allowMock);
 
-    const permissions = guard({
+    const schemaWithPermissions = applyGuard(schema, {
       Query: allow,
     });
-
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
 
     /* Execution */
 
@@ -305,15 +298,13 @@ describe('caching:', () => {
 
     const allowMock = vi.fn().mockResolvedValue(true);
 
-    const permissions = guard({
+    const schemaWithPermissions = applyGuard(schema, {
       Query: rule({
         cache: (parent, args, ctx, info) => {
           return JSON.stringify(args);
         },
       })(allowMock),
     });
-
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
 
     /* Execution */
 
@@ -371,7 +362,8 @@ test('Customize hash function', async () => {
 
   const hashFunction: HashFunction = vi.fn((opts) => JSON.stringify(opts));
 
-  const permissions = guard(
+  const schemaWithPermissions = applyGuard(
+    schema,
     {
       Query: rule({ cache: 'strict' })(allowMock),
     },
@@ -379,8 +371,6 @@ test('Customize hash function', async () => {
       hashFunction,
     },
   );
-
-  const schemaWithPermissions = applyMiddleware(schema, permissions);
 
   /* Execution */
 
@@ -447,11 +437,10 @@ describe('legacy cache:', () => {
     /* Permissions */
 
     const allowMock = vi.fn().mockResolvedValue(true);
-    const permissions = guard({
+
+    const schemaWithPermissions = applyGuard(schema, {
       Test: rule({ cache: true })(allowMock),
     });
-
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
 
     /* Execution */
 
@@ -509,11 +498,9 @@ describe('legacy cache:', () => {
     const allowMock = vi.fn().mockResolvedValue(true);
     const allow = rule({ cache: false })(allowMock);
 
-    const permissions = guard({
+    const schemaWithPermissions = applyGuard(schema, {
       Query: allow,
     });
-
-    const schemaWithPermissions = applyMiddleware(schema, permissions);
 
     // Execution
     const query = `
