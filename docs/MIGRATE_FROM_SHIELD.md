@@ -9,7 +9,6 @@ GraphQL Guard 1.x is a fork of `graphql-shield@7.x` (based on `7.6.5`, the lates
 - [Replace Yup with Zod in `inputRule`](#replace-yup-with-zod-in-inputrule)
 - [Errors Are `GraphQLError`s](#errors-are-graphqlerrors)
 - [Rules on Interfaces and Unions](#rules-on-interfaces-and-unions)
-- [Subscriptions](#subscriptions)
 - [Fragments Removed](#fragments-removed)
 - [Package Entry Points](#package-entry-points)
 
@@ -164,10 +163,6 @@ After
 ```ts
 guard(schema, { Item: { secret: isAdmin } });
 ```
-
-## Subscriptions
-
-Rules on subscription fields run once, when the client subscribes. `graphql-shield` did the same, except for subscription fields with a custom `resolve`, where the rule ran for every event instead.
 
 ## Fragments Removed
 

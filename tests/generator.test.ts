@@ -1,5 +1,5 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
-import { graphql } from 'graphql';
+import { getIntrospectionQuery, graphql } from 'graphql';
 import { deny, rule } from '../src';
 import { applyGuard } from './helpers';
 
@@ -369,5 +369,46 @@ describe('schema', () => {
     expect(await graphql({ schema, source: '{ secret }' })).toEqual({
       data: { secret: 'secret' },
     });
+  });
+});
+
+describe('introspection', () => {
+  const schema = makeExecutableSchema({
+    typeDefs: 'type Query { a: String }',
+    resolvers: { Query: { a: () => 'a' } },
+  });
+
+  test('the full introspection query works with fallbackRule: deny', async () => {
+    const guarded = applyGuard(
+      schema,
+      { Query: { a: deny } },
+      { fallbackRule: deny },
+    );
+
+    const result = await graphql({
+      schema: guarded,
+      source: getIntrospectionQuery(),
+    });
+
+    expect(result.errors).toBeUndefined();
+    expect(result.data?.__schema).toBeDefined();
+  });
+
+  test('rules never run for introspection fields', async () => {
+    const seen = vi.fn();
+    const guarded = applyGuard(
+      schema,
+      rule()((_parent, _args, _ctx, info) => {
+        seen(`${info.parentType.name}.${info.fieldName}`);
+        return true;
+      }),
+    );
+
+    await graphql({
+      schema: guarded,
+      source: '{ a __typename __schema { types { name fields { name } } } }',
+    });
+
+    expect(seen.mock.calls.flat()).toEqual(['Query.a']);
   });
 });

@@ -86,9 +86,8 @@ describe('subscriptions', () => {
   });
 });
 
-test('checks the rule once for a subscription with a custom resolve', async () => {
-  const subscribeRule = vi.fn();
-  const resolveEvent = vi.fn((event: { count: number }) => event.count * 10);
+test('checks every event against the rule for a subscription with a custom resolve', async () => {
+  const eventRule = vi.fn((event: { count: number }) => event.count !== 2);
   const schema = applyGuard(
     makeExecutableSchema({
       typeDefs,
@@ -97,9 +96,9 @@ test('checks the rule once for a subscription with a custom resolve', async () =
         Subscription: {
           count: {
             subscribe: async function* () {
-              for (const count of [1, 2]) yield { count };
+              for (const count of [1, 2, 3]) yield { count };
             },
-            resolve: resolveEvent,
+            resolve: (event: { count: number }) => event.count * 10,
           },
         },
       },
@@ -107,10 +106,7 @@ test('checks the rule once for a subscription with a custom resolve', async () =
     {
       Query: allow,
       Subscription: {
-        count: rule()(() => {
-          subscribeRule();
-          return true;
-        }),
+        count: rule()((event) => eventRule(event)),
       },
     },
   );
@@ -127,7 +123,17 @@ test('checks the rule once for a subscription with a custom resolve', async () =
 
   expect(events.map((event) => event.data)).toEqual([
     { count: 10 },
-    { count: 20 },
+    { count: null },
+    { count: 30 },
   ]);
-  expect(subscribeRule).toHaveBeenCalledTimes(1);
+  expect(events.map((event) => event.errors?.map((e) => e.message))).toEqual([
+    undefined,
+    ['Not Authorised!'],
+    undefined,
+  ]);
+  expect(eventRule.mock.calls.map(([event]) => event)).toEqual([
+    { count: 1 },
+    { count: 2 },
+    { count: 3 },
+  ]);
 });

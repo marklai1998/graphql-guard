@@ -131,7 +131,17 @@ export const applyRulesToSchema = (
         options.fallbackRule,
       );
 
-      // Subscriptions are checked once, when the client subscribes.
+      // A custom resolver is guarded first. On a subscription field this runs
+      // the rule for every event, with the event as parent.
+      if (fieldConfig.resolve && fieldConfig.resolve !== defaultFieldResolver) {
+        return {
+          ...fieldConfig,
+          resolve: guardResolver(fieldConfig.resolve, rule, options),
+        };
+      }
+
+      // A subscription without a custom resolver is checked once, when the
+      // client subscribes.
       if (fieldConfig.subscribe) {
         return {
           ...fieldConfig,
@@ -141,11 +151,7 @@ export const applyRulesToSchema = (
 
       return {
         ...fieldConfig,
-        resolve: guardResolver(
-          fieldConfig.resolve ?? defaultFieldResolver,
-          rule,
-          options,
-        ),
+        resolve: guardResolver(defaultFieldResolver, rule, options),
       };
     },
   });
