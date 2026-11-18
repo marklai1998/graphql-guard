@@ -1,13 +1,13 @@
-service: aws-nodejs
+service: graphql-guard-apollo-server-lambda
 
 provider:
   name: aws
-  runtime: nodejs8.10
-
-plugins:
-  - serverless-offline
+  runtime: nodejs22.x
 
 functions:
   api:
     handler: handler.graphql
-    events: [{ http: "ANY /graphql" }, { http: "ANY /graphql/{proxy+}" }]
+    events:
+      - httpApi:
+          path: /graphql
+          method: ANY

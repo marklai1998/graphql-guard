@@ -1,24 +1,18 @@
-import { arg } from 'nexus';
-import { prismaObjectType } from 'nexus-prisma';
+import { arg, nonNull, objectType } from 'nexus';
+import { login, signup } from '../lib/resolvers/mutations/index.js';
 
-import { login, signup } from '../lib/resolvers/mutations';
-
-export const Mutation = prismaObjectType({
+export const Mutation = objectType({
   name: 'Mutation',
   definition(t) {
-    t.field('signup', {
-      args: t.prismaType.createUser.args,
+    t.nonNull.field('signup', {
+      type: 'AuthPayload',
+      args: { data: nonNull(arg({ type: 'SignupInput' })) },
       resolve: signup,
-      type: 'User',
     });
-    t.field('login', {
-      args: {
-        data: arg({
-          type: 'LoginInput',
-        }),
-      },
+    t.nonNull.field('login', {
+      type: 'AuthPayload',
+      args: { data: nonNull(arg({ type: 'LoginInput' })) },
       resolve: login,
-      type: 'User',
     });
   },
 });

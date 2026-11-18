@@ -1,7 +1,6 @@
-import { rule } from 'graphql-shield';
+import { rule } from 'graphql-guard';
+import type { Context } from '../../context.js';
 
 export const isAuthenticated = rule({ cache: 'contextual' })(
-  (_parent, _args, ctx) => {
-    return Boolean(ctx.request.userId);
-  },
+  (_parent, _args, ctx: Context) => ctx.userId !== null,
 );

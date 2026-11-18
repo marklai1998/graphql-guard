@@ -1,52 +1,32 @@
 # with-graphql-nexus
 
-> using [nexus-prisma](https://github.com/prisma/nexus-prisma/)
-
-This is an example of how to use `graphql-shield` with [GraphQL Nexus](https://nexus.js.org/).
-
-## Dependencies
-
-- Your favourite package manager
-
-- [Prisma CLI](https://github.com/prisma/prisma/tree/master/cli)
-
-- [Docker](https://docs.docker.com/install/) & [Docker Compose](https://docs.docker.com/compose/install/)
+This is an example of how to use `graphql-guard` with [GraphQL Nexus](https://nexusjs.org/), served by [GraphQL Yoga](https://the-guild.dev/graphql/yoga-server).
 
 ## Content
 
-The application uses `cookie-parser` middleware for `express` and a custom `authorization` middleware to set `userId` property on the request object. This property is used by `graphql-shield` in the `isAuthenticated`-rule.
+The schema is built with Nexus and then wrapped with `guard`. Users are kept in an in-memory store (`src/lib/db.ts`) and reset when the server restarts.
 
-There are only two mutations that are available without authentication and those are `login` and `signup`. All queries are protected with `graphql-shield`.
+`signup` and `login` return a JSON Web Token. Send it as an `Authorization: Bearer <token>` header. The context reads the user id from the token, and the `isAuthenticated` rule checks it.
+
+`login` and `signup` are the only operations available without authentication. Every other query and mutation is covered by a `'*'` wildcard rule.
 
 ### Steps to get 'up & running'
 
-You can replace `yarn` with `npm`
+1. GraphQL Guard isn't published yet, so build it first: run `pnpm i && pnpm build` in the repository root.
 
-1. `yarn install`
+2. `pnpm i` in this folder.
 
-2. `docker-compose up -d`
+3. Create a `.env` with an `APP_SECRET` field, or copy `.env.example`.
 
-3. `prisma deploy`
+4. `pnpm start`, or `pnpm start:dev` to restart on change.
 
-4. Create a `.env` with an `APP_SECRET` field or rename `.env.example`.
+5. Navigate to [`http://localhost:4001/graphql`](http://localhost:4001/graphql).
 
-5. `yarn start` or `yarn start:dev` for auto-rebuild on change.
-
-6. Navigate to [`http://localhost:4001/`](http://localhost:4001/).
-
-7. In the top-right corner of GraphQL Playground, click the cogwheel, and change the property `request.credentials` from `omit` to `same-origin`. This is needed for GraphQL Playground to use cookies.
-
-8. Have fun!
+6. Have fun!
 
 ### Queries and Mutations
 
 ```graphql
-mutation LOGIN {
-  login(data: { email: "test@email.com", password: "bananas" }) {
-    id
-  }
-}
-
 mutation SIGNUP {
   signup(
     data: {
@@ -55,10 +35,17 @@ mutation SIGNUP {
       name: "Monkey Business"
     }
   ) {
-    id
+    token
   }
 }
 
+mutation LOGIN {
+  login(data: { email: "test@email.com", password: "bananas" }) {
+    token
+  }
+}
+
+# Requires the Authorization header
 query ME {
   me {
     id
@@ -67,6 +54,7 @@ query ME {
   }
 }
 
+# Requires the Authorization header
 query USERS {
   users {
     id

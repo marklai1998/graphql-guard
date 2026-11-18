@@ -1,44 +1,40 @@
-import { type Context, getUserEmail } from '../utils';
+import { GraphQLError } from 'graphql';
+import type { Context } from '../utils.js';
 
 export const Mutation = {
   addItemToBasket: async (
-    parent,
-    { productId, quantity },
+    _parent: unknown,
+    { productId, quantity }: { productId: string; quantity: number },
     ctx: Context,
-    info,
   ) => {
-    const email = getUserEmail(ctx);
-    const item = await ctx.db.mutation.createBasketItem({
-      data: {
-        product: { connect: { id: productId } },
-        quantity,
-        customer: { connect: { email } },
-      },
+    await ctx.db.addBasketItem({
+      customerEmail: ctx.email as string,
+      productId,
+      quantity,
     });
 
-    // Return empty object because we want to obtain Viewer.
+    // Return an empty object to resolve the Viewer.
     return {};
   },
-  removeItemFromBasket: async (parent, { itemId }, ctx: Context, info) => {
-    const item = await ctx.db.mutation.deleteBasketItem({
-      where: { id: itemId },
-    });
-
-    // Return empty object because we want to obtain Viewer.
-    return {};
-  },
-  addProduct: async (
-    parent,
-    { name, description, price },
+  removeItemFromBasket: async (
+    _parent: unknown,
+    { itemId }: { itemId: string },
     ctx: Context,
-    info,
   ) => {
-    return ctx.db.mutation.createProduct(
-      { data: { name, description, price } },
-      info,
-    );
+    const basket = await ctx.db.basket(ctx.email as string);
+    if (!basket.some((entry) => entry.id === itemId)) {
+      throw new GraphQLError(`No basket item with id "${itemId}"`);
+    }
+    await ctx.db.removeBasketItem(itemId);
+
+    // Return an empty object to resolve the Viewer.
+    return {};
   },
-  removeProduct: async (parent, { id }, ctx: Context, info) => {
-    return ctx.db.mutation.deleteProduct({ where: { id } }, info);
-  },
+  addProduct: (
+    _parent: unknown,
+    args: { name: string; description: string; price: number },
+    ctx: Context,
+  ) => ctx.db.addProduct(args),
+  removeProduct: (_parent: unknown, { id }: { id: string }, ctx: Context) =>
+    ctx.db.removeProduct(id),
 };

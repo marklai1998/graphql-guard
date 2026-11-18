@@ -1,28 +1,36 @@
-# GraphQL Shield Advanced Example
+# GraphQL Guard Advanced Example
 
-> This application is made solely for the purpose of Shield demonstration.
+> This application is made solely for the purpose of GraphQL Guard demonstration.
 
-- Powered by [Prisma](https://www.prisma.io).
-- Simple Groceries shop.
+- A simple groceries shop served with [GraphQL Yoga](https://the-guild.dev/graphql/yoga-server).
+- Data lives in an in-memory store (`src/db.ts`) and resets when the server restarts.
 - Don't spend too much money!
 
 ## Running the server
 
+GraphQL Guard isn't published yet, so build it first from the repository root, then install and start the example with pnpm:
+
 ```bash
-yarn
-yarn dev
+# in the repository root
+pnpm i && pnpm build
+
+# in examples/advanced
+pnpm i
+pnpm dev
 ```
+
+Open [http://localhost:4000/graphql](http://localhost:4000/graphql).
 
 ## Sample Queries
 
-Test the functionality of this application. You can authenticate users by adding `Authorization: Bearer <token>` as your http header. (NOTE: This is not how authentication should be done!)
+Test the functionality of this application. You can authenticate users by adding `Authorization: Bearer <email>` as your http header. (NOTE: This is not how authentication should be done!)
 
 ### Customer
 
 #### Predefined Emails
 
-- use johnny@shield.com,
-- or mathew@shield.com
+- use johnny@example.com,
+- or mathew@example.com
 
 ```gql
 query Johnny {
@@ -73,7 +81,7 @@ mutation RemoveItemFromBasket($ID: ID!) {
 
 #### Available Emails
 
-- use maya@shield.com
+- use maya@example.com
 
 ```gql
 query Supply {

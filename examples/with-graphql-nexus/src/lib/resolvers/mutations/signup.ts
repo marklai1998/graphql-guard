@@ -1,18 +1,18 @@
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
+import { GraphQLError } from 'graphql';
+import { type Context, generateToken } from '../../context.js';
 
-import { generateToken, setCookie } from '../../helpers/cookies';
-
-export async function signup(parent, { data }, ctx, info) {
-  const existing = await ctx.prisma.user({ email: data.email });
-  if (existing) {
-    throw new Error(`User with email "${data.email}" already exists`);
+export async function signup(
+  _parent: unknown,
+  { data }: { data: { email: string; password: string; name: string } },
+  ctx: Context,
+) {
+  if (await ctx.db.userByEmail(data.email)) {
+    throw new GraphQLError(`User with email "${data.email}" already exists`);
   }
 
   const password = await bcrypt.hash(data.password, 10);
-  const user = await ctx.prisma.createUser({ ...data, password }, info);
+  const user = await ctx.db.createUser({ ...data, password });
 
-  const token = generateToken({ userId: user.id });
-  setCookie(ctx.response, token);
-
-  return user;
+  return { token: generateToken(user.id), user };
 }

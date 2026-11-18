@@ -1,7 +1,8 @@
-import { and, not, or, rule, shield } from 'graphql-shield';
-import { GraphQLServer } from 'graphql-yoga';
+import { createServer } from 'node:http';
+import { and, guard, not, or, rule } from 'graphql-guard';
+import { createSchema, createYoga } from 'graphql-yoga';
 
-const typeDefs = `
+const typeDefs = /* GraphQL */ `
   type Query {
     frontPage: [Fruit!]!
     fruits: [Fruit!]!
@@ -46,56 +47,45 @@ const resolvers = {
 
 // Auth
 
-const users = {
-  mathew: {
-    id: 1,
-    name: 'Mathew',
-    role: 'admin',
-  },
-  george: {
-    id: 2,
-    name: 'George',
-    role: 'editor',
-  },
-  johnny: {
-    id: 3,
-    name: 'Johnny',
-    role: 'customer',
-  },
+type User = {
+  id: number;
+  name: string;
+  role: 'admin' | 'editor' | 'customer';
 };
 
-function getUser(req: { get: (header: string) => string }) {
-  const auth = req.get('Authorization') as keyof typeof users;
-  if (users[auth]) {
-    return users[auth];
-  } else {
-    return null;
-  }
+type Context = {
+  user: User | null;
+};
+
+const users: Record<string, User> = {
+  mathew: { id: 1, name: 'Mathew', role: 'admin' },
+  george: { id: 2, name: 'George', role: 'editor' },
+  johnny: { id: 3, name: 'Johnny', role: 'customer' },
+};
+
+// For demonstration only: the Authorization header is just a user name.
+function getUser(request: Request): User | null {
+  const auth = request.headers.get('Authorization');
+  return (auth && users[auth]) || null;
 }
 
 // Rules
 
 const isAuthenticated = rule({ cache: 'contextual' })(
-  async (parent, args, ctx, info) => {
-    return ctx.user !== null;
-  },
+  async (_parent, _args, ctx: Context) => ctx.user !== null,
 );
 
 const isAdmin = rule({ cache: 'contextual' })(
-  async (parent, args, ctx, info) => {
-    return ctx.user.role === 'admin';
-  },
+  async (_parent, _args, ctx: Context) => ctx.user?.role === 'admin',
 );
 
 const isEditor = rule({ cache: 'contextual' })(
-  async (parent, args, ctx, info) => {
-    return ctx.user.role === 'editor';
-  },
+  async (_parent, _args, ctx: Context) => ctx.user?.role === 'editor',
 );
 
 // Permissions
 
-const permissions = shield({
+const schema = guard(createSchema({ typeDefs, resolvers }), {
   Query: {
     frontPage: not(isAuthenticated),
     fruits: and(isAuthenticated, or(isAdmin, isEditor)),
@@ -104,18 +94,16 @@ const permissions = shield({
   Mutation: {
     addFruitToBasket: isAuthenticated,
   },
-  Fruit: isAuthenticated,
   Customer: isAdmin,
 });
 
-const server = new GraphQLServer({
-  typeDefs,
-  resolvers,
-  middlewares: [permissions],
-  context: (req) => ({
-    ...req,
-    user: getUser(req),
-  }),
+// Server
+
+const yoga = createYoga({
+  schema,
+  context: ({ request }): Context => ({ user: getUser(request) }),
 });
 
-server.start(() => console.log('Server is running on http://localhost:4000'));
+createServer(yoga).listen(4000, () => {
+  console.log('Server is running on http://localhost:4000/graphql');
+});

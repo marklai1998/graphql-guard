@@ -1,15 +1,12 @@
-import type { Prisma } from './generated/prisma';
+import type { Db } from './db.js';
 
 export type Context = {
-  db: Prisma;
-  request: any;
+  db: Db;
+  email: string | null;
 };
 
-export function getUserEmail(ctx: Context): string {
-  const Authorization = ctx.request.get('Authorization');
-  if (Authorization) {
-    const email = Authorization.replace('Bearer ', '');
-    return email;
-  }
-  return null;
+// For demonstration only: the bearer token is just the user's email.
+export function getUserEmail(request: Request): string | null {
+  const authorization = request.headers.get('Authorization');
+  return authorization ? authorization.replace('Bearer ', '') : null;
 }

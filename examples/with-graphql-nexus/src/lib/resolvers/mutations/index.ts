@@ -1,2 +1,2 @@
-export { login } from './login';
-export { signup } from './signup';
+export { login } from './login.js';
+export { signup } from './signup.js';

@@ -99,3 +99,6 @@ typings/
 # Custom
 src/generated
 
+
+# pnpm
+pnpm-lock.yaml
