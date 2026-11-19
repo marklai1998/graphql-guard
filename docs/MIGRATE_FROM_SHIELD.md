@@ -24,6 +24,7 @@ Contents:
   - [Rules on Interfaces, Unions and Introspection Types](#rules-on-interfaces-unions-and-introspection-types)
   - [Logic Rules Need at Least One Rule](#logic-rules-need-at-least-one-rule)
   - [`not` Denies When the Rule Throws](#not-denies-when-the-rule-throws)
+  - [`fallbackError` Receives Errors Thrown by Rules](#fallbackerror-receives-errors-thrown-by-rules)
   - [Subscriptions Are Checked on Subscribe](#subscriptions-are-checked-on-subscribe)
   - [Rule Cache](#rule-cache)
   - [Thrown Values With `allowExternalErrors`](#thrown-values-with-allowexternalerrors)
@@ -222,6 +223,12 @@ Rules on introspection types (`__Schema`, `__Type`, ...) were also ignored and n
 
 `not(rule)` denies when the wrapped rule throws. In graphql-shield, a thrown error counted as "no", so `not` turned it into "yes" and let the request through. A rule that returns an error or a string is still a deliberate "no", so `not` turns it into a "yes".
 
+### `fallbackError` Receives Errors Thrown by Rules
+
+When a rule throws, a `fallbackError` function now receives the thrown error as its first argument. graphql-shield caught the error, treated it as a denial and passed `null`, so the function couldn't tell a thrown error from a plain denial. This applies to rules on their own and inside `and`, `or`, `chain`, `race` and `not`. If several rules throw, the function receives the first error. A plain denial still passes `null`.
+
+The request is still denied. If your `fallbackError` function treats any non-`null` first argument as an unexpected error, a rule that throws now goes down that path too.
+
 ### Subscriptions Are Checked on Subscribe
 
 A subscription field with a custom `resolve` is also checked when the client subscribes, not only on each event. Rules that read the event payload get the root value (usually `undefined`) as `parent` at that point.
@@ -269,3 +276,4 @@ These [graphql-shield issues](https://github.com/maticzav/graphql-shield/issues)
 | [#781](https://github.com/maticzav/graphql-shield/issues/781) @types/yup dev dependency                                                    | Yup is replaced with Zod, an optional peer dependency                                                        |
 | [#1087](https://github.com/maticzav/graphql-shield/issues/1087) Build error with yup latest version                                        | Same as #781                                                                                                 |
 | [#1510](https://github.com/maticzav/graphql-shield/issues/1510) Update yup@1.x to avoid @types/lodash and babel runtime in production deps | Same as #781                                                                                                 |
+| [#739](https://github.com/maticzav/graphql-shield/issues/739) Error thrown inside an async rule are not sent to the fallbackError function | `fallbackError` receives errors thrown by rules, including inside logic rules                                |
