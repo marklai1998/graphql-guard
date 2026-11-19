@@ -68,7 +68,7 @@
     "@types/node": "22.20.5",
     "@types/object-hash": "3.0.6",
     "@vitest/coverage-v8": "5.1.0",
-    "graphql": "16.15.0",
+    "graphql": "17.1.0",
     "graphql-middleware": "6.1.35",
     "graphql-shield": "7.6.5",
     "graphql-yoga": "6.1.0",

@@ -4,13 +4,28 @@ import { GraphQLError, versionInfo } from 'graphql';
 // positional arguments: early 16.x and older ignore the options object.
 const supportsOptionsObject = versionInfo.major >= 17;
 
+// graphql 17's typings drop the positional signature, so describe it here to
+// keep the legacy branch compiling against any installed graphql version.
+type LegacyGraphQLErrorConstructor = new (
+  message: string,
+  nodes?: unknown,
+  source?: unknown,
+  positions?: unknown,
+  path?: unknown,
+  originalError?: unknown,
+  extensions?: Record<string, unknown>,
+) => GraphQLError;
+
+const LegacyGraphQLError =
+  GraphQLError as unknown as LegacyGraphQLErrorConstructor;
+
 export const createGuardError = (
   message: string,
   code: string,
 ): GraphQLError =>
   supportsOptionsObject
     ? new GraphQLError(message, { extensions: { code } })
-    : new GraphQLError(
+    : new LegacyGraphQLError(
         message,
         undefined,
         undefined,
