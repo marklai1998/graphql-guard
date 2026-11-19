@@ -224,6 +224,8 @@ After
 guard(schema, { Item: { secret: isAdmin } });
 ```
 
+Rules on input types were also ignored, so a rule on an input field never ran, and now throw. Put the rule on the field that takes the input instead, or use `inputRule` to validate it.
+
 Rules on introspection types (`__Schema`, `__Type`, ...) were also ignored and now throw. To restrict introspection, disable it in your server.
 
 ### Logic Rules Need at Least One Rule
@@ -288,6 +290,7 @@ These [graphql-shield issues](https://github.com/maticzav/graphql-shield/issues)
 | [#1176](https://github.com/maticzav/graphql-shield/issues/1176) Should INTERNAL_SERVER_ERROR be UNAUTHENTICATED/FORBIDDEN?                 | Denials are `GraphQLError`s with the `FORBIDDEN` code                                                        |
 | [#1221](https://github.com/maticzav/graphql-shield/issues/1221) Error: Unknown object type "promise"                                       | Same as #688                                                                                                 |
 | [#1315](https://github.com/maticzav/graphql-shield/issues/1315) The `context` argument of `inputRule` has insufficient type definition     | `inputRule<Context>()`                                                                                       |
+| [#1365](https://github.com/maticzav/graphql-shield/issues/1365) Input field is not checked by Graphql Shield rules?                        | Rules on input types throw a `ValidationError` instead of being ignored                                      |
 | [#1473](https://github.com/maticzav/graphql-shield/issues/1473) The bundled package is missing types in `types.js` export                  | Built with tsdown; types are type-only exports                                                               |
 | [#1476](https://github.com/maticzav/graphql-shield/issues/1476) Move from graphql-middleware to Resolvers Composition                      | `guard` wraps resolvers itself                                                                               |
 | [#1487](https://github.com/maticzav/graphql-shield/issues/1487) 7.6.4 ESM build broken                                                     | Same as #1473                                                                                                |
