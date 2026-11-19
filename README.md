@@ -11,7 +11,7 @@ GraphQL Guard helps you create a permission layer for your application. Using an
 
 ![NPM](https://img.shields.io/npm/v/graphql-guard) ![GitHub CI](https://github.com/marklai1998/graphql-guard/actions/workflows/runTest.yml/badge.svg) [![npm type definitions](https://img.shields.io/npm/types/typescript.svg)](https://www.typescriptlang.org/)
 
-[Installation](#-installation) | [Quick Start](#-quick-start) | [Usage](#-usage) | [API](#-api) | [Examples](#-examples) | [Contributing](#-contributing)
+[Installation](#-installation) | [Quick Start](#-quick-start) | [Comparison](#️-comparison) | [Usage](#-usage) | [API](#-api) | [Examples](#-examples) | [Contributing](#-contributing)
 
 </div>
 
@@ -89,6 +89,32 @@ import { ApolloServer } from '@apollo/server';
 
 const server = new ApolloServer({ schema: guardedSchema });
 ```
+
+## ⚖️ Comparison
+
+How GraphQL Guard compares with other GraphQL authorization libraries. Details for other libraries are taken from their documentation; check it for the current state.
+
+|                        | GraphQL Guard                                          | [graphql-shield](https://github.com/maticzav/graphql-shield) | [@envelop/generic-auth](https://the-guild.dev/graphql/envelop/plugins/use-generic-auth) | [@envelop/operation-field-permissions](https://the-guild.dev/graphql/envelop/plugins/use-operation-field-permissions) | [GraphQL AuthZ](https://github.com/AstrumU/graphql-authz)        |
+| ---------------------- | ------------------------------------------------------ | ------------------------------------------------------------ | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Rules defined as       | Rule tree in code                                      | Rule tree in code                                            | Directives or field extensions (`@authenticated`, `@requiresScopes`, `@policy`)         | Allowed [schema coordinates](https://github.com/graphql/graphql-wg/blob/main/rfcs/SchemaCoordinates.md) per request   | Directives, extensions or a JSON auth schema                     |
+| Checks run             | Per field, when it resolves                            | Per field, when it resolves                                  | Before execution (`protect-all`) or when a marked field resolves (`protect-granular`)   | Before execution                                                                                                      | Before execution, and after it for post-execution rules          |
+| Rule can read          | `parent`, `args`, `context`, `info`                    | `parent`, `args`, `context`, `info`                          | User, execution args, directive args                                                    | `context` (to build the permission set)                                                                               | `context`, field args; result data in post-execution rules       |
+| Logic rules            | `and`, `or`, `not`, `chain`, `race`                    | `and`, `or`, `not`, `chain`, `race`                          | Nested AND / OR lists of scopes or policies                                             | No                                                                                                                    | `and`, `or`, `not`                                               |
+| Deny by default        | `fallbackRule: deny`                                   | `fallbackRule: deny`                                         | `protect-all` mode                                                                      | Yes, only listed coordinates are allowed                                                                              | No (rules are opt-in per type or field)                          |
+| Denied field           | `null` with an error; the rest of the query still runs | `null` with an error; the rest of the query still runs       | Whole operation rejected by default; `rejectUnauthorized: false` skips only the field   | Whole operation rejected                                                                                              | Error from the rule                                              |
+| Per-request rule cache | `contextual`, `strict` or a key function               | `contextual` or `strict`, stored on `ctx._shield`            | No                                                                                      | No                                                                                                                    | No                                                               |
+| Typed rules            | `rule<Context, Args, Parent>()`                        | No                                                           | n/a                                                                                     | n/a                                                                                                                   | No                                                               |
+| Works with             | Any server that takes a `GraphQLSchema`                | Any server, through `graphql-middleware`                     | Envelop-based servers (e.g. GraphQL Yoga)                                               | Envelop-based servers (e.g. GraphQL Yoga)                                                                             | Envelop, Apollo Server, express-graphql, GraphQL Helix, gateways |
+| Also handles           | Authorization only                                     | Authorization, input validation (`inputRule`)                | Authentication (resolves the user into `context`)                                       | Authorization only                                                                                                    | Authorization only                                               |
+
+**Choosing one**
+
+- Pick **GraphQL Guard** when rules depend on the data being returned (for example, "owns this item"), when you want them in one place in code rather than spread over your SDL, or when your server is not built on Envelop. Coming from graphql-shield, see the [Migration Guide](docs/MIGRATE_FROM_SHIELD.md) for what changed.
+- Pick **@envelop/generic-auth** to authenticate requests and mark fields with directives, for example `@authenticated` or `@requiresScopes`.
+- Pick **@envelop/operation-field-permissions** for a coarse allowlist of which fields a user may select, checked before anything runs.
+- Pick **GraphQL AuthZ** when you need rules at a gateway, or rules that check the result after execution.
+
+These approaches can be combined. For example, use `@envelop/generic-auth` in `resolve-only` mode to put the user on `context`, and GraphQL Guard for the permission rules.
 
 ## 📖 Usage
 
