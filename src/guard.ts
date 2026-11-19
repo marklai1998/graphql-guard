@@ -22,10 +22,13 @@ export const guard = (
     debug: options.debug ?? false,
     allowExternalErrors: options.allowExternalErrors ?? false,
     fallbackRule: options.fallbackRule ?? allow,
+    // `null` is kept: it resolves denied fields to null instead of an error.
     fallbackError:
       typeof options.fallbackError === 'string'
         ? createGuardError(options.fallbackError, 'FORBIDDEN')
-        : (options.fallbackError ?? defaultFallbackError),
+        : options.fallbackError === undefined
+          ? defaultFallbackError
+          : options.fallbackError,
     hashFunction: options.hashFunction ?? hash,
   });
 };

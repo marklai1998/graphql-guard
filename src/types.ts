@@ -98,9 +98,9 @@ export type FallbackErrorMapperType = (
   args: object,
   ctx: GuardContext,
   info: GraphQLResolveInfo,
-) => Promise<Error> | Error;
+) => Promise<Error | null> | Error | null;
 
-export type FallbackErrorType = Error | FallbackErrorMapperType;
+export type FallbackErrorType = Error | null | FallbackErrorMapperType;
 
 // Generator Options
 
