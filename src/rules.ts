@@ -113,16 +113,16 @@ const normalizeResult = (res: string | boolean | Error): RuleResult => {
   }
 };
 
-// Gives each parent object a number for the life of the object, so the strict
-// cache tells parents apart by identity rather than by value.
-const parentIds = new WeakMap<object, number>();
-let nextParentId = 0;
+// Gives each object a number for the life of the object, so the strict cache
+// tells parents (and class instances in args) apart by identity, not by value.
+const objectIds = new WeakMap<object, number>();
+let nextObjectId = 0;
 
-const parentId = (parent: object): number => {
-  let id = parentIds.get(parent);
+const objectId = (value: object): number => {
+  let id = objectIds.get(value);
   if (id === undefined) {
-    id = nextParentId++;
-    parentIds.set(parent, id);
+    id = nextObjectId++;
+    objectIds.set(value, id);
   }
   return id;
 };
@@ -130,12 +130,59 @@ const parentId = (parent: object): number => {
 const isObject = (value: unknown): value is object =>
   (typeof value === 'object' && value !== null) || typeof value === 'function';
 
+// Prototypes whose instances object-hash reads in full, so they can be hashed
+// by value. Subclasses are not on the list: they can add #private fields.
+const byValuePrototypes = new Set<unknown>(
+  [
+    Object,
+    Array,
+    Date,
+    RegExp,
+    URL,
+    Map,
+    Set,
+    ArrayBuffer,
+    Int8Array,
+    Uint8Array,
+    Uint8ClampedArray,
+    Int16Array,
+    Uint16Array,
+    Int32Array,
+    Uint32Array,
+    Float32Array,
+    Float64Array,
+    BigInt64Array,
+    BigUint64Array,
+    globalThis.Buffer,
+  ]
+    .filter(Boolean)
+    .map((ctor) => ctor.prototype),
+);
+byValuePrototypes.add(null);
+
+/**
+ * Used as the object-hash replacer for `args`. Plain data (input objects,
+ * lists) and known built-ins are hashed by value. Any other object, such as a
+ * class instance returned by a custom scalar, is replaced by a token for its
+ * identity: its #private fields or getters can hold data the hash can't see,
+ * so two different values could otherwise get the same key. A symbol is used
+ * because object-hash writes it with a `symbol:` prefix that no string,
+ * number or object can produce.
+ */
+const argsReplacer = (value: unknown): unknown => {
+  if (!isObject(value) || byValuePrototypes.has(Object.getPrototypeOf(value))) {
+    return value;
+  }
+  return Symbol(`graphql-guard:object:${objectId(value)}`);
+};
+
 /**
  * The key for the `strict` cache. By default the parent is keyed by identity
- * and only `args` are hashed: hashing the parent by value can give two
- * different parents the same key when they differ only in data the hash can't
- * see (#private fields, getters, non-enumerable properties), and one would get
- * the other's answer. A custom hashFunction still receives `{ parent, args }`.
+ * and `args` are hashed: hashing the parent by value can give two different
+ * parents the same key when they differ only in data the hash can't see
+ * (#private fields, getters, non-enumerable properties), and one would get the
+ * other's answer. Class instances inside `args` are keyed by identity for the
+ * same reason. A custom hashFunction still receives `{ parent, args }`.
  */
 const strictCacheKey = (
   parent: unknown,
@@ -144,8 +191,8 @@ const strictCacheKey = (
 ): string => {
   if (options.hashFunction) return options.hashFunction({ parent, args });
   return JSON.stringify([
-    isObject(parent) ? parentId(parent) : hash({ parent }),
-    hash({ args }),
+    isObject(parent) ? objectId(parent) : hash({ parent }),
+    hash({ args }, { replacer: argsReplacer }),
   ]);
 };
 

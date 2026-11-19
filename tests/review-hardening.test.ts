@@ -1,5 +1,5 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
-import { graphql } from 'graphql';
+import { GraphQLScalarType, graphql } from 'graphql';
 import { not, rule } from '../src/index.js';
 import { applyGuard } from './helpers.js';
 
@@ -100,6 +100,83 @@ describe('strict cache keys parents by identity', () => {
       contextValue: {},
     });
     expect(res).toEqual({ data: { user: { a: 'a', b: 'b' } } });
+    expect(allowMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('strict cache keys class instances in args by identity', () => {
+  class Money {
+    #cents: number;
+    constructor(cents: number) {
+      this.#cents = cents;
+    }
+    get cents() {
+      return this.#cents;
+    }
+  }
+
+  const MoneyScalar = new GraphQLScalarType({
+    name: 'Money',
+    parseValue: (value) => new Money(Number(value)),
+    parseLiteral: (ast) => new Money(Number((ast as { value: string }).value)),
+    serialize: (value) => String(value),
+  });
+
+  const buildSchema = (
+    func: (parent: unknown, args: { amount: Money }) => boolean,
+  ) =>
+    applyGuard(
+      makeExecutableSchema({
+        typeDefs: `
+          scalar Money
+          type Query { pay(amount: Money!): String }
+        `,
+        resolvers: {
+          Money: MoneyScalar,
+          Query: {
+            pay: (_: unknown, { amount }: { amount: Money }) =>
+              String(amount.cents),
+          },
+        },
+      }),
+      {
+        Query: {
+          pay: rule({ cache: 'strict' })((parent, args) =>
+            func(parent, args as { amount: Money }),
+          ),
+        },
+      },
+      { fallbackError: null },
+    );
+
+  test('args that differ only in #private fields do not share a result', async () => {
+    const schema = buildSchema((_parent, args) => args.amount.cents < 100);
+    const res = await graphql({
+      schema,
+      source: '{ small: pay(amount: 50) large: pay(amount: 5000) }',
+      contextValue: {},
+    });
+    expect(res).toEqual({ data: { small: '50', large: null } });
+  });
+
+  test('plain input objects in args are still hashed by value', async () => {
+    const allowMock = vi.fn().mockReturnValue(true);
+    const schema = applyGuard(
+      makeExecutableSchema({
+        typeDefs: `
+          input Filter { tags: [String!]! }
+          type Query { a(f: Filter!): String b(f: Filter!): String }
+        `,
+        resolvers: { Query: { a: () => 'a', b: () => 'b' } },
+      }),
+      { Query: rule({ cache: 'strict' })(allowMock) },
+    );
+    const res = await graphql({
+      schema,
+      source: '{ a(f: { tags: ["x"] }) b(f: { tags: ["x"] }) }',
+      contextValue: {},
+    });
+    expect(res).toEqual({ data: { a: 'a', b: 'b' } });
     expect(allowMock).toHaveBeenCalledTimes(1);
   });
 });

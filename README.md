@@ -205,7 +205,7 @@ const canSeeUserSensitiveData = rule({ cache: 'strict' })(
 );
 ```
 
-`strict` keys `parent` by identity and hashes `args` with object-hash. Two parent objects never share a result, even if they look equal, because data that a hash can't see (`#private` fields, getters, non-enumerable properties) could tell them apart. The same parent object is still cached across its fields. If you set a custom `hashFunction`, it receives `{ parent, args }` and must tell different parents apart itself.
+`strict` keys `parent` by identity and hashes `args` with object-hash. Two parent objects never share a result, even if they look equal, because data that a hash can't see (`#private` fields, getters, non-enumerable properties) could tell them apart. The same parent object is still cached across its fields. `args` are hashed by value, except objects that aren't plain data or a built-in like `Date` or `URL` (for example, a class instance from a custom scalar): those are keyed by identity for the same reason. If you set a custom `hashFunction`, it receives `{ parent, args }` and must tell different parents apart itself.
 
 If a cache key can't be computed, the rule runs without the cache for that call. For example, object-hash can't hash `args` that hold a file upload.
 
