@@ -38,7 +38,7 @@ Contents:
 
 ## Requirements
 
-- Node 18 or above
+- Node.js 20.19+ or 22.12+, the versions that can `require()` an ES module. Node.js 18 and earlier 20.x and 22.x releases are no longer supported
 - `graphql` 14.4 or above, 15, 16 or 17. Support for `graphql` 0.11 to 0.13 and 14.0 to 14.3 is removed. `graphql` 17 itself needs Node 22 or above
 - `graphql-middleware` is no longer needed. Remove it unless you use it for other middleware
 
@@ -229,7 +229,7 @@ The `fragment` rule option and `fragmentReplacements` are removed. They existed 
 
 GraphQL Guard is ESM only. It is built with [tsdown](https://tsdown.dev) and ships `dist/index.mjs` with its type definitions. graphql-shield also shipped a CommonJS build.
 
-- Use `import` instead of `require`. On Node.js 20.19+ and 22.12+, `require('graphql-guard')` also works, because Node.js can `require()` an ES module.
+- `import` and `require` both work. Every supported Node.js version (20.19+, 22.12+) can `require()` an ES module.
 - In TypeScript, use `"moduleResolution": "nodenext"` or `"bundler"`. A CommonJS project with `"module": "nodenext"` needs TypeScript 5.8 or later to import the package; on older versions, set `"type": "module"` in your `package.json`.
 - `graphql-guard/package.json` is still exported.
 
