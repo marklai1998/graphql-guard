@@ -1,5 +1,4 @@
 import type { GraphQLResolveInfo } from 'graphql';
-import type * as z from 'zod';
 import { logicRuleBrand, ruleBrand } from './brand.js';
 import { getRuleCache } from './cache.js';
 import { createGuardError } from './errors.js';
@@ -204,40 +203,6 @@ export class Rule implements RuleType {
       }
       return cache.get(cacheKey) as RuleResult | Promise<RuleResult>;
     };
-  }
-}
-
-export class InputRule<T> extends Rule {
-  constructor(
-    name: string,
-    schema: (zod: typeof z, ctx: GuardContext) => z.ZodType<T>,
-    options?: Parameters<z.ZodType<T>['safeParseAsync']>[1],
-  ) {
-    const validationFunction: RuleFunction = async (
-      _parent: object,
-      args: object,
-      ctx: GuardContext,
-    ) => {
-      const zod = await import('zod');
-      const result = await schema(zod, ctx).safeParseAsync(args, options);
-      if (result.success) return true;
-      const error = createGuardError(
-        result.error.issues[0]?.message ?? result.error.message,
-        'BAD_USER_INPUT',
-      );
-      return Object.assign(error, { cause: result.error });
-    };
-
-    super(name, validationFunction, { cache: 'strict' });
-  }
-
-  // The schema only reads args, so the parent is left out of the cache key.
-  // That also skips hashing the parent for every item of a list.
-  protected override strictCacheInput(
-    _parent: object,
-    args: object,
-  ): Parameters<HashFunction>[0] {
-    return { parent: undefined, args };
   }
 }
 

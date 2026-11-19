@@ -20,10 +20,6 @@ type Resolver = GraphQLFieldResolver<any, any, any>;
 const guardResolver =
   (resolve: Resolver, rule: GuardRule, options: PopulatedOptions): Resolver =>
   async (parent, args, ctx: GuardContext, info) => {
-    if (!ctx) {
-      ctx = {} as GuardContext;
-    }
-
     try {
       const res = await rule.resolve(parent, args, ctx, info, options);
 

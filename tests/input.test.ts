@@ -1,6 +1,7 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { graphql } from 'graphql';
-import { inputRule, rule } from '../src/index.js';
+import { rule } from '../src/index.js';
+import { inputRule } from '../src/zod.js';
 import { applyGuard } from './helpers.js';
 
 describe('input rule', () => {

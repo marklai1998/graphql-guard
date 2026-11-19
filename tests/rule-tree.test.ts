@@ -8,6 +8,7 @@ import { applyGuard } from './helpers.js';
 // ESM and the CommonJS build.
 vi.resetModules();
 const otherCopy = await import('../src/index.js');
+const otherZodCopy = await import('../src/zod.js');
 
 const execute = async (
   schema: ReturnType<typeof applyGuard>,
@@ -39,7 +40,7 @@ describe('rules from another copy of graphql-guard', () => {
     const guarded = applyGuard(schema, {
       Query: allow,
       Mutation: {
-        signup: otherCopy.inputRule()((z) => z.object({ email: z.email() })),
+        signup: otherZodCopy.inputRule()((z) => z.object({ email: z.email() })),
         closed: otherCopy.deny,
       },
     });

@@ -1,10 +1,5 @@
 import { and, rule } from '../src/constructors.js';
-import {
-  isLogicRule,
-  isRule,
-  isRuleFieldMap,
-  isRuleFunction,
-} from '../src/utils.js';
+import { isLogicRule, isRule, isRuleFunction } from '../src/utils.js';
 
 // Objects from graphql-shield have the same class names but are not rules.
 const shieldLike = {
@@ -16,16 +11,12 @@ const shieldLike = {
 // ESM and the CommonJS build. `instanceof` fails across the two copies.
 vi.resetModules();
 const otherCopy = await import('../src/index.js');
+const otherZodCopy = await import('../src/zod.js');
 
 describe('type identifiers', () => {
   test('recognises every rule kind from another copy of graphql-guard', () => {
-    const {
-      rule: otherRule,
-      inputRule,
-      and: otherAnd,
-      allow,
-      deny,
-    } = otherCopy;
+    const { rule: otherRule, and: otherAnd, allow, deny } = otherCopy;
+    const { inputRule } = otherZodCopy;
 
     expect(otherRule()(() => true)).not.toBeInstanceOf(
       rule()(() => true).constructor,
@@ -55,21 +46,5 @@ describe('type identifiers', () => {
     expect(isLogicRule(rule()(() => true))).toBeFalsy();
     expect(isLogicRule(false)).toBeFalsy();
     expect(isLogicRule(new shieldLike.RuleAnd())).toBeFalsy();
-  });
-
-  test('isRuleFieldMap finds rule field map.', async () => {
-    expect(
-      isRuleFieldMap({
-        foo: rule()(() => true),
-        bar: and(),
-      }),
-    ).toBeTruthy();
-
-    expect(
-      isRuleFieldMap({
-        foo: rule()(() => true),
-        bar: false,
-      }),
-    ).toBeFalsy();
   });
 });

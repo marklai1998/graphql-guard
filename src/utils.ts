@@ -2,7 +2,6 @@ import { logicRuleBrand, ruleBrand } from './brand.js';
 import type {
   GuardRule,
   LogicRule as LogicRuleType,
-  RuleFieldMap,
   Rule as RuleType,
 } from './types.js';
 
@@ -13,13 +12,6 @@ export const isLogicRule = (x: any): x is LogicRuleType =>
 
 export const isRuleFunction = (x: any): x is GuardRule => {
   return isRule(x) || isLogicRule(x);
-};
-
-export const isRuleFieldMap = (x: any): x is RuleFieldMap => {
-  return (
-    typeof x === 'object' &&
-    Object.values(x).every((rule) => isRuleFunction(rule))
-  );
 };
 
 export const flattenObjectOf = <T>(
