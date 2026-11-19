@@ -11,7 +11,7 @@
     "security",
     "middleware"
   ],
-  "version": "0.0.0",
+  "version": "1.0.0",
   "author": "Mark Lai <marklai1998@pm.me>",
   "license": "MIT",
   "homepage": "https://github.com/marklai1998/graphql-guard",
