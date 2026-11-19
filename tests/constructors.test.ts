@@ -1,5 +1,15 @@
 import type * as z from 'zod';
-import { allow, and, chain, deny, not, or, rule } from '../src/constructors.js';
+import {
+  allow,
+  and,
+  chain,
+  deny,
+  not,
+  or,
+  race,
+  rule,
+} from '../src/constructors.js';
+import { ValidationError } from '../src/errors.js';
 import {
   Rule,
   RuleAnd,
@@ -9,6 +19,7 @@ import {
   RuleOr,
   RuleTrue,
 } from '../src/rules.js';
+import type { GuardRule } from '../src/types.js';
 import { InputRule, inputRule } from '../src/zod.js';
 
 describe('rule constructor', () => {
@@ -128,6 +139,24 @@ describe('logic rules constructors', () => {
   test('not correctly constructs rule not', async () => {
     const ruleA = rule()(() => true);
     expect(not(ruleA)).toEqual(new RuleNot(ruleA));
+  });
+
+  test.each([
+    ['and', and],
+    ['chain', chain],
+    ['or', or],
+    ['race', race],
+  ])('%s throws when called with no rules', (name, logic) => {
+    expect(() => logic()).toThrow(
+      new ValidationError(
+        `${name}() needs at least one rule. Use allow or deny if you meant to allow or deny everything.`,
+      ),
+    );
+  });
+
+  test('and throws when spread from an empty list', () => {
+    const rulesFromConfig: GuardRule[] = [];
+    expect(() => and(...rulesFromConfig)).toThrow(ValidationError);
   });
 });
 

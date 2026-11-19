@@ -286,6 +286,9 @@ export class RuleAnd extends LogicRule {
   ): Promise<RuleResult> {
     const result = await this.evaluate(parent, args, ctx, info, options);
 
+    // and() and chain() reject an empty rule list; deny here too in case an
+    // empty one is built from the class directly.
+    if (result.length === 0) return false;
     if (result.some((res) => res !== true)) {
       const customError = result.find((res) => res instanceof Error);
       return customError || false;
@@ -309,6 +312,9 @@ export class RuleChain extends LogicRule {
   ): Promise<RuleResult> {
     const result = await this.evaluate(parent, args, ctx, info, options);
 
+    // and() and chain() reject an empty rule list; deny here too in case an
+    // empty one is built from the class directly.
+    if (result.length === 0) return false;
     if (result.some((res) => res !== true)) {
       const customError = result.find((res) => res instanceof Error);
       return customError || false;
