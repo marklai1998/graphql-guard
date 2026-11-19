@@ -1,5 +1,4 @@
 import type { GraphQLSchema } from 'graphql';
-import hash from 'object-hash';
 import { allow } from './constructors.js';
 import { createGuardError } from './errors.js';
 import { applyRulesToSchema } from './generator.js';
@@ -29,6 +28,6 @@ export const guard = (
         : options.fallbackError === undefined
           ? defaultFallbackError
           : options.fallbackError,
-    hashFunction: options.hashFunction ?? hash,
+    hashFunction: options.hashFunction,
   });
 };

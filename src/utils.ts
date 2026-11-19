@@ -1,4 +1,4 @@
-import { logicRuleBrand, ruleBrand } from './brand.js';
+import { allowBrand, logicRuleBrand, ruleBrand } from './brand.js';
 import type {
   GuardRule,
   LogicRule as LogicRuleType,
@@ -9,6 +9,8 @@ export const isRule = (x: any): x is RuleType => x?.[ruleBrand] === true;
 
 export const isLogicRule = (x: any): x is LogicRuleType =>
   x?.[logicRuleBrand] === true;
+
+export const isAllowRule = (x: any): boolean => x?.[allowBrand] === true;
 
 export const isRuleFunction = (x: any): x is GuardRule => {
   return isRule(x) || isLogicRule(x);

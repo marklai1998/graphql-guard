@@ -60,7 +60,8 @@ describe('caching:', () => {
         test: [{ value: 'pass-A' }, { value: 'pass-A' }, { value: 'pass-B' }],
       },
     });
-    expect(allowMock).toBeCalledTimes(2);
+    // Parents are keyed by identity, so equal-looking parents don't share.
+    expect(allowMock).toBeCalledTimes(3);
   });
 
   test('Strict cache - Rule is called multiple times, based on different arguments.', async () => {
@@ -464,7 +465,8 @@ describe('legacy cache:', () => {
         test: [{ value: 'pass-A' }, { value: 'pass-A' }, { value: 'pass-B' }],
       },
     });
-    expect(allowMock).toBeCalledTimes(2);
+    // Parents are keyed by identity, so equal-looking parents don't share.
+    expect(allowMock).toBeCalledTimes(3);
   });
 
   test('No Cache - rule is reexecuted every time.', async () => {

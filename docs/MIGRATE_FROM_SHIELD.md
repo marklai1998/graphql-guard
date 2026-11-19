@@ -38,7 +38,7 @@ Contents:
 
 ## Requirements
 
-- Node 18 or above
+- Node.js 20.19+ or 22.12+, the versions that can `require()` an ES module. Node.js 18 and earlier 20.x and 22.x releases are no longer supported
 - `graphql` 14.4 or above, 15, 16 or 17. Support for `graphql` 0.11 to 0.13 and 14.0 to 14.3 is removed. `graphql` 17 itself needs Node 22 or above
 - `graphql-middleware` is no longer needed. Remove it unless you use it for other middleware
 
@@ -193,7 +193,7 @@ const isValidSignup = zodRule(
 - **Return** the error instead of throwing it. A thrown error is replaced with `fallbackError` (`Not Authorised!`)
 - A returned `GraphQLError` keeps its message and `code`, so it survives error masking in servers like GraphQL Yoga
 - `new GraphQLError(message, { extensions })` needs `graphql` 17 or a recent 16.x. Older versions ignore the options object, so pass `extensions` as the seventh positional argument there
-- `strict` hashes `parent` and `args`. To validate the same input once across the items of a list, key the cache on `args` only, for example `cache: (_parent, args) => objectHash(args)`
+- `strict` keys `parent` by identity and hashes `args`. graphql-shield hashed `parent` by value, so two parents that differed only in data the hash can't see (`#private` fields, getters, non-enumerable properties) shared a result, and one user could get another's answer. Equal-looking parent objects no longer share a cached result. To validate the same input once across the items of a list, key the cache on `args` only, for example `cache: (_parent, args) => objectHash(args)`
 
 ### Resolver Errors Pass Through
 
@@ -227,7 +227,11 @@ The `fragment` rule option and `fragmentReplacements` are removed. They existed 
 
 ### Package Entry Points
 
-The package is built with [tsdown](https://tsdown.dev) and ships `dist/index.mjs` (ESM) and `dist/index.cjs` (CommonJS) with their own type definitions. Both `import` and `require` work as before, and `graphql-guard/package.json` is still exported.
+GraphQL Guard is ESM only. It is built with [tsdown](https://tsdown.dev) and ships `dist/index.mjs` with its type definitions. graphql-shield also shipped a CommonJS build.
+
+- `import` and `require` both work. Every supported Node.js version (20.19+, 22.12+) can `require()` an ES module.
+- In TypeScript, use `"moduleResolution": "nodenext"` or `"bundler"`. A CommonJS project with `"module": "nodenext"` needs TypeScript 5.8 or later to import the package; on older versions, set `"type": "module"` in your `package.json`.
+- `graphql-guard/package.json` is still exported.
 
 ## Behavioral Changes
 
@@ -245,7 +249,7 @@ Every value in the rule tree, and `fallbackRule`, must be a rule created with gr
 
 - Rules created with graphql-shield are not accepted. Recreate them with graphql-guard. Mixing the two never worked: graphql-shield rules with a contextual or strict cache always denied the request, because their cache lives on `ctx._shield`
 - `graphql-shield` replaced the whole type with the fallback rule when one value wasn't a rule, which let every field of that type through by default. GraphQL Guard throws instead
-- Rules are recognised by a brand instead of `instanceof`, so a rule created by another copy of graphql-guard (another package in a monorepo, or the ESM and CommonJS builds in one app) is accepted
+- Rules are recognised by a brand instead of `instanceof`, so a rule created by another copy of graphql-guard (for example, another package in a monorepo) is accepted
 - `fallbackRule` is validated like the rule tree, including duplicate rule names
 
 ### Rules on Interfaces, Unions and Introspection Types

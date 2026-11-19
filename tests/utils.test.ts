@@ -7,8 +7,8 @@ const shieldLike = {
   RuleAnd: class RuleAnd {},
 };
 
-// A second, separate instance of the package, like an app that loads both the
-// ESM and the CommonJS build. `instanceof` fails across the two copies.
+// A second, separate instance of the package, like a monorepo where two
+// packages each install graphql-guard. `instanceof` fails across the copies.
 vi.resetModules();
 const otherCopy = await import('../src/index.js');
 

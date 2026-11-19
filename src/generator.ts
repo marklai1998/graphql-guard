@@ -9,8 +9,8 @@ import {
 import { ValidationError } from './errors.js';
 import {
   isPromiseLike,
+  type MaybePromise,
   type ResolveOptions,
-  RuleTrue,
   reportThrown,
   resolveRule,
 } from './rules.js';
@@ -20,7 +20,7 @@ import type {
   RuleResult,
   Rules,
 } from './types.js';
-import { isRuleFunction } from './utils.js';
+import { isAllowRule, isRuleFunction } from './utils.js';
 
 type Resolver = GraphQLFieldResolver<any, any, any>;
 
@@ -115,22 +115,31 @@ const guardResolver = (
       }
     };
 
+    // A rule that throws past its own handling (for example, in debug mode)
+    // denies with the thrown error. afterRule runs outside this handling, so a
+    // fallbackError function that throws is called once, and its error is not
+    // fed back into it.
+    const onRuleError = (err: unknown): RuleResult => {
+      if (options.debug) throw err;
+      thrown = { err };
+      return false;
+    };
+
     // Only the rule runs inside the guard's error handling. The resolver runs
     // after it, so its errors are left alone.
     const afterGuard = (res: unknown): unknown =>
       res === proceed ? runResolver(...fieldArgs) : res;
 
     // Stays synchronous unless the rule or the resolver returns a promise.
-    const res = withErrorHandling(
-      () => {
-        const res = resolveRule(rule, parent, args, ctx, info, ruleOptions);
-        return isPromiseLike(res)
-          ? Promise.resolve(res).then(afterRule)
-          : afterRule(res);
-      },
-      options,
-      fieldArgs,
-    );
+    let ruleRes: MaybePromise<RuleResult>;
+    try {
+      ruleRes = resolveRule(rule, parent, args, ctx, info, ruleOptions);
+    } catch (err) {
+      ruleRes = onRuleError(err);
+    }
+    const res = isPromiseLike(ruleRes)
+      ? Promise.resolve(ruleRes).then(undefined, onRuleError).then(afterRule)
+      : afterRule(ruleRes);
     return isPromiseLike(res)
       ? Promise.resolve(res).then(afterGuard)
       : afterGuard(res);
@@ -142,7 +151,7 @@ const wrapResolver = (
   rule: GuardRule,
   options: PopulatedOptions,
 ): Resolver =>
-  rule instanceof RuleTrue
+  isAllowRule(rule)
     ? allowResolver(resolve, options)
     : guardResolver(resolve, rule, options);
 
@@ -235,7 +244,7 @@ export const applyRulesToSchema = (
 
       // An allow field has nothing to deny, so unless its resolver errors are
       // replaced, the field is left as it is.
-      if (rule instanceof RuleTrue && !suppressesResolverErrors(options)) {
+      if (isAllowRule(rule) && !suppressesResolverErrors(options)) {
         return fieldConfig;
       }
 

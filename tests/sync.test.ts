@@ -246,7 +246,7 @@ describe('logic rules with synchronous errors', () => {
     for (const key of Object.getOwnPropertySymbols(
       Object.getPrototypeOf(foreign),
     )) {
-      if (key.description === 'resolveMaybeSync') {
+      if (key === Symbol.for('graphql-guard/resolve-maybe-sync/v1')) {
         Object.defineProperty(withoutSyncPath, key, { value: undefined });
       }
     }

@@ -205,7 +205,9 @@ const canSeeUserSensitiveData = rule({ cache: 'strict' })(
 );
 ```
 
-If a cache key can't be computed, the rule runs without the cache for that call. For example, object-hash can't hash a `parent` that holds a `Promise` or a `WeakMap`, which is common with ORMs and data loaders.
+`strict` keys `parent` by identity and hashes `args` with object-hash. Two parent objects never share a result, even if they look equal, because data that a hash can't see (`#private` fields, getters, non-enumerable properties) could tell them apart. The same parent object is still cached across its fields. If you set a custom `hashFunction`, it receives `{ parent, args }` and must tell different parents apart itself.
+
+If a cache key can't be computed, the rule runs without the cache for that call. For example, object-hash can't hash `args` that hold a file upload.
 
 > [!NOTE]
 > For backward compatibility, `{ cache: false }` maps to `no_cache` and `{ cache: true }` maps to `strict`.
@@ -401,13 +403,13 @@ import { guard } from 'graphql-guard';
 const guardedSchema = guard(schema, ruleTree, options);
 ```
 
-| Option                | Default                                              | Description                                                         |
-| --------------------- | ---------------------------------------------------- | ------------------------------------------------------------------- |
-| debug                 | `false`                                              | Toggle debug mode. Errors thrown by rules are rethrown.             |
-| fallbackRule          | `allow`                                              | Rule for every field without one.                                   |
-| fallbackError         | [`defaultFallbackError`](#defaultfallbackerror)      | Error returned on denial. A string, `Error`, `null`, or a function. |
-| hashFunction          | [object-hash](https://github.com/puleos/object-hash) | Hashing function used by the `strict` cache.                        |
-| suppressResolverError | `false`                                              | Replace errors thrown by resolvers with `fallbackError`.            |
+| Option                | Default                                                                          | Description                                                           |
+| --------------------- | -------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| debug                 | `false`                                                                          | Toggle debug mode. Errors thrown by rules are rethrown.               |
+| fallbackRule          | `allow`                                                                          | Rule for every field without one.                                     |
+| fallbackError         | [`defaultFallbackError`](#defaultfallbackerror)                                  | Error returned on denial. A string, `Error`, `null`, or a function.   |
+| hashFunction          | parent identity + [object-hash](https://github.com/puleos/object-hash) of `args` | Key function used by the `strict` cache. Receives `{ parent, args }`. |
+| suppressResolverError | `false`                                                                          | Replace errors thrown by resolvers with `fallbackError`.              |
 
 > [!NOTE]
 > GraphQL Guard leaves errors thrown by resolvers alone, so they reach the client and your server's error logging as they are, on every field. Only errors from the guard's own work, like a rule that throws, are replaced with `fallbackError`. Set `suppressResolverError: true` to replace resolver errors too, the same response a denial gets. A `fallbackError` function then receives the resolver's error as its first argument (and `null` for a plain denial). See [Custom errors](#custom-errors).
@@ -422,7 +424,7 @@ rule<Context = any, Args = any, Parent = any>(
       | 'no_cache'
       | 'contextual'
       | 'strict'
-      | ((parent: Parent, args: Args, ctx: Context, info) => string);
+      | ((parent: Parent, args: Args, ctx: Context, info) => string | number);
   },
 )(
   (parent: Parent, args: Args, ctx: Context, info) =>
@@ -430,9 +432,9 @@ rule<Context = any, Args = any, Parent = any>(
 )
 ```
 
-Wraps a validation function into a reusable rule. Return `true` to allow, `false` to deny, or an `Error`/string to deny with a custom message.
+Wraps a validation function into a reusable rule. Return `true` to allow, `false` to deny, or an `Error`/string to deny with a custom message. An empty string has no message, so it denies like `false`, with `fallbackError`.
 
-`cache` also accepts a function that returns a cache key. The rule runs once per request for each distinct key, so you can cache on just the data the rule depends on instead of hashing all of `parent` and `args` like `strict` does:
+`cache` also accepts a function that returns a cache key, a string or a number. The rule runs once per request for each distinct key, so you can cache on just the data the rule depends on instead of all of `parent` and `args` like `strict` does. If the function returns anything else (for example, an object from plain JavaScript), the rule runs without the cache for that call:
 
 ```ts
 const canEditPost = rule({ cache: (parent, args) => args.postId })(
