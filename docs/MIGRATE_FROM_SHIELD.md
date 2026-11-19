@@ -2,11 +2,12 @@
 
 GraphQL Guard 1.x is a fork of `graphql-shield@7.x` (based on `7.6.5`, the latest 7.x release). Rules, caching, logic rules and fallbacks work as before. GraphQL Guard no longer depends on `graphql-middleware`: `guard` takes your schema and returns a guarded one. Most projects only need to update the package name, replace `shield` and `applyMiddleware` with `guard`, and check the requirements below.
 
-This guide has three parts:
+This guide has four parts:
 
 - **[API Changes](#api-changes)**: code you need to change.
 - **[Behavioral Changes](#behavioral-changes)**: the same code behaves differently, mostly where graphql-shield let a request through by mistake.
 - **[Fixed graphql-shield Issues](#fixed-graphql-shield-issues)**: open or unreleased upstream issues that GraphQL Guard fixes.
+- **[Answered in the Docs](#answered-in-the-docs)**: common upstream questions that the README now answers.
 
 Contents:
 
@@ -33,6 +34,7 @@ Contents:
   - [Anonymous Rule Names](#anonymous-rule-names)
   - [Validation Error Messages](#validation-error-messages)
 - [Fixed graphql-shield Issues](#fixed-graphql-shield-issues)
+- [Answered in the Docs](#answered-in-the-docs)
 
 ## Requirements
 
@@ -318,3 +320,15 @@ These [graphql-shield issues](https://github.com/maticzav/graphql-shield/issues)
 | [#1528](https://github.com/maticzav/graphql-shield/issues/1528) Initializing shield adding significant overhead even with empty middleware            | Same as #812                                                                     |
 | [#1560](https://github.com/maticzav/graphql-shield/issues/1560) Support for node v23 or higher                                                        | No `util.isUndefined`, which Node 23 removed (fixed upstream but never released) |
 | [#1561](https://github.com/maticzav/graphql-shield/issues/1561) isUndefined import error                                                              | Same as #1560                                                                    |
+
+## Answered in the Docs
+
+These [graphql-shield issues](https://github.com/maticzav/graphql-shield/issues) are questions, not bugs. GraphQL Guard behaves the same way, and the README now answers them.
+
+| Issue                                                                                                                       | Answer                                              |
+| --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| [#235](https://github.com/maticzav/graphql-shield/issues/235) How should I unit test a rule?                                | [Testing rules](../README.md#testing-rules)         |
+| [#641](https://github.com/maticzav/graphql-shield/issues/641) When using '\*': deny it's blocking apollo federation fields  | [Apollo Federation](../README.md#apollo-federation) |
+| [#1111](https://github.com/maticzav/graphql-shield/issues/1111) Issues with \_\_resolveReference in Apollo Federated Schema | Same as #641                                        |
+| [#1218](https://github.com/maticzav/graphql-shield/issues/1218) GraphQL Shield to Work with Apollo Federation               | Same as #641                                        |
+| [#1387](https://github.com/maticzav/graphql-shield/issues/1387) Apollo Federation and Shield Question                       | Same as #641                                        |
