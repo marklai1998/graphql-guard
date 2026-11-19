@@ -1,6 +1,11 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
-import { getIntrospectionQuery, graphql } from 'graphql';
-import { deny, rule } from '../src/index.js';
+import {
+  type GraphQLFieldResolver,
+  type GraphQLResolveInfo,
+  getIntrospectionQuery,
+  graphql,
+} from 'graphql';
+import { allow, deny, rule } from '../src/index.js';
 import { applyGuard } from './helpers.js';
 
 describe('generates correct middleware', () => {
@@ -410,5 +415,116 @@ describe('introspection', () => {
     });
 
     expect(seen.mock.calls.flat()).toEqual(['Query.a']);
+  });
+});
+
+describe('allow', () => {
+  const schema = makeExecutableSchema({
+    typeDefs: `
+      type Query {
+        a: String
+        async: String
+        throws: String
+        rejects: String
+      }
+    `,
+    resolvers: {
+      Query: {
+        a: () => 'a',
+        async: async () => 'async',
+        throws: () => {
+          throw new Error('internal');
+        },
+        rejects: async () => {
+          throw new Error('internal');
+        },
+      },
+    },
+  });
+
+  const info = {} as GraphQLResolveInfo;
+  const resolverOf = (s: typeof schema, field: string) =>
+    s.getQueryType()?.getFields()[field].resolve as GraphQLFieldResolver<
+      unknown,
+      unknown
+    >;
+
+  // An async wrapper would make every allowed field a promise, which makes
+  // large lists of allowed fields several times slower to execute.
+  test('keeps a synchronous resolver synchronous', () => {
+    const guarded = applyGuard(schema, { Query: { a: allow } });
+
+    expect(resolverOf(guarded, 'a')({}, {}, {}, info)).toBe('a');
+  });
+
+  test('keeps a synchronous resolver synchronous as the fallback rule', () => {
+    const guarded = applyGuard(schema, {});
+
+    expect(resolverOf(guarded, 'a')({}, {}, {}, info)).toBe('a');
+  });
+
+  test('passes an empty context when there is none', () => {
+    const resolve = vi.fn();
+    const guarded = applyGuard(
+      makeExecutableSchema({
+        typeDefs: 'type Query { a: String }',
+        resolvers: { Query: { a: resolve } },
+      }),
+      {},
+    );
+
+    resolverOf(guarded, 'a')({}, {}, undefined, info);
+
+    expect(resolve.mock.calls[0][2]).toEqual({});
+  });
+
+  test('resolves fields of every kind', async () => {
+    const res = await graphql({
+      schema: applyGuard(schema, {}),
+      source: '{ a async }',
+    });
+
+    expect(res).toEqual({ data: { a: 'a', async: 'async' } });
+  });
+
+  test('replaces errors thrown and rejected by resolvers with the fallback error', async () => {
+    const res = await graphql({
+      schema: applyGuard(schema, {}, { fallbackError: 'fallback' }),
+      source: '{ throws rejects }',
+    });
+
+    expect(res.data).toEqual({ throws: null, rejects: null });
+    expect(res.errors?.map((e) => e.message)).toEqual(['fallback', 'fallback']);
+  });
+
+  test('passes resolver errors to a fallbackError function', async () => {
+    const fallbackError = vi.fn(async (_err: unknown) => new Error('mapped'));
+    const res = await graphql({
+      schema: applyGuard(schema, {}, { fallbackError }),
+      source: '{ throws rejects }',
+    });
+
+    expect(res.errors?.map((e) => e.message)).toEqual(['mapped', 'mapped']);
+    expect(
+      fallbackError.mock.calls.map(([err]) => (err as Error).message),
+    ).toEqual(['internal', 'internal']);
+  });
+
+  test('returns resolver errors with allowExternalErrors', async () => {
+    const res = await graphql({
+      schema: applyGuard(schema, {}, { allowExternalErrors: true }),
+      source: '{ throws rejects }',
+    });
+
+    expect(res.errors?.map((e) => e.message)).toEqual(['internal', 'internal']);
+  });
+
+  test('rethrows resolver errors in debug mode', async () => {
+    const res = await graphql({
+      schema: applyGuard(schema, {}, { debug: true }),
+      source: '{ throws rejects }',
+    });
+
+    expect(res.errors?.map((e) => e.message)).toEqual(['internal', 'internal']);
   });
 });

@@ -7,6 +7,7 @@ import {
   isObjectType,
 } from 'graphql';
 import { ValidationError } from './errors.js';
+import { RuleTrue } from './rules.js';
 import type {
   GuardContext,
   GuardRule,
@@ -16,6 +17,32 @@ import type {
 import { isRuleFunction } from './utils.js';
 
 type Resolver = GraphQLFieldResolver<any, any, any>;
+
+/**
+ * What a guarded field returns when its rule or its resolver throws: the
+ * original error in debug mode, the error itself with allowExternalErrors,
+ * and the fallback error otherwise.
+ */
+const handleError = (
+  err: unknown,
+  options: PopulatedOptions,
+  ...[parent, args, ctx, info]: Parameters<Resolver>
+) => {
+  if (options.debug) {
+    throw err;
+  } else if (options.allowExternalErrors) {
+    // Returning a non-Error would make it field data, so wrap it. The value
+    // stays out of the message, as it may hold internal details.
+    return err instanceof Error
+      ? err
+      : new Error('Unexpected error value', { cause: err });
+  } else {
+    if (typeof options.fallbackError === 'function') {
+      return options.fallbackError(err, parent, args, ctx, info);
+    }
+    return options.fallbackError;
+  }
+};
 
 const guardResolver =
   (resolve: Resolver, rule: GuardRule, options: PopulatedOptions): Resolver =>
@@ -38,22 +65,48 @@ const guardResolver =
         return res;
       }
     } catch (err) {
-      if (options.debug) {
-        throw err;
-      } else if (options.allowExternalErrors) {
-        // Returning a non-Error would make it field data, so wrap it. The value
-        // stays out of the message, as it may hold internal details.
-        return err instanceof Error
-          ? err
-          : new Error('Unexpected error value', { cause: err });
-      } else {
-        if (typeof options.fallbackError === 'function') {
-          return await options.fallbackError(err, parent, args, ctx, info);
-        }
-        return options.fallbackError;
-      }
+      return await handleError(err, options, parent, args, ctx, info);
     }
   };
+
+/**
+ * Wraps a field whose rule is `allow`. There is no rule to wait for, so a
+ * synchronous resolver stays synchronous. An async wrapper would turn every
+ * field into a promise, and graphql-js completes promises far more slowly than
+ * plain values, which makes large lists of allowed fields several times slower.
+ * Errors the resolver throws are still handled like guardResolver handles them.
+ */
+const allowResolver =
+  (resolve: Resolver, options: PopulatedOptions): Resolver =>
+  (parent, args, ctx: GuardContext, info) => {
+    if (!ctx) {
+      ctx = {} as GuardContext;
+    }
+
+    try {
+      const res = resolve(parent, args, ctx, info);
+      if (isPromiseLike(res)) {
+        return Promise.resolve(res).catch((err) =>
+          handleError(err, options, parent, args, ctx, info),
+        );
+      }
+      return res;
+    } catch (err) {
+      return handleError(err, options, parent, args, ctx, info);
+    }
+  };
+
+const isPromiseLike = (value: unknown): value is PromiseLike<unknown> =>
+  typeof (value as PromiseLike<unknown> | null)?.then === 'function';
+
+const wrapResolver = (
+  resolve: Resolver,
+  rule: GuardRule,
+  options: PopulatedOptions,
+): Resolver =>
+  rule instanceof RuleTrue
+    ? allowResolver(resolve, options)
+    : guardResolver(resolve, rule, options);
 
 const ruleForField = (
   rules: Rules,
@@ -152,9 +205,9 @@ export const applyRulesToSchema = (
       if (fieldConfig.subscribe) {
         return {
           ...fieldConfig,
-          subscribe: guardResolver(fieldConfig.subscribe, rule, options),
+          subscribe: wrapResolver(fieldConfig.subscribe, rule, options),
           ...(hasCustomResolve && {
-            resolve: guardResolver(
+            resolve: wrapResolver(
               fieldConfig.resolve as Resolver,
               rule,
               options,
@@ -165,7 +218,7 @@ export const applyRulesToSchema = (
 
       return {
         ...fieldConfig,
-        resolve: guardResolver(
+        resolve: wrapResolver(
           fieldConfig.resolve ?? defaultFieldResolver,
           rule,
           options,
