@@ -8,7 +8,6 @@ import { applyGuard } from './helpers.js';
 // ESM and the CommonJS build.
 vi.resetModules();
 const otherCopy = await import('../src/index.js');
-const otherZodCopy = await import('../src/zod.js');
 
 const execute = async (
   schema: ReturnType<typeof applyGuard>,
@@ -36,11 +35,11 @@ describe('rules from another copy of graphql-guard', () => {
     },
   });
 
-  test('inputRule and deny are enforced', async () => {
+  test('rule and deny are enforced', async () => {
     const guarded = applyGuard(schema, {
       Query: allow,
       Mutation: {
-        signup: otherZodCopy.inputRule()((z) => z.object({ email: z.email() })),
+        signup: otherCopy.rule()((_parent, args) => args.email.includes('@')),
         closed: otherCopy.deny,
       },
     });
@@ -82,7 +81,7 @@ describe('values that are not rules', () => {
   ])('throws for %s', (_label, rules, path) => {
     expect(() => applyGuard(schema, rules as never)).toThrow(
       new ValidationError(
-        `It seems like ${path} is not a graphql-guard rule. Create rules with rule(), inputRule(), allow, deny or the logic rules from graphql-guard. Rules created with graphql-shield are not supported.`,
+        `It seems like ${path} is not a graphql-guard rule. Create rules with rule(), allow, deny or the logic rules from graphql-guard. Rules created with graphql-shield are not supported.`,
       ),
     );
   });

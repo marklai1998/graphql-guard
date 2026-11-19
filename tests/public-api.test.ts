@@ -12,7 +12,6 @@ import {
   rule,
   ValidationError,
 } from '../src/index.js';
-import { inputRule } from '../src/zod.js';
 
 const schema = makeExecutableSchema({
   typeDefs: /* GraphQL */ `
@@ -114,13 +113,6 @@ describe('types', () => {
 
     // @ts-expect-error ctx.user is typed, so unknown properties fail
     rule<Ctx>()((_parent, _args, ctx) => ctx.nope);
-  });
-
-  test('inputRule() types ctx from its type parameter', () => {
-    inputRule<{ locale: string }>()((z, ctx) => {
-      expectTypeOf(ctx).toEqualTypeOf<{ locale: string }>();
-      return z.object({});
-    });
   });
 
   test('option and function types are exported', () => {

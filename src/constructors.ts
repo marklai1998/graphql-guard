@@ -38,11 +38,11 @@ export const rule =
     if (typeof name === 'object') {
       options = name;
       name = anonymousName('rule');
-    } else if (typeof name === 'string') {
-      options = options || {};
     } else {
-      name = anonymousName('rule');
-      options = {};
+      // rule(undefined, options) keeps its options, so a wrapper can pass an
+      // optional name straight through.
+      options = options || {};
+      if (typeof name !== 'string') name = anonymousName('rule');
     }
 
     return new Rule(name, func as RuleFunction, {

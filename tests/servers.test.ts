@@ -1,10 +1,9 @@
 import { ApolloServer } from '@apollo/server';
 import { makeExecutableSchema } from '@graphql-tools/schema';
-import type { GraphQLSchema } from 'graphql';
+import { GraphQLError, type GraphQLSchema } from 'graphql';
 import { createYoga } from 'graphql-yoga';
 
 import { allow, and, deny, or, rule } from '../src/index.js';
-import { inputRule } from '../src/zod.js';
 import { applyGuard } from './helpers.js';
 
 /* Users and context */
@@ -91,8 +90,13 @@ const createGuardedSchema = (): GraphQLSchema =>
         email: or(isAdmin, isSelf),
       },
       Mutation: {
-        signup: inputRule()((z) =>
-          z.object({ email: z.email('It has to be an email!') }),
+        // The inputRule recipe from the migration guide, without a validation library
+        signup: rule({ cache: 'strict' })((_parent, args) =>
+          args.email.includes('@')
+            ? true
+            : new GraphQLError('It has to be an email!', {
+                extensions: { code: 'BAD_USER_INPUT' },
+              }),
         ),
       },
     },
@@ -239,7 +243,7 @@ describe.each(servers)('$name', ({ create }) => {
     expect(messages(result)).toEqual(['Not Authorised!']);
   });
 
-  test('validates mutation arguments with inputRule', async () => {
+  test('passes a GraphQLError returned by a rule through with its code', async () => {
     const mutation = 'mutation ($email: String!) { signup(email: $email) }';
 
     const valid = await execute(mutation, {
