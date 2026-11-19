@@ -7,37 +7,94 @@ import {
   isObjectType,
 } from 'graphql';
 import { ValidationError } from './errors.js';
-import { type ResolveOptions, reportThrown } from './rules.js';
+import {
+  isPromiseLike,
+  type ResolveOptions,
+  RuleTrue,
+  reportThrown,
+  resolveRule,
+} from './rules.js';
 import type {
-  GuardContext,
   GuardRule,
   PopulatedOptions,
+  RuleResult,
   Rules,
 } from './types.js';
 import { isRuleFunction } from './utils.js';
 
 type Resolver = GraphQLFieldResolver<any, any, any>;
 
+type FieldArgs = Parameters<Resolver>;
+
+// Called when a rule or resolver throws: rethrows in debug mode, passes the
+// error through with allowExternalErrors, and otherwise returns fallbackError.
+const handleError = (
+  err: unknown,
+  options: PopulatedOptions,
+  [parent, args, ctx, info]: FieldArgs,
+): unknown => {
+  if (options.debug) {
+    throw err;
+  } else if (options.allowExternalErrors) {
+    // Returning a non-Error would make it field data, so wrap it. The value
+    // stays out of the message, as it may hold internal details.
+    return err instanceof Error
+      ? err
+      : new Error('Unexpected error value', { cause: err });
+  } else {
+    if (typeof options.fallbackError === 'function') {
+      return options.fallbackError(err, parent, args, ctx, info);
+    }
+    return options.fallbackError;
+  }
+};
+
+// Runs `run` and handles anything it throws or rejects with. A synchronous
+// result is returned as is, so no promise is created for it.
+const withErrorHandling = (
+  run: () => unknown,
+  options: PopulatedOptions,
+  fieldArgs: FieldArgs,
+): unknown => {
+  try {
+    const res = run();
+    return isPromiseLike(res)
+      ? Promise.resolve(res).then(undefined, (err) =>
+          handleError(err, options, fieldArgs),
+        )
+      : res;
+  } catch (err) {
+    return handleError(err, options, fieldArgs);
+  }
+};
+
+// Used for fields whose rule is allow: there is no rule to run, but errors
+// thrown by the resolver are still handled like on every other field.
+const allowResolver =
+  (resolve: Resolver, options: PopulatedOptions): Resolver =>
+  (...fieldArgs) =>
+    withErrorHandling(() => resolve(...fieldArgs), options, fieldArgs);
+
 const guardResolver =
   (resolve: Resolver, rule: GuardRule, options: PopulatedOptions): Resolver =>
-  async (parent, args, ctx: GuardContext, info) => {
-    try {
-      // The first error a rule threw, if any, so a denial caused by a thrown
-      // error passes it to fallbackError, even from inside and/chain/or.
-      let thrown: { err: unknown } | undefined;
-      const ruleOptions: ResolveOptions = {
-        ...options,
-        [reportThrown]: (err) => {
-          thrown ??= { err };
-        },
-      };
-      const res = await rule.resolve(parent, args, ctx, info, ruleOptions);
+  (...fieldArgs) => {
+    const [parent, args, ctx, info] = fieldArgs;
+    // The first error a rule threw, if any, so a denial caused by a thrown
+    // error passes it to fallbackError, even from inside and/chain/or.
+    let thrown: { err: unknown } | undefined;
+    const ruleOptions: ResolveOptions = {
+      ...options,
+      [reportThrown]: (err) => {
+        thrown ??= { err };
+      },
+    };
 
+    const afterRule = (res: RuleResult): unknown => {
       if (res === true) {
-        return await resolve(parent, args, ctx, info);
+        return resolve(...fieldArgs);
       } else if (res === false) {
         if (typeof options.fallbackError === 'function') {
-          return await options.fallbackError(
+          return options.fallbackError(
             thrown ? thrown.err : null,
             parent,
             args,
@@ -49,23 +106,29 @@ const guardResolver =
       } else {
         return res;
       }
-    } catch (err) {
-      if (options.debug) {
-        throw err;
-      } else if (options.allowExternalErrors) {
-        // Returning a non-Error would make it field data, so wrap it. The value
-        // stays out of the message, as it may hold internal details.
-        return err instanceof Error
-          ? err
-          : new Error('Unexpected error value', { cause: err });
-      } else {
-        if (typeof options.fallbackError === 'function') {
-          return await options.fallbackError(err, parent, args, ctx, info);
-        }
-        return options.fallbackError;
-      }
-    }
+    };
+
+    // Stays synchronous unless the rule or the resolver returns a promise.
+    return withErrorHandling(
+      () => {
+        const res = resolveRule(rule, parent, args, ctx, info, ruleOptions);
+        return isPromiseLike(res)
+          ? Promise.resolve(res).then(afterRule)
+          : afterRule(res);
+      },
+      options,
+      fieldArgs,
+    );
   };
+
+const wrapResolver = (
+  resolve: Resolver,
+  rule: GuardRule,
+  options: PopulatedOptions,
+): Resolver =>
+  rule instanceof RuleTrue
+    ? allowResolver(resolve, options)
+    : guardResolver(resolve, rule, options);
 
 const ruleForField = (
   rules: Rules,
@@ -154,6 +217,10 @@ export const applyRulesToSchema = (
         options.fallbackRule,
       );
 
+      // With allow and debug, the guard would neither deny nor handle errors,
+      // so the field is left as it is.
+      if (rule instanceof RuleTrue && options.debug) return fieldConfig;
+
       const hasCustomResolve =
         fieldConfig.resolve !== undefined &&
         fieldConfig.resolve !== defaultFieldResolver;
@@ -164,9 +231,9 @@ export const applyRulesToSchema = (
       if (fieldConfig.subscribe) {
         return {
           ...fieldConfig,
-          subscribe: guardResolver(fieldConfig.subscribe, rule, options),
+          subscribe: wrapResolver(fieldConfig.subscribe, rule, options),
           ...(hasCustomResolve && {
-            resolve: guardResolver(
+            resolve: wrapResolver(
               fieldConfig.resolve as Resolver,
               rule,
               options,
@@ -177,7 +244,7 @@ export const applyRulesToSchema = (
 
       return {
         ...fieldConfig,
-        resolve: guardResolver(
+        resolve: wrapResolver(
           fieldConfig.resolve ?? defaultFieldResolver,
           rule,
           options,
