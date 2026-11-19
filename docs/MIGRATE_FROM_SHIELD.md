@@ -23,7 +23,6 @@ Contents:
   - [Package Entry Points](#package-entry-points)
 - [Behavioral Changes](#behavioral-changes)
   - [Errors Are `GraphQLError`s](#errors-are-graphqlerrors)
-  - [Rules Are Recognised by Their API](#rules-are-recognised-by-their-api)
   - [Rules on Interfaces, Unions and Introspection Types](#rules-on-interfaces-unions-and-introspection-types)
   - [Logic Rules Need at Least One Rule](#logic-rules-need-at-least-one-rule)
   - [`not` Denies When the Rule Throws](#not-denies-when-the-rule-throws)
@@ -242,18 +241,6 @@ Errors created by GraphQL Guard are now `GraphQLError`s with the `FORBIDDEN` cod
 Servers that hide unexpected errors now show them. With `graphql-shield`, GraphQL Yoga's default error masking turned every denial into `Unexpected error.` If you turned masking off for that reason, you can turn it back on.
 
 A plain `Error` returned from a rule or a custom `fallbackError` is still passed through as is. Return a string or a `GraphQLError` if it should survive error masking.
-
-### Rules Are Recognised by Their API
-
-Every value in the rule tree, and `fallbackRule`, must be a rule. A rule is any object with the rule API: `name`, `equals()` and `resolve()`, or for a logic rule `getRules()`, `evaluate()` and `resolve()`. Anything else throws a `ValidationError` that names the field, for example `It seems like Query.users is not a rule.` `ValidationError` is exported, so you can check for it with `instanceof`.
-
-- Rules are recognised by their API instead of `instanceof` or a brand, so a rule from another copy of graphql-guard (for example, another package in a monorepo) is accepted
-- Rules created with graphql-shield are accepted too, so you can migrate one rule at a time. Their TypeScript types expect graphql-shield's own options, so they need a cast (`as unknown as GuardRule`). Recreate them with graphql-guard when you can:
-  - graphql-shield rules with a `contextual`, `strict` or custom cache always deny, because their cache lives on `ctx._shield`
-  - A graphql-shield rule that throws resolves to `false` itself, so `not()` around it allows the request instead of denying it
-- Only this copy's `allow` leaves a field unwrapped. `allow` from another copy, or from graphql-shield, still allows the field, but the field is wrapped like any other rule
-- `graphql-shield` replaced the whole type with the fallback rule when one value wasn't a rule, which let every field of that type through by default. GraphQL Guard throws instead
-- `fallbackRule` is validated like the rule tree, including duplicate rule names
 
 ### Rules on Interfaces, Unions and Introspection Types
 
