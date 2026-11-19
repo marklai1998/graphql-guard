@@ -22,7 +22,7 @@ export const flattenObjectOf = <T>(
     const val = obj[key];
     if (f(val)) {
       return [...acc, val];
-    } else if (typeof val === 'object' && !f(val)) {
+    } else if (val !== null && typeof val === 'object') {
       return [...acc, ...flattenObjectOf(val, f)];
     } else {
       return acc;
