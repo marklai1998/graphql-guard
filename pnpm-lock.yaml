@@ -207,8 +207,8 @@ importers:
         specifier: 22.20.5
         version: 22.20.5
       '@types/object-hash':
-        specifier: 2.2.1
-        version: 2.2.1
+        specifier: 3.0.6
+        version: 3.0.6
       '@vitest/coverage-v8':
         specifier: 5.1.0
         version: 5.1.0(vitest@5.1.0)
@@ -941,8 +941,8 @@ packages:
   '@types/node@22.20.5':
     resolution: {integrity: sha512-U2+DNr+wSjpsTS/wZGYHq7GcwfuSmKiKvoPvK22zwTlRhU91yOniN4qRR5KhIjvif7ysw/dz/hKmfDH0Ris4aA==}
 
-  '@types/object-hash@2.2.1':
-    resolution: {integrity: sha512-i/rtaJFCsPljrZvP/akBqEwUP2y5cZLOmvO+JaYnz01aPknrQ+hB5MRcO7iqCUsFaYfTG8kGfKUyboA07xeDHQ==}
+  '@types/object-hash@3.0.6':
+    resolution: {integrity: sha512-fOBV8C1FIu2ELinoILQ+ApxcUKz4ngq+IWUYrxSGjXzzjUALijilampwkMgEtJ+h2njAW3pi853QpzNVCHB73w==}
 
   '@types/yup@0.29.13':
     resolution: {integrity: sha512-qRyuv+P/1t1JK1rA+elmK1MmCL1BapEzKKfbEhDBV/LMMse4lmhZ/XbgETI39JveDJRpLjmToOI6uFtMW/WR2g==}
@@ -2635,7 +2635,7 @@ snapshots:
     dependencies:
       undici-types: 6.21.0
 
-  '@types/object-hash@2.2.1': {}
+  '@types/object-hash@3.0.6': {}
 
   '@types/yup@0.29.13': {}
 
