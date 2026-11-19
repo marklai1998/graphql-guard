@@ -15,6 +15,7 @@ Contents:
   - [Update Import](#update-import)
   - [Replace `shield` and `applyMiddleware` with `guard`](#replace-shield-and-applymiddleware-with-guard)
   - [Rename Types](#rename-types)
+  - [`fallbackError` Accepts `null`](#fallbackerror-accepts-null)
   - [Replace Yup with Zod in `inputRule`](#replace-yup-with-zod-in-inputrule)
   - [Fragments Removed](#fragments-removed)
   - [Package Entry Points](#package-entry-points)
@@ -121,6 +122,15 @@ const permissions: Rules = { Query: { users: isAdmin } };
 ```
 
 `rule` now takes optional type parameters for the context, arguments and parent: `rule<Context, Args, Parent>()`. They are new, so existing code needs no change.
+
+### `fallbackError` Accepts `null`
+
+`fallbackError` can be `null`, and a `fallbackError` function can return `null`, so denied fields resolve to `null` without an error. In graphql-shield, `null` worked at runtime but failed type checking. If you cast it (`null as any`, `@ts-expect-error`), remove the cast.
+
+```diff
+- guard(schema, rules, { fallbackError: null as any });
++ guard(schema, rules, { fallbackError: null });
+```
 
 ### Replace Yup with Zod in `inputRule`
 
@@ -277,3 +287,4 @@ These [graphql-shield issues](https://github.com/maticzav/graphql-shield/issues)
 | [#1087](https://github.com/maticzav/graphql-shield/issues/1087) Build error with yup latest version                                        | Same as #781                                                                                                 |
 | [#1510](https://github.com/maticzav/graphql-shield/issues/1510) Update yup@1.x to avoid @types/lodash and babel runtime in production deps | Same as #781                                                                                                 |
 | [#739](https://github.com/maticzav/graphql-shield/issues/739) Error thrown inside an async rule are not sent to the fallbackError function | `fallbackError` receives errors thrown by rules, including inside logic rules                                |
+| [#988](https://github.com/maticzav/graphql-shield/issues/988) Add support for a 'silent' mode                                              | `fallbackError` accepts `null`                                                                               |

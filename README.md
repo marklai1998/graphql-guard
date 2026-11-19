@@ -253,6 +253,14 @@ const guardedSchema = guard(schema, rules, {
 
 The default error is exported as [`defaultFallbackError`](#defaultfallbackerror), so you can reuse it or check for it.
 
+To deny quietly, set `fallbackError` to `null` (or return `null` from the function). Denied fields resolve to `null` with no error, which is useful with Apollo Federation. The field must be nullable: a non-null field still produces GraphQL's non-null error.
+
+```ts
+const guardedSchema = guard(schema, rules, {
+  fallbackError: null,
+});
+```
+
 > [!TIP]
 > Set `debug: true` to see errors thrown in resolvers, or `allowExternalErrors: true` to pass them through to the client.
 
@@ -320,13 +328,13 @@ import { guard } from 'graphql-guard';
 const guardedSchema = guard(schema, ruleTree, options);
 ```
 
-| Option              | Default                                              | Description                                                 |
-| ------------------- | ---------------------------------------------------- | ----------------------------------------------------------- |
-| allowExternalErrors | `false`                                              | Pass errors thrown in resolvers through to the client.      |
-| debug               | `false`                                              | Toggle debug mode.                                          |
-| fallbackRule        | `allow`                                              | Rule for every field without one.                           |
-| fallbackError       | [`defaultFallbackError`](#defaultfallbackerror)      | Error returned on denial. A string, `Error`, or a function. |
-| hashFunction        | [object-hash](https://github.com/puleos/object-hash) | Hashing function used by the `strict` cache.                |
+| Option              | Default                                              | Description                                                         |
+| ------------------- | ---------------------------------------------------- | ------------------------------------------------------------------- |
+| allowExternalErrors | `false`                                              | Pass errors thrown in resolvers through to the client.              |
+| debug               | `false`                                              | Toggle debug mode.                                                  |
+| fallbackRule        | `allow`                                              | Rule for every field without one.                                   |
+| fallbackError       | [`defaultFallbackError`](#defaultfallbackerror)      | Error returned on denial. A string, `Error`, `null`, or a function. |
+| hashFunction        | [object-hash](https://github.com/puleos/object-hash) | Hashing function used by the `strict` cache.                        |
 
 > [!WARNING]
 > By default, errors **thrown by resolvers** are caught and replaced with `fallbackError` (`Not Authorised!`), the same response a denial gets. The original error is not rethrown, so it never reaches your server's error logging and real bugs look like permission failures. Use `debug: true` to rethrow them, `allowExternalErrors: true` to pass them through to the client, or a `fallbackError` function to log them (it receives the error thrown by a resolver or rule as its first argument, and `null` for a plain denial). See [Custom errors](#custom-errors).

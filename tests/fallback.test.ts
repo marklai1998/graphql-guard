@@ -712,6 +712,68 @@ describe('options', () => {
     expect(res.errors?.map((error) => error.message)).toEqual(['Denied!']);
     expect(options).toEqual({ fallbackError: 'Denied!' });
   });
+
+  describe('null fallbackError', () => {
+    const typeDefs = `
+      type Query {
+        denied: String
+        failing: String
+        allowed: String
+      }
+    `;
+    const resolvers = {
+      Query: {
+        denied: () => 'secret',
+        failing: () => {
+          throw new Error('boom');
+        },
+        allowed: () => 'public',
+      },
+    };
+    const query = `
+      query {
+        denied
+        failing
+        allowed
+      }
+    `;
+
+    test('resolves denied and failing fields to null without errors.', async () => {
+      const schema = applyGuard(
+        makeExecutableSchema({ typeDefs, resolvers }),
+        { Query: { denied: deny, failing: allow, allowed: allow } },
+        { fallbackError: null },
+      );
+
+      const res = await graphql({ schema, source: query });
+
+      expect(res.errors).toBeUndefined();
+      expect(res.data).toEqual({
+        denied: null,
+        failing: null,
+        allowed: 'public',
+      });
+    });
+
+    test('a fallbackError function can return null.', async () => {
+      const schema = applyGuard(
+        makeExecutableSchema({ typeDefs, resolvers }),
+        { Query: { denied: deny, failing: allow, allowed: allow } },
+        {
+          fallbackError: (err) => (err === null ? null : new Error('failed')),
+        },
+      );
+
+      const res = await graphql({ schema, source: query });
+
+      expect(res.errors?.map((error) => error.message)).toEqual(['failed']);
+      expect(res.data).toEqual({
+        denied: null,
+        failing: null,
+        allowed: 'public',
+      });
+    });
+  });
 });
 
 describe('fallbackError receives errors thrown by rules', () => {

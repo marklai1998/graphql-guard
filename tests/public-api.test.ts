@@ -133,4 +133,10 @@ describe('types', () => {
     };
     expectTypeOf(options).toMatchTypeOf<Options>();
   });
+
+  test('fallbackError accepts null', () => {
+    expectTypeOf<null>().toMatchTypeOf<Options['fallbackError']>();
+    const mapper: FallbackErrorMapperType = () => null;
+    expectTypeOf(mapper).toMatchTypeOf<Options['fallbackError']>();
+  });
 });
