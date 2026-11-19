@@ -22,6 +22,11 @@ export type Options = {
   hashFunction?: HashFunction;
 };
 
+/**
+ * The guard's options after defaults are applied. This is the last argument of
+ * `Rule.resolve` and `LogicRule.resolve` / `evaluate`, for calling a rule
+ * directly (for example in a test).
+ */
 export type PopulatedOptions = {
   debug: boolean;
   suppressResolverError: boolean;

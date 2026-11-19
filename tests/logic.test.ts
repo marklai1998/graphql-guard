@@ -1,7 +1,15 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { type GraphQLResolveInfo, graphql } from 'graphql';
 import { chain, race } from '../src/constructors.js';
-import { allow, and, deny, not, or, rule } from '../src/index.js';
+import {
+  allow,
+  and,
+  deny,
+  not,
+  or,
+  type PopulatedOptions,
+  rule,
+} from '../src/index.js';
 import { LogicRule } from '../src/rules.js';
 import { applyGuard } from './helpers.js';
 
@@ -581,7 +589,7 @@ describe('internal execution', () => {
     expect(res.errors?.length).toBe(1);
   });
 
-  const options = {
+  const options: PopulatedOptions = {
     suppressResolverError: false,
     debug: false,
     fallbackRule: allow,
