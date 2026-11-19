@@ -12,10 +12,7 @@ const typeDefs = readFileSync(
   'utf8',
 );
 
-// Pass resolver errors such as an unknown product through to the client.
-const schema = guard(createSchema({ typeDefs, resolvers }), permissions, {
-  allowExternalErrors: true,
-});
+const schema = guard(createSchema({ typeDefs, resolvers }), permissions);
 
 const yoga = createYoga({
   schema,

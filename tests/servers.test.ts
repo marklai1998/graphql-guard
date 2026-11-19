@@ -119,54 +119,60 @@ type Execute = (
   options?: { as?: keyof typeof users; variables?: Record<string, unknown> },
 ) => Promise<Result>;
 
-const servers: { name: string; create: (schema: GraphQLSchema) => Execute }[] =
-  [
-    {
-      name: 'GraphQL Yoga',
-      create: (schema) => {
-        const yoga = createYoga({
-          schema,
-          context: ({ request }) =>
-            contextFromHeader(request.headers.get('authorization')),
-          // Default error masking stays on: guard errors must still reach the client
-          logging: false,
+const servers: {
+  name: string;
+  create: (schema: GraphQLSchema) => Execute;
+  // What the client sees when a resolver throws, after the server's own error handling
+  resolverErrorMessage: string;
+}[] = [
+  {
+    name: 'GraphQL Yoga',
+    resolverErrorMessage: 'Unexpected error.',
+    create: (schema) => {
+      const yoga = createYoga({
+        schema,
+        context: ({ request }) =>
+          contextFromHeader(request.headers.get('authorization')),
+        // Default error masking stays on: guard errors must still reach the client
+        logging: false,
+      });
+      return async (query, { as, variables } = {}) => {
+        const response = await yoga.fetch('http://yoga/graphql', {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            ...(as ? { authorization: as } : {}),
+          },
+          body: JSON.stringify({ query, variables }),
         });
-        return async (query, { as, variables } = {}) => {
-          const response = await yoga.fetch('http://yoga/graphql', {
-            method: 'POST',
-            headers: {
-              'content-type': 'application/json',
-              ...(as ? { authorization: as } : {}),
-            },
-            body: JSON.stringify({ query, variables }),
-          });
-          return response.json() as Promise<Result>;
-        };
-      },
+        return response.json() as Promise<Result>;
+      };
     },
-    {
-      name: 'Apollo Server',
-      create: (schema) => {
-        const server = new ApolloServer<Context>({ schema });
-        return async (query, { as, variables } = {}) => {
-          const response = await server.executeOperation(
-            { query, variables },
-            { contextValue: contextFromHeader(as ?? null) },
-          );
-          if (response.body.kind !== 'single') {
-            throw new Error('Expected a single result');
-          }
-          const { data, errors } = response.body.singleResult;
-          return { data, errors } as Result;
-        };
-      },
+  },
+  {
+    name: 'Apollo Server',
+    resolverErrorMessage: 'database password leaked',
+    create: (schema) => {
+      const server = new ApolloServer<Context>({ schema });
+      return async (query, { as, variables } = {}) => {
+        const response = await server.executeOperation(
+          { query, variables },
+          { contextValue: contextFromHeader(as ?? null) },
+        );
+        if (response.body.kind !== 'single') {
+          throw new Error('Expected a single result');
+        }
+        const { data, errors } = response.body.singleResult;
+        return { data, errors } as Result;
+      };
     },
-  ];
+  },
+];
 
 const messages = (result: Result) =>
   (result.errors ?? []).map((error) => error.message);
 
-describe.each(servers)('$name', ({ create }) => {
+describe.each(servers)('$name', ({ create, resolverErrorMessage }) => {
   const execute = create(createGuardedSchema());
 
   test('allows public fields and denies protected ones with the default error', async () => {
@@ -236,11 +242,11 @@ describe.each(servers)('$name', ({ create }) => {
     });
   });
 
-  test('hides errors thrown in resolvers', async () => {
+  test("leaves errors thrown in resolvers to the server's error handling", async () => {
     const result = await execute('{ broken }');
 
     expect(result.data).toEqual({ broken: null });
-    expect(messages(result)).toEqual(['Not Authorised!']);
+    expect(messages(result)).toEqual([resolverErrorMessage]);
   });
 
   test('passes a GraphQLError returned by a rule through with its code', async () => {

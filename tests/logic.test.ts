@@ -525,7 +525,7 @@ describe('internal execution', () => {
       { _guard: { cache: {} } },
       {} as GraphQLResolveInfo,
       {
-        allowExternalErrors: false,
+        suppressResolverError: false,
         debug: false,
         fallbackRule: allow,
         fallbackError: new Error(),
@@ -582,7 +582,7 @@ describe('internal execution', () => {
   });
 
   const options = {
-    allowExternalErrors: false,
+    suppressResolverError: false,
     debug: false,
     fallbackRule: allow,
     fallbackError: new Error(),

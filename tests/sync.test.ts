@@ -140,7 +140,7 @@ describe('synchronous execution', () => {
 });
 
 describe('errors on allow fields', () => {
-  test('a synchronous resolver error is replaced with fallbackError', () => {
+  test('a synchronous resolver error passes through', () => {
     const res = run(
       applyGuard(
         makeSchema(() => {
@@ -153,17 +153,36 @@ describe('errors on allow fields', () => {
     expect(isPromise(res)).toBe(false);
     expect(res).toMatchObject({
       data: { a: null, b: 'b' },
+      errors: [{ message: 'internal' }],
+    });
+  });
+
+  test('a synchronous resolver error is replaced with fallbackError with suppressResolverError', () => {
+    const res = run(
+      applyGuard(
+        makeSchema(() => {
+          throw new Error('internal');
+        }),
+        { Query: allow },
+        { suppressResolverError: true },
+      ),
+    );
+
+    expect(isPromise(res)).toBe(false);
+    expect(res).toMatchObject({
+      data: { a: null, b: 'b' },
       errors: [{ message: 'Not Authorised!' }],
     });
   });
 
-  test('a rejected resolver is replaced with fallbackError', async () => {
+  test('a rejected resolver is replaced with fallbackError with suppressResolverError', async () => {
     const res = await run(
       applyGuard(
         makeSchema(async () => {
           throw new Error('internal');
         }),
         { Query: allow },
+        { suppressResolverError: true },
       ),
     );
 
