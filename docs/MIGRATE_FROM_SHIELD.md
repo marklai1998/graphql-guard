@@ -227,7 +227,11 @@ The `fragment` rule option and `fragmentReplacements` are removed. They existed 
 
 ### Package Entry Points
 
-The package is built with [tsdown](https://tsdown.dev) and ships `dist/index.mjs` (ESM) and `dist/index.cjs` (CommonJS) with their own type definitions. Both `import` and `require` work as before, and `graphql-guard/package.json` is still exported.
+GraphQL Guard is ESM only. It is built with [tsdown](https://tsdown.dev) and ships `dist/index.mjs` with its type definitions. graphql-shield also shipped a CommonJS build.
+
+- Use `import` instead of `require`. On Node.js 20.19+ and 22.12+, `require('graphql-guard')` also works, because Node.js can `require()` an ES module.
+- In TypeScript, use `"moduleResolution": "nodenext"` or `"bundler"`. A CommonJS project with `"module": "nodenext"` needs TypeScript 5.8 or later to import the package; on older versions, set `"type": "module"` in your `package.json`.
+- `graphql-guard/package.json` is still exported.
 
 ## Behavioral Changes
 
@@ -245,7 +249,7 @@ Every value in the rule tree, and `fallbackRule`, must be a rule created with gr
 
 - Rules created with graphql-shield are not accepted. Recreate them with graphql-guard. Mixing the two never worked: graphql-shield rules with a contextual or strict cache always denied the request, because their cache lives on `ctx._shield`
 - `graphql-shield` replaced the whole type with the fallback rule when one value wasn't a rule, which let every field of that type through by default. GraphQL Guard throws instead
-- Rules are recognised by a brand instead of `instanceof`, so a rule created by another copy of graphql-guard (another package in a monorepo, or the ESM and CommonJS builds in one app) is accepted
+- Rules are recognised by a brand instead of `instanceof`, so a rule created by another copy of graphql-guard (for example, another package in a monorepo) is accepted
 - `fallbackRule` is validated like the rule tree, including duplicate rule names
 
 ### Rules on Interfaces, Unions and Introspection Types

@@ -19,7 +19,7 @@ import type {
 
 // Anonymous rules get readable, sequential names. The counter lives on
 // globalThis under a Symbol.for key so copies of graphql-guard loaded side by
-// side (for example its ESM and CommonJS builds) never hand out the same name.
+// side (for example in a monorepo) never hand out the same name.
 const counterKey = Symbol.for('graphql-guard/anonymous-rule-counter');
 const globalCounter = globalThis as { [counterKey]?: number };
 

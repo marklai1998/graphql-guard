@@ -4,8 +4,8 @@ import { allow, deny, rule } from '../src/index.js';
 import { ValidationError } from '../src/validation.js';
 import { applyGuard } from './helpers.js';
 
-// A second, separate instance of the package, like an app that loads both the
-// ESM and the CommonJS build.
+// A second, separate instance of the package, like a monorepo where two
+// packages each install graphql-guard.
 vi.resetModules();
 const otherCopy = await import('../src/index.js');
 

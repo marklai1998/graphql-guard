@@ -2,6 +2,7 @@
   "name": "with-apollo-server-lambda",
   "private": true,
   "version": "1.0.0",
+  "type": "module",
   "main": "handler.ts",
   "license": "MIT",
   "scripts": {
