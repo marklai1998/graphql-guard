@@ -18,7 +18,7 @@ import {
   RuleOr,
   RuleTrue,
 } from '../src/rules.js';
-import type { GuardRule } from '../src/types.js';
+import type { GuardRule } from '../src/types/index.js';
 
 describe('rule constructor', () => {
   test('correctly constructs from no arguments', async () => {

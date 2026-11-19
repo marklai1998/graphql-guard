@@ -1,3 +1,4 @@
+import { anonymousRuleCounterKey } from './constants/index.js';
 import { createGuardError, ValidationError } from './errors.js';
 import {
   Rule,
@@ -15,17 +16,13 @@ import type {
   GuardRule,
   RuleConstructorOptions,
   RuleFunction,
-} from './types.js';
+} from './types/index.js';
 
-// Anonymous rules get readable, sequential names. The counter lives on
-// globalThis under a Symbol.for key so copies of graphql-guard loaded side by
-// side (for example in a monorepo) never hand out the same name.
-const counterKey = Symbol.for('graphql-guard/anonymous-rule-counter');
-const globalCounter = globalThis as { [counterKey]?: number };
+const globalCounter = globalThis as { [anonymousRuleCounterKey]?: number };
 
 export const anonymousName = (kind: string): string => {
-  const n = (globalCounter[counterKey] ?? 0) + 1;
-  globalCounter[counterKey] = n;
+  const n = (globalCounter[anonymousRuleCounterKey] ?? 0) + 1;
+  globalCounter[anonymousRuleCounterKey] = n;
   return `anonymous-${kind}-${n}`;
 };
 

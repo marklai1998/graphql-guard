@@ -1,7 +1,7 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { graphql } from 'graphql';
 import { rule } from '../src/index.js';
-import type { HashFunction } from '../src/types.js';
+import type { HashFunction } from '../src/types/index.js';
 import { applyGuard } from './helpers.js';
 
 describe('caching:', () => {
