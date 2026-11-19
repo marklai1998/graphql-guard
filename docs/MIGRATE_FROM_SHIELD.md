@@ -61,8 +61,8 @@ npm i graphql-guard
 Before
 
 ```ts
-import { applyMiddleware } from "graphql-middleware";
-import { shield } from "graphql-shield";
+import { applyMiddleware } from 'graphql-middleware';
+import { shield } from 'graphql-shield';
 
 const permissions = shield(
   { Query: { users: isAdmin } },
@@ -75,7 +75,7 @@ const schemaWithPermissions = applyMiddleware(schema, permissions);
 After
 
 ```ts
-import { guard } from "graphql-guard";
+import { guard } from 'graphql-guard';
 
 const schemaWithPermissions = guard(
   schema,
@@ -105,7 +105,7 @@ The `I` prefix is removed from type names.
 Before
 
 ```ts
-import type { IRule, IRules } from "graphql-shield";
+import type { IRule, IRules } from 'graphql-shield';
 
 const isAdmin: IRule = rule()(async (parent, args, ctx) => ctx.user.isAdmin);
 const permissions: IRules = { Query: { users: isAdmin } };
@@ -114,7 +114,7 @@ const permissions: IRules = { Query: { users: isAdmin } };
 After
 
 ```ts
-import type { Rule, Rules } from "graphql-guard";
+import type { Rule, Rules } from 'graphql-guard';
 
 const isAdmin: Rule = rule()(async (parent, args, ctx) => ctx.user.isAdmin);
 const permissions: Rules = { Query: { users: isAdmin } };
@@ -135,13 +135,13 @@ const permissions: Rules = { Query: { users: isAdmin } };
 Before
 
 ```ts
-import { inputRule } from "graphql-shield";
+import { inputRule } from 'graphql-shield';
 
 const isValidSignup = inputRule()(
   (yup) =>
     yup.object({
-      email: yup.string().email("It has to be an email!").required(),
-      age: yup.number().min(18, "Must be an adult!").required(),
+      email: yup.string().email('It has to be an email!').required(),
+      age: yup.number().min(18, 'Must be an adult!').required(),
     }),
   { abortEarly: false },
 );
@@ -150,13 +150,13 @@ const isValidSignup = inputRule()(
 After
 
 ```ts
-import { inputRule } from "graphql-guard/zod";
+import { inputRule } from 'graphql-guard/zod';
 
 // Fields are required by default in Zod
 const isValidSignup = inputRule()((z) =>
   z.object({
-    email: z.email("It has to be an email!"),
-    age: z.number().min(18, "Must be an adult!"),
+    email: z.email('It has to be an email!'),
+    age: z.number().min(18, 'Must be an adult!'),
   }),
 );
 ```
