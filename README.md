@@ -97,7 +97,9 @@ const server = new ApolloServer({ schema: guardedSchema });
 - [Caching](#caching)
 - [Custom errors](#custom-errors)
 - [Locking down your schema](#locking-down-your-schema)
+- [Apollo Federation](#apollo-federation)
 - [Subscriptions](#subscriptions)
+- [Testing rules](#testing-rules)
 - [Troubleshooting](#troubleshooting)
 
 ### Permission tree
@@ -286,6 +288,35 @@ const guardedSchema = guard(
 );
 ```
 
+### Apollo Federation
+
+Apply `guard` to the schema returned by `buildSubgraphSchema`. With `fallbackRule: deny`, also allow the fields the router uses to read your subgraph, or composition and entity lookups fail with `Not Authorised!`:
+
+```ts
+import { buildSubgraphSchema } from '@apollo/subgraph';
+
+const guardedSchema = guard(
+  buildSubgraphSchema({ typeDefs, resolvers }),
+  {
+    Query: {
+      _service: allow, // the router fetches your SDL through it
+      _entities: allow, // the router resolves entity references through it
+      products: allow,
+    },
+    _Service: allow,
+    Product: {
+      id: allow,
+      name: isLoggedIn,
+    },
+  },
+  { fallbackRule: deny },
+);
+```
+
+- `_entities` exists only when the subgraph defines at least one entity (a type with `@key`). Leave it out otherwise, or `guard` throws a `ValidationError`.
+- `_Entity` is a union and `_Any` is a scalar, so they take no rules.
+- Allowing `_entities` doesn't expose your entities: the fields of each returned entity are still checked by their own rules.
+
 ### Subscriptions
 
 Rules on `Subscription` fields run when the client subscribes. A denied subscription returns the error and never calls the field's `subscribe` function, so no listeners, queries or other setup run for it.
@@ -296,6 +327,46 @@ If the field also has a custom `resolve`, the rule runs again for every event, w
 const canSeePost = rule()((post, args, ctx) =>
   post === undefined ? ctx.user !== null : post.authorId === ctx.user?.id,
 );
+```
+
+### Testing rules
+
+Test a rule the way it runs in production: guard a small schema and execute a query against it, with the context each case needs. This covers the rule together with caching, logic rules and error handling.
+
+```ts
+import { graphql } from 'graphql';
+import { makeExecutableSchema } from '@graphql-tools/schema';
+import { guard } from 'graphql-guard';
+import { isAdmin } from './rules';
+
+const schema = guard(
+  makeExecutableSchema({
+    typeDefs: 'type Query { secret: String }',
+    resolvers: { Query: { secret: () => 'ok' } },
+  }),
+  { Query: { secret: isAdmin } },
+);
+
+const run = (user) =>
+  graphql({ schema, source: '{ secret }', contextValue: { user } });
+
+test('admins can read the secret', async () => {
+  const result = await run({ role: 'admin' });
+  expect(result.data?.secret).toBe('ok');
+});
+
+test('other users are denied', async () => {
+  const result = await run({ role: 'viewer' });
+  expect(result.data?.secret).toBeNull();
+  expect(result.errors?.[0].message).toBe('Not Authorised!');
+});
+```
+
+To test only the logic, define the function on its own, test it directly, and pass it to `rule()`:
+
+```ts
+export const isAdminFn = (parent, args, ctx) => ctx.user?.role === 'admin';
+export const isAdmin = rule({ cache: 'contextual' })(isAdminFn);
 ```
 
 ### Troubleshooting
