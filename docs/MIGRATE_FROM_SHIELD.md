@@ -193,7 +193,7 @@ const isValidSignup = zodRule(
 - **Return** the error instead of throwing it. A thrown error is replaced with `fallbackError` (`Not Authorised!`)
 - A returned `GraphQLError` keeps its message and `code`, so it survives error masking in servers like GraphQL Yoga
 - `new GraphQLError(message, { extensions })` needs `graphql` 17 or a recent 16.x. Older versions ignore the options object, so pass `extensions` as the seventh positional argument there
-- `strict` hashes `parent` and `args`. To validate the same input once across the items of a list, key the cache on `args` only, for example `cache: (_parent, args) => objectHash(args)`
+- `strict` keys `parent` by identity and hashes `args`. graphql-shield hashed `parent` by value, so two parents that differed only in data the hash can't see (`#private` fields, getters, non-enumerable properties) shared a result, and one user could get another's answer. Equal-looking parent objects no longer share a cached result. To validate the same input once across the items of a list, key the cache on `args` only, for example `cache: (_parent, args) => objectHash(args)`
 
 ### Resolver Errors Pass Through
 

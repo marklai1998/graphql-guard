@@ -49,7 +49,7 @@ export type CacheKeyFn<TContext = GuardContext, TArgs = any, TParent = any> = (
   args: TArgs,
   ctx: TContext,
   info: GraphQLResolveInfo,
-) => string;
+) => string | number;
 export type RuleResult = boolean | string | Error;
 export type RuleFunction<
   TContext = GuardContext,
@@ -109,7 +109,8 @@ export type PopulatedOptions = {
   suppressResolverError: boolean;
   fallbackRule: GuardRule;
   fallbackError?: FallbackErrorType;
-  hashFunction: HashFunction;
+  // Unset means the default strict key: parent by identity, args by hash.
+  hashFunction?: HashFunction;
 };
 
 export type Options = {
