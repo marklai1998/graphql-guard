@@ -1,10 +1,6 @@
 import type { GraphQLResolveInfo } from 'graphql';
-import type { RuleResult } from './types.js';
-
-export type RuleCache = Map<string, RuleResult | Promise<RuleResult>>;
-
-const isObject = (value: unknown): value is object =>
-  (typeof value === 'object' && value !== null) || typeof value === 'function';
+import type { RuleCache } from './types/index.js';
+import { isObject } from './utils/index.js';
 
 // Used when the executor gives no per-run object, so the cache is per context.
 const sharedRun = {};

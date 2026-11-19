@@ -1,7 +1,15 @@
 import type { GraphQLResolveInfo } from 'graphql';
 import hash from 'object-hash';
-import { allowBrand, logicRuleBrand, ruleBrand } from './brand.js';
 import { getRuleCache } from './cache.js';
+import {
+  allowBrand,
+  evaluateMaybeSync,
+  failClosed,
+  logicRuleBrand,
+  reportThrown,
+  resolveMaybeSync,
+  ruleBrand,
+} from './constants/index.js';
 import { createGuardError } from './errors.js';
 import type {
   Cache,
@@ -9,67 +17,21 @@ import type {
   GuardContext,
   GuardRule,
   LogicRule as LogicRuleType,
+  MaybePromise,
   PopulatedOptions,
+  ResolveOptions,
   RuleConstructorOptions,
   RuleFunction,
   RuleOptions,
   RuleResult,
   Rule as RuleType,
-} from './types.js';
-
-// The internal symbols below use Symbol.for, like the brands, so they are the
-// same in every copy of graphql-guard (for example two packages in a monorepo
-// that each install it). With Symbol(), a rule from the other copy would not see
-// failClosed, and not() would invert its thrown error into an allow.
-
-// Set while a rule runs inside not(). A rule that throws then rethrows instead
-// of resolving to false, so not() can deny rather than invert the failure.
-const failClosed = Symbol.for('graphql-guard/fail-closed/v1');
-
-// Set by the guard for each field. A rule that throws and resolves to false
-// reports the error here, so fallbackError receives it instead of null.
-export const reportThrown = Symbol.for('graphql-guard/report-thrown/v1');
-
-export type ResolveOptions = PopulatedOptions & {
-  [failClosed]?: true;
-  [reportThrown]?: (err: unknown) => void;
-};
-
-export type MaybePromise<T> = T | Promise<T>;
-
-export const isPromiseLike = (value: unknown): value is PromiseLike<unknown> =>
-  typeof (value as { then?: unknown } | null)?.then === 'function';
-
-// Runs `f` on the value, and only waits when the value is a promise, so rules
-// that answer synchronously never create a promise.
-const then = <T, U>(
-  value: MaybePromise<T>,
-  f: (value: T) => MaybePromise<U>,
-): MaybePromise<U> =>
-  isPromiseLike(value) ? Promise.resolve(value).then(f) : f(value);
-
-// Like Promise.all, but stays synchronous when every value is. Every task runs
-// even if one throws, as with Promise.all over async functions.
-const all = <T>(tasks: (() => MaybePromise<T>)[]): MaybePromise<T[]> => {
-  const results: MaybePromise<T>[] = [];
-  let async = false;
-  for (const task of tasks) {
-    try {
-      const res = task();
-      if (isPromiseLike(res)) async = true;
-      results.push(res);
-    } catch (err) {
-      async = true;
-      results.push(Promise.reject(err));
-    }
-  }
-  return async ? Promise.all(results) : (results as T[]);
-};
-
-// The internal, possibly synchronous version of `resolve` and `evaluate`.
-// `resolve` and `evaluate` stay async for the public API.
-const resolveMaybeSync = Symbol.for('graphql-guard/resolve-maybe-sync/v1');
-const evaluateMaybeSync = Symbol.for('graphql-guard/evaluate-maybe-sync/v1');
+} from './types/index.js';
+import {
+  allMaybeSync,
+  andThen,
+  isObject,
+  isPromiseLike,
+} from './utils/index.js';
 
 type MaybeSyncRule = {
   [resolveMaybeSync]?: (
@@ -126,9 +88,6 @@ const parentId = (parent: object): number => {
   }
   return id;
 };
-
-const isObject = (value: unknown): value is object =>
-  (typeof value === 'object' && value !== null) || typeof value === 'function';
 
 /**
  * The key for the `strict` cache. By default the parent is keyed by identity
@@ -395,7 +354,7 @@ export class LogicRule implements LogicRuleType {
     info: GraphQLResolveInfo,
     options: PopulatedOptions,
   ): MaybePromise<RuleResult[]> {
-    return all(
+    return allMaybeSync(
       this.getRules().map(
         (rule) => () => resolveRule(rule, parent, args, ctx, info, options),
       ),
@@ -421,7 +380,7 @@ export class RuleOr extends LogicRule {
     info: GraphQLResolveInfo,
     options: PopulatedOptions,
   ): MaybePromise<RuleResult> {
-    return then(
+    return andThen(
       this[evaluateMaybeSync](parent, args, ctx, info, options),
       (result) =>
         result.every((res) => res !== true) ? firstError(result) : true,
@@ -448,7 +407,7 @@ export class RuleAnd extends LogicRule {
     info: GraphQLResolveInfo,
     options: PopulatedOptions,
   ): MaybePromise<RuleResult> {
-    return then(
+    return andThen(
       this[evaluateMaybeSync](parent, args, ctx, info, options),
       allTrue,
     );
@@ -467,7 +426,7 @@ export class RuleChain extends LogicRule {
     info: GraphQLResolveInfo,
     options: PopulatedOptions,
   ): MaybePromise<RuleResult> {
-    return then(
+    return andThen(
       this[evaluateMaybeSync](parent, args, ctx, info, options),
       allTrue,
     );
@@ -486,8 +445,12 @@ export class RuleChain extends LogicRule {
     const iterate = (i: number): MaybePromise<RuleResult[]> => {
       const rule = rules[i];
       if (rule === undefined) return [];
-      return then(resolveRule(rule, parent, args, ctx, info, options), (res) =>
-        res !== true ? [res] : then(iterate(i + 1), (ress) => [res, ...ress]),
+      return andThen(
+        resolveRule(rule, parent, args, ctx, info, options),
+        (res) =>
+          res !== true
+            ? [res]
+            : andThen(iterate(i + 1), (ress) => [res, ...ress]),
       );
     };
 
@@ -507,7 +470,7 @@ export class RuleRace extends LogicRule {
     info: GraphQLResolveInfo,
     options: PopulatedOptions,
   ): MaybePromise<RuleResult> {
-    return then(
+    return andThen(
       this[evaluateMaybeSync](parent, args, ctx, info, options),
       (result) =>
         result.some((res) => res === true) ? true : firstError(result),
@@ -527,8 +490,12 @@ export class RuleRace extends LogicRule {
     const iterate = (i: number): MaybePromise<RuleResult[]> => {
       const rule = rules[i];
       if (rule === undefined) return [];
-      return then(resolveRule(rule, parent, args, ctx, info, options), (res) =>
-        res === true ? [res] : then(iterate(i + 1), (ress) => [res, ...ress]),
+      return andThen(
+        resolveRule(rule, parent, args, ctx, info, options),
+        (res) =>
+          res === true
+            ? [res]
+            : andThen(iterate(i + 1), (ress) => [res, ...ress]),
       );
     };
 

@@ -1,3 +1,4 @@
+export { defaultFallbackError } from './constants/index.js';
 export {
   allow,
   and,
@@ -9,7 +10,7 @@ export {
   rule,
 } from './constructors.js';
 export { ValidationError } from './errors.js';
-export { defaultFallbackError, guard } from './guard.js';
+export { guard } from './guard.js';
 export type {
   Cache,
   CacheConstructorOptions,
@@ -28,4 +29,4 @@ export type {
   RuleResult,
   Rules,
   RuleTypeMap,
-} from './types.js';
+} from './types/index.js';

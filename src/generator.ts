@@ -6,21 +6,18 @@ import {
   isIntrospectionType,
   isObjectType,
 } from 'graphql';
+import { reportThrown } from './constants/index.js';
 import { ValidationError } from './errors.js';
-import {
-  isPromiseLike,
-  type MaybePromise,
-  type ResolveOptions,
-  reportThrown,
-  resolveRule,
-} from './rules.js';
+import { resolveRule } from './rules.js';
 import type {
   GuardRule,
+  MaybePromise,
   PopulatedOptions,
+  ResolveOptions,
   RuleResult,
   Rules,
-} from './types.js';
-import { isAllowRule, isRuleFunction } from './utils.js';
+} from './types/index.js';
+import { isAllowRule, isPromiseLike, isRuleFunction } from './utils/index.js';
 
 type Resolver = GraphQLFieldResolver<any, any, any>;
 

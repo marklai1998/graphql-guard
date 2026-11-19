@@ -1,6 +1,11 @@
 import { ValidationError } from './errors.js';
-import type { GuardRule, LogicRule, Rule, Rules } from './types.js';
-import { flattenObjectOf, isLogicRule, isRuleFunction } from './utils.js';
+import type { GuardRule, LogicRule, Rule, Rules } from './types/index.js';
+import {
+  flattenObjectOf,
+  isLogicRule,
+  isPlainObject,
+  isRuleFunction,
+} from './utils/index.js';
 
 export { ValidationError };
 
@@ -28,12 +33,6 @@ const extractRules = (ruleTree: Rules): Rule[] => {
   }, []);
 
   return rules;
-};
-
-const isPlainObject = (x: unknown): x is Record<string, unknown> => {
-  if (x === null || typeof x !== 'object') return false;
-  const prototype = Object.getPrototypeOf(x);
-  return prototype === Object.prototype || prototype === null;
 };
 
 const notARule = (path: string) =>

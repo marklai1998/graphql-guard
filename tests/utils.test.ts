@@ -1,5 +1,5 @@
 import { allow, and, rule } from '../src/constructors.js';
-import { isLogicRule, isRule, isRuleFunction } from '../src/utils.js';
+import { isLogicRule, isRule, isRuleFunction } from '../src/utils/index.js';
 
 // Objects from graphql-shield have the same class names but are not rules.
 const shieldLike = {
