@@ -257,7 +257,7 @@ const guardedSchema = guard(schema, rules, {
 
 The default error is exported as [`defaultFallbackError`](#defaultfallbackerror), so you can reuse it or check for it.
 
-To deny quietly, set `fallbackError` to `null` (or return `null` from the function). Denied fields resolve to `null` with no error, which is useful with Apollo Federation. The field must be nullable: a non-null field still produces GraphQL's non-null error.
+To deny quietly, set `fallbackError` to `null` (or return `null` from the function). Denied fields resolve to `null` with no error, which is useful with Apollo Federation. The field must be nullable: a non-null field still produces GraphQL's non-null error. A denied subscription still gets `defaultFallbackError`, because GraphQL requires subscribing to return either a stream or an error. Events of a subscription with a custom `resolve` are still denied quietly.
 
 ```ts
 const guardedSchema = guard(schema, rules, {

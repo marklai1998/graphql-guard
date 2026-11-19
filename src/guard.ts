@@ -1,14 +1,11 @@
 import type { GraphQLSchema } from 'graphql';
 import { allow } from './constructors.js';
-import { createGuardError } from './errors.js';
+import { createGuardError, defaultFallbackError } from './errors.js';
 import { applyRulesToSchema } from './generator.js';
 import type { Options, Rules } from './types.js';
 import { validateRuleTree } from './validation.js';
 
-export const defaultFallbackError = createGuardError(
-  'Not Authorised!',
-  'FORBIDDEN',
-);
+export { defaultFallbackError };
 
 export const guard = (
   schema: GraphQLSchema,

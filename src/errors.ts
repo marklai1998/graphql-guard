@@ -20,6 +20,11 @@ export const createGuardError = (
         { code },
       );
 
+export const defaultFallbackError = createGuardError(
+  'Not Authorised!',
+  'FORBIDDEN',
+);
+
 /**
  * Thrown by `guard` when the rule tree or its options are invalid, for example
  * a rule on a type that isn't in the schema or two rules sharing a name.

@@ -177,3 +177,95 @@ test('checks a subscription with a custom resolve when the client subscribes', a
   ).toEqual(['Not Authorised!']);
   expect(subscribeFn).not.toHaveBeenCalled();
 });
+
+describe('a quiet (null) fallbackError on subscriptions', () => {
+  const build = (
+    options: Parameters<typeof applyGuard>[2],
+    subscribeFn: () => AsyncGenerator<{ count: number }> = async function* () {
+      yield { count: 1 };
+    },
+  ) =>
+    applyGuard(
+      makeExecutableSchema({
+        typeDefs,
+        resolvers: {
+          Query: { ok: () => true },
+          Subscription: { count: { subscribe: subscribeFn } },
+        },
+      }),
+      {
+        Query: allow,
+        Subscription: {
+          count: rule()((_parent, _args, ctx) => ctx.allowed === true),
+        },
+      },
+      options,
+    );
+
+  const messages = (result: Awaited<ReturnType<typeof run>>) =>
+    (result as ExecutionResult).errors?.map((error) => error.message);
+
+  test.each([
+    ['null', null],
+    ['a function that returns null', () => null],
+    ['an async function that returns null', async () => null],
+    ['a function that returns undefined', () => undefined as unknown as null],
+  ])(
+    'denies with the default error when fallbackError is %s',
+    async (_, fallbackError) => {
+      const result = await run(build({ fallbackError }), { allowed: false });
+      expect(Symbol.asyncIterator in result).toBe(false);
+      expect(messages(result)).toEqual(['Not Authorised!']);
+    },
+  );
+
+  test('keeps an error returned by a fallbackError function', async () => {
+    const result = await run(
+      build({ fallbackError: () => new Error('custom') }),
+      { allowed: false },
+    );
+    expect(messages(result)).toEqual(['custom']);
+  });
+
+  test('applies to a subscribe error replaced by suppressResolverError', async () => {
+    const result = await run(
+      build({ fallbackError: null, suppressResolverError: true }, () => {
+        throw new Error('boom');
+      }),
+      { allowed: true },
+    );
+    expect(messages(result)).toEqual(['Not Authorised!']);
+  });
+
+  test('still denies events quietly with a custom resolve', async () => {
+    const schema = applyGuard(
+      makeExecutableSchema({
+        typeDefs,
+        resolvers: {
+          Query: { ok: () => true },
+          Subscription: {
+            count: {
+              subscribe: async function* () {
+                for (const count of [1, 2]) yield { count };
+              },
+              resolve: (event: { count: number }) => event.count,
+            },
+          },
+        },
+      }),
+      {
+        Query: allow,
+        Subscription: {
+          count: rule()((event) => event === undefined || event.count !== 2),
+        },
+      },
+      { fallbackError: null },
+    );
+    const result = await run(schema, {});
+    const events: ExecutionResult[] = [];
+    for await (const event of result as AsyncIterable<ExecutionResult>) {
+      events.push(event);
+    }
+    expect(events).toEqual([{ data: { count: 1 } }, { data: { count: null } }]);
+  });
+});

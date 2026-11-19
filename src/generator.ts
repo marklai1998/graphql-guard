@@ -6,7 +6,7 @@ import {
   isIntrospectionType,
   isObjectType,
 } from 'graphql';
-import { ValidationError } from './errors.js';
+import { defaultFallbackError, ValidationError } from './errors.js';
 import {
   isPromiseLike,
   type MaybePromise,
@@ -15,6 +15,7 @@ import {
   resolveRule,
 } from './rules.js';
 import type {
+  FallbackErrorType,
   GuardRule,
   PopulatedOptions,
   RuleResult,
@@ -146,6 +147,24 @@ const guardResolver = (
   };
 };
 
+// A subscribe function must return an async iterable or an error, so a denied
+// subscription can't resolve to null: graphql-js would throw "Subscription
+// field must return Async Iterable". A null (or undefined) fallbackError, or a
+// fallbackError function that returns one, denies with defaultFallbackError.
+const subscriptionFallbackError = (
+  fallbackError: FallbackErrorType | undefined,
+): FallbackErrorType => {
+  if (typeof fallbackError !== 'function') {
+    return fallbackError ?? defaultFallbackError;
+  }
+  return (...fallbackArgs) => {
+    const res = fallbackError(...fallbackArgs);
+    return isPromiseLike(res)
+      ? Promise.resolve(res).then((err) => err ?? defaultFallbackError)
+      : (res ?? defaultFallbackError);
+  };
+};
+
 const wrapResolver = (
   resolve: Resolver,
   rule: GuardRule,
@@ -255,10 +274,14 @@ export const applyRulesToSchema = (
       // A subscription is checked when the client subscribes, so a denied
       // subscription never runs its subscribe function. If it also has a custom
       // resolve, the rule runs again for every event, with the event as parent.
+      // A quiet (null) denial only applies to those events, not to subscribe.
       if (fieldConfig.subscribe) {
         return {
           ...fieldConfig,
-          subscribe: wrapResolver(fieldConfig.subscribe, rule, options),
+          subscribe: wrapResolver(fieldConfig.subscribe, rule, {
+            ...options,
+            fallbackError: subscriptionFallbackError(options.fallbackError),
+          }),
           ...(hasCustomResolve && {
             resolve: wrapResolver(
               fieldConfig.resolve as Resolver,
