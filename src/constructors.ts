@@ -1,10 +1,10 @@
 import { anonymousRuleCounterKey } from './constants/index.js';
 import { createGuardError, ValidationError } from './errors.js';
 import {
-  Rule,
   RuleAnd,
   RuleChain,
   RuleFalse,
+  Rule as RuleImpl,
   RuleNot,
   RuleOr,
   RuleRace,
@@ -14,6 +14,8 @@ import type {
   CacheConstructorOptions,
   GuardContext,
   GuardRule,
+  LogicRule,
+  Rule,
   RuleConstructorOptions,
   RuleFunction,
 } from './types/index.js';
@@ -26,6 +28,8 @@ export const anonymousName = (kind: string): string => {
   return `anonymous-${kind}-${n}`;
 };
 
+// Constructors return the public Rule / LogicRule types rather than the
+// classes, so the classes' internals stay out of the published types.
 export const rule =
   <TContext = GuardContext, TArgs = any, TParent = any>(
     name?: string | RuleConstructorOptions<TContext, TArgs, TParent>,
@@ -42,7 +46,7 @@ export const rule =
       if (typeof name !== 'string') name = anonymousName('rule');
     }
 
-    return new Rule(name, func as RuleFunction, {
+    return new RuleImpl(name, func as RuleFunction, {
       cache: options.cache as CacheConstructorOptions,
     });
   };
@@ -58,33 +62,33 @@ const assertNotEmpty = (name: string, rules: GuardRule[]): void => {
   }
 };
 
-export const and = (...rules: GuardRule[]): RuleAnd => {
+export const and = (...rules: GuardRule[]): LogicRule => {
   assertNotEmpty('and', rules);
   return new RuleAnd(rules);
 };
 
-export const chain = (...rules: GuardRule[]): RuleChain => {
+export const chain = (...rules: GuardRule[]): LogicRule => {
   assertNotEmpty('chain', rules);
   return new RuleChain(rules);
 };
 
-export const race = (...rules: GuardRule[]): RuleRace => {
+export const race = (...rules: GuardRule[]): LogicRule => {
   assertNotEmpty('race', rules);
   return new RuleRace(rules);
 };
 
-export const or = (...rules: GuardRule[]): RuleOr => {
+export const or = (...rules: GuardRule[]): LogicRule => {
   assertNotEmpty('or', rules);
   return new RuleOr(rules);
 };
 
-export const not = (rule: GuardRule, error?: string | Error): RuleNot => {
+export const not = (rule: GuardRule, error?: string | Error): LogicRule => {
   if (typeof error === 'string') {
     return new RuleNot(rule, createGuardError(error, 'FORBIDDEN'));
   }
   return new RuleNot(rule, error);
 };
 
-export const allow = new RuleTrue();
+export const allow: LogicRule = new RuleTrue();
 
-export const deny = new RuleFalse();
+export const deny: LogicRule = new RuleFalse();

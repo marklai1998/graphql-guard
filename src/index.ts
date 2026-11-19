@@ -22,6 +22,7 @@ export type {
   HashFunction,
   LogicRule,
   Options,
+  PopulatedOptions,
   Rule,
   RuleConstructorOptions,
   RuleFieldMap,
