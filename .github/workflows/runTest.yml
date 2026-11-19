@@ -76,7 +76,7 @@ jobs:
         run: pnpm i --frozen-lockfile
 
       - name: Use graphql ${{ matrix.graphql }}
-        if: matrix.graphql != '16'
+        if: matrix.graphql != '17'
         run: pnpm add -D graphql@${{ matrix.graphql }} ${{ matrix.test-deps }}
 
       - name: Test Code
