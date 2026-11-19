@@ -329,7 +329,7 @@ const guardedSchema = guard(schema, ruleTree, options);
 | hashFunction        | [object-hash](https://github.com/puleos/object-hash) | Hashing function used by the `strict` cache.                |
 
 > [!WARNING]
-> By default, errors **thrown by resolvers** are caught and replaced with `fallbackError` (`Not Authorised!`), the same response a denial gets. The original error is not rethrown, so it never reaches your server's error logging and real bugs look like permission failures. Use `debug: true` to rethrow them, `allowExternalErrors: true` to pass them through to the client, or a `fallbackError` function to log them (it receives the thrown error as its first argument, and `null` for a denial). See [Custom errors](#custom-errors).
+> By default, errors **thrown by resolvers** are caught and replaced with `fallbackError` (`Not Authorised!`), the same response a denial gets. The original error is not rethrown, so it never reaches your server's error logging and real bugs look like permission failures. Use `debug: true` to rethrow them, `allowExternalErrors: true` to pass them through to the client, or a `fallbackError` function to log them (it receives the error thrown by a resolver or rule as its first argument, and `null` for a plain denial). See [Custom errors](#custom-errors).
 
 ### `rule`
 

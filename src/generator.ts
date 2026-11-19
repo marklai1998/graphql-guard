@@ -7,6 +7,7 @@ import {
   isObjectType,
 } from 'graphql';
 import { ValidationError } from './errors.js';
+import { type ResolveOptions, reportThrown } from './rules.js';
 import type {
   GuardContext,
   GuardRule,
@@ -21,13 +22,28 @@ const guardResolver =
   (resolve: Resolver, rule: GuardRule, options: PopulatedOptions): Resolver =>
   async (parent, args, ctx: GuardContext, info) => {
     try {
-      const res = await rule.resolve(parent, args, ctx, info, options);
+      // The first error a rule threw, if any, so a denial caused by a thrown
+      // error passes it to fallbackError, even from inside and/chain/or.
+      let thrown: { err: unknown } | undefined;
+      const ruleOptions: ResolveOptions = {
+        ...options,
+        [reportThrown]: (err) => {
+          thrown ??= { err };
+        },
+      };
+      const res = await rule.resolve(parent, args, ctx, info, ruleOptions);
 
       if (res === true) {
         return await resolve(parent, args, ctx, info);
       } else if (res === false) {
         if (typeof options.fallbackError === 'function') {
-          return await options.fallbackError(null, parent, args, ctx, info);
+          return await options.fallbackError(
+            thrown ? thrown.err : null,
+            parent,
+            args,
+            ctx,
+            info,
+          );
         }
         return options.fallbackError;
       } else {

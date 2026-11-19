@@ -1,6 +1,16 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { graphql } from 'graphql';
-import { allow, defaultFallbackError, deny, rule } from '../src/index.js';
+import {
+  allow,
+  and,
+  chain,
+  defaultFallbackError,
+  deny,
+  not,
+  or,
+  race,
+  rule,
+} from '../src/index.js';
 import { applyGuard } from './helpers.js';
 
 describe('fallbackError correctly handles errors', () => {
@@ -701,5 +711,81 @@ describe('options', () => {
 
     expect(res.errors?.map((error) => error.message)).toEqual(['Denied!']);
     expect(options).toEqual({ fallbackError: 'Denied!' });
+  });
+});
+
+describe('fallbackError receives errors thrown by rules', () => {
+  const schema = makeExecutableSchema({
+    typeDefs: `
+      type Query {
+        test: String
+      }
+    `,
+    resolvers: { Query: { test: () => 'ok' } },
+  });
+
+  const run = async (testRule: Parameters<typeof applyGuard>[1]) => {
+    const fallbackError = vi.fn((_err: unknown) => new Error('fallback'));
+    const res = await graphql({
+      schema: applyGuard(schema, { Query: { test: testRule } } as never, {
+        fallbackError,
+      }),
+      source: '{ test }',
+    });
+    return { res, fallbackError };
+  };
+
+  const thrown = new Error('database down');
+  const throws = rule()(() => {
+    throw thrown;
+  });
+  const throwsAsync = rule()(async () => {
+    throw thrown;
+  });
+  const allowed = rule()(() => true);
+  const denied = rule()(() => false);
+
+  test.each([
+    ['a rule', throws],
+    ['an async rule', throwsAsync],
+    ['and()', and(allowed, throwsAsync)],
+    ['chain()', chain(allowed, throwsAsync)],
+    ['or()', or(denied, throwsAsync)],
+    ['race()', race(denied, throwsAsync)],
+    ['not()', not(throws)],
+    ['not(not())', not(not(throws))],
+  ])('passes the error thrown in %s', async (_, testRule) => {
+    const { res, fallbackError } = await run(testRule);
+
+    expect(res.errors?.[0]?.message).toBe('fallback');
+    expect(fallbackError).toHaveBeenCalledTimes(1);
+    expect(fallbackError.mock.calls[0]?.[0]).toBe(thrown);
+  });
+
+  test('passes the first error when several rules throw', async () => {
+    const first = new Error('first');
+    const { fallbackError } = await run(
+      chain(
+        rule()(() => {
+          throw first;
+        }),
+        throws,
+      ),
+    );
+
+    expect(fallbackError.mock.calls[0]?.[0]).toBe(first);
+  });
+
+  test('passes null for a plain denial', async () => {
+    const { fallbackError } = await run(and(allowed, denied));
+
+    expect(fallbackError.mock.calls[0]?.[0]).toBeNull();
+  });
+
+  test('ignores a thrown error when or() still allows', async () => {
+    const { res, fallbackError } = await run(or(throws, allowed));
+
+    expect(res.data).toEqual({ test: 'ok' });
+    expect(fallbackError).not.toHaveBeenCalled();
   });
 });

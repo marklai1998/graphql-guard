@@ -21,7 +21,14 @@ import type {
 // of resolving to false, so not() can deny rather than invert the failure.
 const failClosed = Symbol('failClosed');
 
-type ResolveOptions = PopulatedOptions & { [failClosed]?: true };
+// Set by the guard for each field. A rule that throws and resolves to false
+// reports the error here, so fallbackError receives it instead of null.
+export const reportThrown = Symbol('reportThrown');
+
+export type ResolveOptions = PopulatedOptions & {
+  [failClosed]?: true;
+  [reportThrown]?: (err: unknown) => void;
+};
 
 export class Rule implements RuleType {
   get [ruleBrand](): true {
@@ -69,6 +76,7 @@ export class Rule implements RuleType {
       if (options.debug || (options as ResolveOptions)[failClosed]) {
         throw err;
       } else {
+        (options as ResolveOptions)[reportThrown]?.(err);
         return false;
       }
     }
@@ -421,6 +429,7 @@ export class RuleNot extends LogicRule {
       // that would let every request through, so deny instead. Inside another
       // not(), rethrow so the outermost not() denies.
       if (options.debug || (options as ResolveOptions)[failClosed]) throw err;
+      (options as ResolveOptions)[reportThrown]?.(err);
       return false;
     }
 
