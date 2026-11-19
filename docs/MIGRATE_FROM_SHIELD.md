@@ -2,12 +2,12 @@
 
 GraphQL Guard 1.x is a fork of `graphql-shield@7.x` (based on `7.6.5`, the latest 7.x release). Rules, caching, logic rules and fallbacks work as before. GraphQL Guard no longer depends on `graphql-middleware`: `guard` takes your schema and returns a guarded one. Most projects only need to update the package name, replace `shield` and `applyMiddleware` with `guard`, and check the requirements below.
 
-This guide has four parts:
+This guide has two parts:
 
 - **[API Changes](#api-changes)**: code you need to change.
 - **[Behavioral Changes](#behavioral-changes)**: the same code behaves differently, mostly where graphql-shield let a request through by mistake.
-- **[Fixed graphql-shield Issues](#fixed-graphql-shield-issues)**: open or unreleased upstream issues that GraphQL Guard fixes.
-- **[Answered in the Docs](#answered-in-the-docs)**: common upstream questions that the README now answers.
+
+For the graphql-shield issues that GraphQL Guard fixes or answers in its docs, see [#46](https://github.com/marklai1998/graphql-guard/issues/46).
 
 Contents:
 
@@ -33,8 +33,6 @@ Contents:
   - [Rule Cache](#rule-cache)
   - [Anonymous Rule Names](#anonymous-rule-names)
   - [Validation Error Messages](#validation-error-messages)
-- [Fixed graphql-shield Issues](#fixed-graphql-shield-issues)
-- [Answered in the Docs](#answered-in-the-docs)
 
 ## Requirements
 
@@ -310,46 +308,3 @@ Rules without a name get sequential names (`anonymous-rule-1`, `anonymous-rule-2
 ### Validation Error Messages
 
 Validation errors say `Guard cannot find them in your schema` instead of `Shield cannot find them in your schema`. Update any test or log matching that text.
-
-## Fixed graphql-shield Issues
-
-These [graphql-shield issues](https://github.com/maticzav/graphql-shield/issues) are fixed in GraphQL Guard.
-
-| Issue                                                                                                                                                 | Fix                                                                              |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| [#163](https://github.com/maticzav/graphql-shield/issues/163) Aliasing not working with graphql-shield permissions middleware and customFieldResolver | `guard` wraps each field's own resolver, so aliased fields resolve               |
-| [#487](https://github.com/maticzav/graphql-shield/issues/487) Shield rules with cache: "strict" don't work on types                                   | Rules whose `strict` cache key can't be computed run uncached instead of denying |
-| [#562](https://github.com/maticzav/graphql-shield/issues/562) Rule is not recognised when imported from a package                                     | Rules are recognised by a brand instead of `instanceof`                          |
-| [#688](https://github.com/maticzav/graphql-shield/issues/688) Unknown object type "promise" error when uploading files                                | Rules whose cache key can't be computed run uncached instead of denying          |
-| [#739](https://github.com/maticzav/graphql-shield/issues/739) Error thrown inside an async rule are not sent to the fallbackError function            | `fallbackError` receives errors thrown by rules, including inside logic rules    |
-| [#781](https://github.com/maticzav/graphql-shield/issues/781) @types/yup dev dependency                                                               | `inputRule` is removed, so Yup is no longer a dependency                         |
-| [#812](https://github.com/maticzav/graphql-shield/issues/812) GraphQL Shield response 2times slower on response with large list                       | Fields whose rule is `allow` skip rule evaluation                                |
-| [#828](https://github.com/maticzav/graphql-shield/issues/828) Wrong order in RuleChain and RuleRace evaluation                                        | `chain` and `race` keep results in rule order, so `race` returns the first error |
-| [#970](https://github.com/maticzav/graphql-shield/issues/970) Mono repo (lerna) MiddlewareError                                                       | Same as #562                                                                     |
-| [#988](https://github.com/maticzav/graphql-shield/issues/988) Add support for a 'silent' mode                                                         | `fallbackError` accepts `null`                                                   |
-| [#1087](https://github.com/maticzav/graphql-shield/issues/1087) Build error with yup latest version                                                   | Same as #781                                                                     |
-| [#1109](https://github.com/maticzav/graphql-shield/issues/1109) Context object not typed on rule arguments                                            | `rule<Context, Args, Parent>()`                                                  |
-| [#1176](https://github.com/maticzav/graphql-shield/issues/1176) Should INTERNAL_SERVER_ERROR be UNAUTHENTICATED/FORBIDDEN?                            | Denials are `GraphQLError`s with the `FORBIDDEN` code                            |
-| [#1221](https://github.com/maticzav/graphql-shield/issues/1221) Error: Unknown object type "promise"                                                  | Same as #688                                                                     |
-| [#1365](https://github.com/maticzav/graphql-shield/issues/1365) Input field is not checked by Graphql Shield rules?                                   | Rules on input types throw a `ValidationError` instead of being ignored          |
-| [#1473](https://github.com/maticzav/graphql-shield/issues/1473) The bundled package is missing types in `types.js` export                             | Built with tsdown; types are type-only exports                                   |
-| [#1476](https://github.com/maticzav/graphql-shield/issues/1476) Move from graphql-middleware to Resolvers Composition                                 | `guard` wraps resolvers itself                                                   |
-| [#1487](https://github.com/maticzav/graphql-shield/issues/1487) 7.6.4 ESM build broken                                                                | Same as #1473                                                                    |
-| [#1510](https://github.com/maticzav/graphql-shield/issues/1510) Update yup@1.x to avoid @types/lodash and babel runtime in production deps            | Same as #781                                                                     |
-| [#1511](https://github.com/maticzav/graphql-shield/issues/1511) fallbackError loses custom error types                                                | `fallbackError` receives the thrown error as is, so `instanceof` works           |
-| [#1522](https://github.com/maticzav/graphql-shield/issues/1522) Performance -- every field wrapped is unnecessarily wrapped in a promise              | Synchronous rules resolve without creating promises                              |
-| [#1528](https://github.com/maticzav/graphql-shield/issues/1528) Initializing shield adding significant overhead even with empty middleware            | Same as #812                                                                     |
-| [#1560](https://github.com/maticzav/graphql-shield/issues/1560) Support for node v23 or higher                                                        | No `util.isUndefined`, which Node 23 removed (fixed upstream but never released) |
-| [#1561](https://github.com/maticzav/graphql-shield/issues/1561) isUndefined import error                                                              | Same as #1560                                                                    |
-
-## Answered in the Docs
-
-These [graphql-shield issues](https://github.com/maticzav/graphql-shield/issues) are questions, not bugs. GraphQL Guard behaves the same way, and the README now answers them.
-
-| Issue                                                                                                                       | Answer                                              |
-| --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| [#235](https://github.com/maticzav/graphql-shield/issues/235) How should I unit test a rule?                                | [Testing rules](../README.md#testing-rules)         |
-| [#641](https://github.com/maticzav/graphql-shield/issues/641) When using '\*': deny it's blocking apollo federation fields  | [Apollo Federation](../README.md#apollo-federation) |
-| [#1111](https://github.com/maticzav/graphql-shield/issues/1111) Issues with \_\_resolveReference in Apollo Federated Schema | Same as #641                                        |
-| [#1218](https://github.com/maticzav/graphql-shield/issues/1218) GraphQL Shield to Work with Apollo Federation               | Same as #641                                        |
-| [#1387](https://github.com/maticzav/graphql-shield/issues/1387) Apollo Federation and Shield Question                       | Same as #641                                        |
