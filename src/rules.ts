@@ -29,6 +29,85 @@ export type ResolveOptions = PopulatedOptions & {
   [reportThrown]?: (err: unknown) => void;
 };
 
+export type MaybePromise<T> = T | Promise<T>;
+
+export const isPromiseLike = (value: unknown): value is PromiseLike<unknown> =>
+  typeof (value as { then?: unknown } | null)?.then === 'function';
+
+// Runs `f` on the value, and only waits when the value is a promise, so rules
+// that answer synchronously never create a promise.
+const then = <T, U>(
+  value: MaybePromise<T>,
+  f: (value: T) => MaybePromise<U>,
+): MaybePromise<U> =>
+  isPromiseLike(value) ? Promise.resolve(value).then(f) : f(value);
+
+// Like Promise.all, but stays synchronous when every value is. Every task runs
+// even if one throws, as with Promise.all over async functions.
+const all = <T>(tasks: (() => MaybePromise<T>)[]): MaybePromise<T[]> => {
+  const results: MaybePromise<T>[] = [];
+  let async = false;
+  for (const task of tasks) {
+    try {
+      const res = task();
+      if (isPromiseLike(res)) async = true;
+      results.push(res);
+    } catch (err) {
+      async = true;
+      results.push(Promise.reject(err));
+    }
+  }
+  return async ? Promise.all(results) : (results as T[]);
+};
+
+// The internal, possibly synchronous version of `resolve` and `evaluate`.
+// `resolve` and `evaluate` stay async for the public API.
+const resolveMaybeSync = Symbol('resolveMaybeSync');
+const evaluateMaybeSync = Symbol('evaluateMaybeSync');
+
+type MaybeSyncRule = {
+  [resolveMaybeSync]?: (
+    parent: object,
+    args: object,
+    ctx: GuardContext,
+    info: GraphQLResolveInfo,
+    options: PopulatedOptions,
+  ) => MaybePromise<RuleResult>;
+};
+
+/**
+ * Resolves a rule, synchronously when it can. A rule from another copy of
+ * graphql-guard has no synchronous path and falls back to `resolve`.
+ */
+export const resolveRule = (
+  rule: GuardRule,
+  parent: object,
+  args: object,
+  ctx: GuardContext,
+  info: GraphQLResolveInfo,
+  options: PopulatedOptions,
+): MaybePromise<RuleResult> => {
+  const resolve = (rule as MaybeSyncRule)[resolveMaybeSync];
+  return resolve
+    ? resolve.call(rule, parent, args, ctx, info, options)
+    : rule.resolve(parent, args, ctx, info, options);
+};
+
+const normalizeResult = (res: string | boolean | Error): RuleResult => {
+  if (res instanceof Error) {
+    return res;
+  } else if (typeof res === 'string') {
+    return createGuardError(res, 'FORBIDDEN');
+  } else if (res === true) {
+    return true;
+  } else {
+    return false;
+  }
+};
+
+const firstError = (results: RuleResult[]): RuleResult =>
+  results.find((res) => res instanceof Error) || false;
+
 export class Rule implements RuleType {
   get [ruleBrand](): true {
     return true;
@@ -58,26 +137,31 @@ export class Rule implements RuleType {
     info: GraphQLResolveInfo,
     options: PopulatedOptions,
   ): Promise<RuleResult> {
-    try {
-      /* Resolve */
-      const res = await this.executeRule(parent, args, ctx, info, options);
+    return this[resolveMaybeSync](parent, args, ctx, info, options);
+  }
 
-      if (res instanceof Error) {
-        return res;
-      } else if (typeof res === 'string') {
-        return createGuardError(res, 'FORBIDDEN');
-      } else if (res === true) {
-        return true;
-      } else {
-        return false;
-      }
-    } catch (err) {
+  [resolveMaybeSync](
+    parent: object,
+    args: object,
+    ctx: GuardContext,
+    info: GraphQLResolveInfo,
+    options: PopulatedOptions,
+  ): MaybePromise<RuleResult> {
+    const onError = (err: unknown): RuleResult => {
       if (options.debug || (options as ResolveOptions)[failClosed]) {
         throw err;
-      } else {
-        (options as ResolveOptions)[reportThrown]?.(err);
-        return false;
       }
+      (options as ResolveOptions)[reportThrown]?.(err);
+      return false;
+    };
+
+    try {
+      const res = this.executeRule(parent, args, ctx, info, options);
+      return isPromiseLike(res)
+        ? Promise.resolve(res).then(normalizeResult, onError)
+        : normalizeResult(res);
+    } catch (err) {
+      return onError(err);
     }
   }
 
@@ -217,12 +301,22 @@ export class LogicRule implements LogicRuleType {
   }
 
   async resolve(
+    parent: object,
+    args: object,
+    ctx: GuardContext,
+    info: GraphQLResolveInfo,
+    options: PopulatedOptions,
+  ): Promise<RuleResult> {
+    return this[resolveMaybeSync](parent, args, ctx, info, options);
+  }
+
+  [resolveMaybeSync](
     _parent: object,
     _args: object,
     _ctx: GuardContext,
     _info: GraphQLResolveInfo,
     _options: PopulatedOptions,
-  ): Promise<RuleResult> {
+  ): MaybePromise<RuleResult> {
     return false;
   }
 
@@ -233,12 +327,21 @@ export class LogicRule implements LogicRuleType {
     info: GraphQLResolveInfo,
     options: PopulatedOptions,
   ): Promise<RuleResult[]> {
-    const rules = this.getRules();
-    const tasks = rules.map((rule) =>
-      rule.resolve(parent, args, ctx, info, options),
-    );
+    return this[evaluateMaybeSync](parent, args, ctx, info, options);
+  }
 
-    return Promise.all(tasks);
+  [evaluateMaybeSync](
+    parent: object,
+    args: object,
+    ctx: GuardContext,
+    info: GraphQLResolveInfo,
+    options: PopulatedOptions,
+  ): MaybePromise<RuleResult[]> {
+    return all(
+      this.getRules().map(
+        (rule) => () => resolveRule(rule, parent, args, ctx, info, options),
+      ),
+    );
   }
 
   getRules() {
@@ -253,47 +356,44 @@ export class RuleOr extends LogicRule {
     super(rules);
   }
 
-  override async resolve(
+  override [resolveMaybeSync](
     parent: object,
     args: object,
     ctx: GuardContext,
     info: GraphQLResolveInfo,
     options: PopulatedOptions,
-  ): Promise<RuleResult> {
-    const result = await this.evaluate(parent, args, ctx, info, options);
-
-    if (result.every((res) => res !== true)) {
-      const customError = result.find((res) => res instanceof Error);
-      return customError || false;
-    } else {
-      return true;
-    }
+  ): MaybePromise<RuleResult> {
+    return then(
+      this[evaluateMaybeSync](parent, args, ctx, info, options),
+      (result) =>
+        result.every((res) => res !== true) ? firstError(result) : true,
+    );
   }
 }
+
+// and() and chain() reject an empty rule list; deny here too in case an empty
+// one is built from the class directly.
+const allTrue = (result: RuleResult[]): RuleResult => {
+  if (result.length === 0) return false;
+  return result.some((res) => res !== true) ? firstError(result) : true;
+};
 
 export class RuleAnd extends LogicRule {
   constructor(rules: GuardRule[]) {
     super(rules);
   }
 
-  override async resolve(
+  override [resolveMaybeSync](
     parent: object,
     args: object,
     ctx: GuardContext,
     info: GraphQLResolveInfo,
     options: PopulatedOptions,
-  ): Promise<RuleResult> {
-    const result = await this.evaluate(parent, args, ctx, info, options);
-
-    // and() and chain() reject an empty rule list; deny here too in case an
-    // empty one is built from the class directly.
-    if (result.length === 0) return false;
-    if (result.some((res) => res !== true)) {
-      const customError = result.find((res) => res instanceof Error);
-      return customError || false;
-    } else {
-      return true;
-    }
+  ): MaybePromise<RuleResult> {
+    return then(
+      this[evaluateMaybeSync](parent, args, ctx, info, options),
+      allTrue,
+    );
   }
 }
 
@@ -302,49 +402,38 @@ export class RuleChain extends LogicRule {
     super(rules);
   }
 
-  override async resolve(
+  override [resolveMaybeSync](
     parent: object,
     args: object,
     ctx: GuardContext,
     info: GraphQLResolveInfo,
     options: PopulatedOptions,
-  ): Promise<RuleResult> {
-    const result = await this.evaluate(parent, args, ctx, info, options);
-
-    // and() and chain() reject an empty rule list; deny here too in case an
-    // empty one is built from the class directly.
-    if (result.length === 0) return false;
-    if (result.some((res) => res !== true)) {
-      const customError = result.find((res) => res instanceof Error);
-      return customError || false;
-    } else {
-      return true;
-    }
+  ): MaybePromise<RuleResult> {
+    return then(
+      this[evaluateMaybeSync](parent, args, ctx, info, options),
+      allTrue,
+    );
   }
 
-  override async evaluate(
+  override [evaluateMaybeSync](
     parent: object,
     args: object,
     ctx: GuardContext,
     info: GraphQLResolveInfo,
     options: PopulatedOptions,
-  ): Promise<RuleResult[]> {
+  ): MaybePromise<RuleResult[]> {
     const rules = this.getRules();
 
-    const iterate = async ([rule, ...otherRules]: GuardRule[]): Promise<
-      RuleResult[]
-    > => {
+    // Stops at the first rule that isn't true.
+    const iterate = (i: number): MaybePromise<RuleResult[]> => {
+      const rule = rules[i];
       if (rule === undefined) return [];
-      return rule.resolve(parent, args, ctx, info, options).then((res) => {
-        if (res !== true) {
-          return [res];
-        } else {
-          return iterate(otherRules).then((ress) => [res, ...ress]);
-        }
-      });
+      return then(resolveRule(rule, parent, args, ctx, info, options), (res) =>
+        res !== true ? [res] : then(iterate(i + 1), (ress) => [res, ...ress]),
+      );
     };
 
-    return iterate(rules);
+    return iterate(0);
   }
 }
 
@@ -353,46 +442,39 @@ export class RuleRace extends LogicRule {
     super(rules);
   }
 
-  override async resolve(
+  override [resolveMaybeSync](
     parent: object,
     args: object,
     ctx: GuardContext,
     info: GraphQLResolveInfo,
     options: PopulatedOptions,
-  ): Promise<RuleResult> {
-    const result = await this.evaluate(parent, args, ctx, info, options);
-
-    if (result.some((res) => res === true)) {
-      return true;
-    } else {
-      const customError = result.find((res) => res instanceof Error);
-      return customError || false;
-    }
+  ): MaybePromise<RuleResult> {
+    return then(
+      this[evaluateMaybeSync](parent, args, ctx, info, options),
+      (result) =>
+        result.some((res) => res === true) ? true : firstError(result),
+    );
   }
 
-  override async evaluate(
+  override [evaluateMaybeSync](
     parent: object,
     args: object,
     ctx: GuardContext,
     info: GraphQLResolveInfo,
     options: PopulatedOptions,
-  ): Promise<RuleResult[]> {
+  ): MaybePromise<RuleResult[]> {
     const rules = this.getRules();
 
-    const iterate = async ([rule, ...otherRules]: GuardRule[]): Promise<
-      RuleResult[]
-    > => {
+    // Stops at the first rule that is true.
+    const iterate = (i: number): MaybePromise<RuleResult[]> => {
+      const rule = rules[i];
       if (rule === undefined) return [];
-      return rule.resolve(parent, args, ctx, info, options).then((res) => {
-        if (res === true) {
-          return [res];
-        } else {
-          return iterate(otherRules).then((ress) => [res, ...ress]);
-        }
-      });
+      return then(resolveRule(rule, parent, args, ctx, info, options), (res) =>
+        res === true ? [res] : then(iterate(i + 1), (ress) => [res, ...ress]),
+      );
     };
 
-    return iterate(rules);
+    return iterate(0);
   }
 }
 
@@ -404,32 +486,40 @@ export class RuleNot extends LogicRule {
     this.error = error;
   }
 
-  override async resolve(
+  override [resolveMaybeSync](
     parent: object,
     args: object,
     ctx: GuardContext,
     info: GraphQLResolveInfo,
     options: PopulatedOptions,
-  ): Promise<RuleResult> {
-    let res: RuleResult | undefined;
-    try {
-      const innerOptions: ResolveOptions = { ...options, [failClosed]: true };
-      [res] = await this.evaluate(parent, args, ctx, info, innerOptions);
-    } catch (err) {
-      // The wrapped rule threw (for example, its database is down). Inverting
-      // that would let every request through, so deny instead. Inside another
-      // not(), rethrow so the outermost not() denies.
+  ): MaybePromise<RuleResult> {
+    // The wrapped rule threw (for example, its database is down). Inverting
+    // that would let every request through, so deny instead. Inside another
+    // not(), rethrow so the outermost not() denies.
+    const onError = (err: unknown): RuleResult => {
       if (options.debug || (options as ResolveOptions)[failClosed]) throw err;
       (options as ResolveOptions)[reportThrown]?.(err);
       return false;
-    }
+    };
 
     // A returned error or string is a deliberate "no", so it inverts to "yes".
-    if (res !== true) {
-      return true;
-    } else {
-      if (this.error) return this.error;
-      return false;
+    const invert = ([res]: RuleResult[]): RuleResult =>
+      res !== true ? true : (this.error ?? false);
+
+    try {
+      const innerOptions: ResolveOptions = { ...options, [failClosed]: true };
+      const result = this[evaluateMaybeSync](
+        parent,
+        args,
+        ctx,
+        info,
+        innerOptions,
+      );
+      return isPromiseLike(result)
+        ? Promise.resolve(result).then(invert, onError)
+        : invert(result);
+    } catch (err) {
+      return onError(err);
     }
   }
 }
@@ -439,7 +529,7 @@ export class RuleTrue extends LogicRule {
     super([]);
   }
 
-  override async resolve(): Promise<RuleResult> {
+  override [resolveMaybeSync](): MaybePromise<RuleResult> {
     return true;
   }
 }
@@ -449,7 +539,7 @@ export class RuleFalse extends LogicRule {
     super([]);
   }
 
-  override async resolve(): Promise<RuleResult> {
+  override [resolveMaybeSync](): MaybePromise<RuleResult> {
     return false;
   }
 }
