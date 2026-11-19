@@ -383,7 +383,7 @@ Its resolver threw and `suppressResolverError` is set, which replaces resolver e
 This is caching. `contextual` rules are cached per request regardless of `parent` and `args`. Use `strict` (or `no_cache`) when the rule depends on them.
 
 **How long does a cached result last?**
-One run of an operation. The cache is keyed by the context object and the run, so results never carry over to another request, even if your server reuses one context object. Each subscription event gets a fresh cache, keyed by the event payload. An event whose payload is not an object (for example, a bare number) shares one cache with the other events of that subscription on graphql-js 17, so use `no_cache` for rules on such events whose answer can change while a client stays subscribed (for example, a ban check).
+One run of an operation. The cache is keyed by the context object and the run, so results never carry over to another request, even if your server reuses one context object. The run is identified by `info.variableValues`, which graphql-js builds fresh for every run. If your executor doesn't pass a `variableValues` object, the cache is kept per context object only, so create a new context for every request. Each subscription event gets a fresh cache, keyed by the event payload. An event whose payload is not an object (for example, a bare number) shares one cache with the other events of that subscription on graphql-js 17, so use `no_cache` for rules on such events whose answer can change while a client stays subscribed (for example, a ban check).
 
 ## 💻 API
 

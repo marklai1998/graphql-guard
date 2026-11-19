@@ -270,8 +270,10 @@ export class Rule implements RuleType {
     }
   }
 
+  // Rules with one name share one cache, so two rules are only the same rule
+  // if they also cache the same way.
   equals(rule: Rule): boolean {
-    return this.func === rule.func;
+    return this.func === rule.func && this.cache === rule.cache;
   }
 
   private normalizeOptions(options: RuleConstructorOptions): RuleOptions {

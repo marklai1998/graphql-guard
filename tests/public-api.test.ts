@@ -61,6 +61,22 @@ describe('fallbackRule validation', () => {
     ).toThrow('There seem to be multiple definitions of these rules: same');
   });
 
+  test('rejects rules with one name and function but different caches', () => {
+    const func = () => true;
+    const a = rule('same', { cache: 'strict' })(func);
+    const b = rule('same', { cache: 'contextual' })(func);
+    expect(() => guard(schema, or(a, b))).toThrow(
+      'There seem to be multiple definitions of these rules: same',
+    );
+  });
+
+  test('accepts rules with one name, function and cache', () => {
+    const func = () => true;
+    const a = rule('same', { cache: 'strict' })(func);
+    const b = rule('same', { cache: true })(func);
+    expect(() => guard(schema, or(a, b))).not.toThrow();
+  });
+
   test('accepts the same rule in the tree and as fallbackRule', () => {
     const a = rule('same')(() => true);
     expect(() =>
