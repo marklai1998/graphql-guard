@@ -14,7 +14,7 @@ import {
 import { applyGuard } from './helpers.js';
 
 describe('fallbackError correctly handles errors', () => {
-  test('error in resolver returns fallback error.', async () => {
+  test('error in resolver returns fallback error with suppressResolverError.', async () => {
     /* Schema */
 
     const typeDefs = `
@@ -46,6 +46,7 @@ describe('fallbackError correctly handles errors', () => {
       },
       {
         fallbackError,
+        suppressResolverError: true,
       },
     );
 
@@ -144,6 +145,7 @@ describe('fallbackError correctly handles errors', () => {
       },
       {
         fallbackError: fallbackMessage,
+        suppressResolverError: true,
       },
     );
 
@@ -211,7 +213,7 @@ describe('fallbackError correctly handles errors', () => {
     expect(res.errors?.[0]?.message).toBe(fallbackError().message);
   });
 
-  test('error in resolver can be mapped.', async () => {
+  test('error in resolver can be mapped with suppressResolverError.', async () => {
     /* Schema */
 
     const typeDefs = `
@@ -243,6 +245,7 @@ describe('fallbackError correctly handles errors', () => {
       },
       {
         fallbackError,
+        suppressResolverError: true,
       },
     );
 
@@ -265,131 +268,84 @@ describe('fallbackError correctly handles errors', () => {
   });
 });
 
-describe('external errors can be controled correctly', () => {
-  test('error in resolver with allowExternalErrors returns external error.', async () => {
-    /* Schema */
-
-    const typeDefs = `
-      type Query {
-        test: String!
-      }
-    `;
-
-    const resolvers = {
-      Query: {
-        test: () => {
-          throw new Error('external');
-        },
+describe('resolver errors are left alone', () => {
+  const typeDefs = `
+    type Query {
+      public: String
+      guarded: String
+    }
+  `;
+  const resolvers = {
+    Query: {
+      public: () => {
+        throw new Error('public failed');
       },
-    };
-
-    const schema = makeExecutableSchema({ typeDefs, resolvers });
-
-    /* Permissions */
-
-    const schemaWithPermissions = applyGuard(
-      schema,
-      {
-        Query: allow,
+      guarded: async () => {
+        throw new Error('guarded failed');
       },
-      {
-        allowExternalErrors: true,
-      },
-    );
+    },
+  };
+  const passes = rule()(() => true);
 
-    /* Execution */
-
-    const query = `
-      query {
-        test
-      }
-    `;
+  test('errors thrown by resolvers reach the client as they are.', async () => {
     const res = await graphql({
-      schema: schemaWithPermissions,
-      source: query,
+      schema: applyGuard(makeExecutableSchema({ typeDefs, resolvers }), {
+        Query: { public: allow, guarded: passes },
+      }),
+      source: '{ public guarded }',
     });
 
-    /* Tests */
-
-    expect(res.data).toBeNull();
-    expect(res.errors?.[0]?.message).toBe('external');
+    expect(res.data).toEqual({ public: null, guarded: null });
+    expect(res.errors?.map((error) => error.message)).toEqual([
+      'public failed',
+      'guarded failed',
+    ]);
   });
 
-  test('a non-Error thrown in a resolver with allowExternalErrors is not returned as data.', async () => {
-    const schema = makeExecutableSchema({
-      typeDefs: `
-        type Query {
-          a: String
-        }
-      `,
-      resolvers: {
-        Query: {
-          a: () => {
-            throw 'internal: db password=x';
-          },
-        },
-      },
-    });
-
+  test('suppressResolverError replaces them with fallbackError.', async () => {
+    const fallbackError = vi.fn((_err: unknown) => new Error('fallback'));
     const res = await graphql({
       schema: applyGuard(
-        schema,
-        { Query: allow },
-        { allowExternalErrors: true },
+        makeExecutableSchema({ typeDefs, resolvers }),
+        { Query: { public: allow, guarded: passes } },
+        { suppressResolverError: true, fallbackError },
       ),
-      source: '{ a }',
+      source: '{ public guarded }',
     });
 
-    expect(res.data).toEqual({ a: null });
-    expect(res.errors?.[0]?.message).toBe('Unexpected error value');
-    expect(res.errors?.[0]?.originalError?.cause).toBe(
-      'internal: db password=x',
-    );
-    expect(JSON.stringify(res)).not.toContain('password');
+    expect(res.data).toEqual({ public: null, guarded: null });
+    expect(res.errors?.map((error) => error.message)).toEqual([
+      'fallback',
+      'fallback',
+    ]);
+    expect(
+      fallbackError.mock.calls.map(([err]) => (err as Error).message),
+    ).toEqual(['public failed', 'guarded failed']);
   });
 
-  test('error in rule with allowExternalErrors returns fallback.', async () => {
-    /* Schema */
-    const typeDefs = `
-      type Query {
-        test: String!
-      }
-    `;
-
-    const schema = makeExecutableSchema({ typeDefs, resolvers: {} });
-
-    /* Permissions */
-
-    const allow = rule()(() => {
+  test('errors thrown by rules still return fallbackError.', async () => {
+    const throws = rule()(() => {
       throw new Error('external');
     });
 
-    const schemaWithPermissions = applyGuard(
-      schema,
-      {
-        Query: allow,
-      },
-      {
-        allowExternalErrors: true,
-      },
-    );
-
-    /* Execution */
-
-    const query = `
-      query {
-        test
-      }
-    `;
     const res = await graphql({
-      schema: schemaWithPermissions,
-      source: query,
+      schema: applyGuard(makeExecutableSchema({ typeDefs, resolvers }), {
+        Query: { public: allow, guarded: throws },
+      }),
+      source: '{ guarded }',
     });
 
-    /* Tests */
-
-    expect(res.data).toBeNull();
+    expect(res.data).toEqual({ guarded: null });
     expect(res.errors?.[0]?.message).toBe('Not Authorised!');
+  });
+
+  test('allow fields keep their resolver.', () => {
+    const schema = makeExecutableSchema({ typeDefs, resolvers });
+    const guarded = applyGuard(schema, { Query: allow });
+
+    expect(guarded.getQueryType()?.getFields().public.resolve).toBe(
+      schema.getQueryType()?.getFields().public.resolve,
+    );
   });
 });
 
@@ -738,11 +694,11 @@ describe('options', () => {
       }
     `;
 
-    test('resolves denied and failing fields to null without errors.', async () => {
+    test('resolves denied and failing fields to null without errors with suppressResolverError.', async () => {
       const schema = applyGuard(
         makeExecutableSchema({ typeDefs, resolvers }),
         { Query: { denied: deny, failing: allow, allowed: allow } },
-        { fallbackError: null },
+        { fallbackError: null, suppressResolverError: true },
       );
 
       const res = await graphql({ schema, source: query });
@@ -761,6 +717,7 @@ describe('options', () => {
         { Query: { denied: deny, failing: allow, allowed: allow } },
         {
           fallbackError: (err) => (err === null ? null : new Error('failed')),
+          suppressResolverError: true,
         },
       );
 

@@ -106,7 +106,7 @@ export type FallbackErrorType = Error | null | FallbackErrorMapperType;
 
 export type PopulatedOptions = {
   debug: boolean;
-  allowExternalErrors: boolean;
+  suppressResolverError: boolean;
   fallbackRule: GuardRule;
   fallbackError?: FallbackErrorType;
   hashFunction: HashFunction;
@@ -114,7 +114,7 @@ export type PopulatedOptions = {
 
 export type Options = {
   debug?: boolean;
-  allowExternalErrors?: boolean;
+  suppressResolverError?: boolean;
   fallbackRule?: GuardRule;
   fallbackError?: string | FallbackErrorType;
   hashFunction?: HashFunction;

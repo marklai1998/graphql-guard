@@ -20,7 +20,7 @@ export const guard = (
 
   return applyRulesToSchema(schema, ruleTree, {
     debug: options.debug ?? false,
-    allowExternalErrors: options.allowExternalErrors ?? false,
+    suppressResolverError: options.suppressResolverError ?? false,
     fallbackRule: options.fallbackRule ?? allow,
     // `null` is kept: it resolves denied fields to null instead of an error.
     fallbackError:

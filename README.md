@@ -212,7 +212,7 @@ If a cache key can't be computed, the rule runs without the cache for that call.
 
 ### Custom errors
 
-By default, GraphQL Guard catches every error thrown during execution and replaces it with `Not Authorised!`, so internal details never reach the client.
+GraphQL Guard only handles errors from its own work. A rule that throws denies access with `fallbackError` (`Not Authorised!`), so internal details from rules never reach the client. Errors thrown by resolvers are left alone, on every field: they reach the client and your server's error handling (for example, GraphQL Yoga's error masking) as they are.
 
 Errors created by GraphQL Guard are `GraphQLError`s with the `FORBIDDEN` code. Servers that hide unexpected errors, like GraphQL Yoga's default error masking, still show them to the client.
 
@@ -264,7 +264,7 @@ const guardedSchema = guard(schema, rules, {
 ```
 
 > [!TIP]
-> Set `debug: true` to see errors thrown in resolvers, or `allowExternalErrors: true` to pass them through to the client.
+> Set `debug: true` to see errors thrown in rules. To replace errors thrown by resolvers with `fallbackError` too, set `suppressResolverError: true`. The `fallbackError` function then receives the resolver's error as its first argument.
 
 ### Locking down your schema
 
@@ -374,6 +374,9 @@ export const isAdmin = rule({ cache: 'contextual' })(isAdminFn);
 **A single field is `Not Authorised!` and the whole parent object returns `null`.**
 The blocked field is non-nullable in your schema. GraphQL must honour the schema, so a `null` in a non-nullable field nulls the parent. Make the field nullable if it can be blocked.
 
+**A public field (`allow`, or no rule with `fallbackRule: allow`) returns `Not Authorised!`.**
+Its resolver threw and `suppressResolverError` is set, which replaces resolver errors with `fallbackError` on every field, including allowed ones. Remove it, or set `debug: true`, to see the original error.
+
 **A rule runs only once even though the result has many items.**
 This is caching. `contextual` rules are cached per request regardless of `parent` and `args`. Use `strict` (or `no_cache`) when the rule depends on them.
 
@@ -398,16 +401,16 @@ import { guard } from 'graphql-guard';
 const guardedSchema = guard(schema, ruleTree, options);
 ```
 
-| Option              | Default                                              | Description                                                         |
-| ------------------- | ---------------------------------------------------- | ------------------------------------------------------------------- |
-| allowExternalErrors | `false`                                              | Pass errors thrown in resolvers through to the client.              |
-| debug               | `false`                                              | Toggle debug mode.                                                  |
-| fallbackRule        | `allow`                                              | Rule for every field without one.                                   |
-| fallbackError       | [`defaultFallbackError`](#defaultfallbackerror)      | Error returned on denial. A string, `Error`, `null`, or a function. |
-| hashFunction        | [object-hash](https://github.com/puleos/object-hash) | Hashing function used by the `strict` cache.                        |
+| Option                | Default                                              | Description                                                         |
+| --------------------- | ---------------------------------------------------- | ------------------------------------------------------------------- |
+| debug                 | `false`                                              | Toggle debug mode. Errors thrown by rules are rethrown.             |
+| fallbackRule          | `allow`                                              | Rule for every field without one.                                   |
+| fallbackError         | [`defaultFallbackError`](#defaultfallbackerror)      | Error returned on denial. A string, `Error`, `null`, or a function. |
+| hashFunction          | [object-hash](https://github.com/puleos/object-hash) | Hashing function used by the `strict` cache.                        |
+| suppressResolverError | `false`                                              | Replace errors thrown by resolvers with `fallbackError`.            |
 
-> [!WARNING]
-> By default, errors **thrown by resolvers** are caught and replaced with `fallbackError` (`Not Authorised!`), the same response a denial gets. The original error is not rethrown, so it never reaches your server's error logging and real bugs look like permission failures. Use `debug: true` to rethrow them, `allowExternalErrors: true` to pass them through to the client, or a `fallbackError` function to log them (it receives the error thrown by a resolver or rule as its first argument, and `null` for a plain denial). See [Custom errors](#custom-errors).
+> [!NOTE]
+> GraphQL Guard leaves errors thrown by resolvers alone, so they reach the client and your server's error logging as they are, on every field. Only errors from the guard's own work, like a rule that throws, are replaced with `fallbackError`. Set `suppressResolverError: true` to replace resolver errors too, the same response a denial gets. A `fallbackError` function then receives the resolver's error as its first argument (and `null` for a plain denial). See [Custom errors](#custom-errors).
 
 ### `rule`
 

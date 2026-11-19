@@ -10,7 +10,4 @@ const baseSchema = makeSchema({
   outputs: false,
 });
 
-// Pass resolver errors such as a failed login through to the client.
-export const schema = guard(baseSchema, permissions, {
-  allowExternalErrors: true,
-});
+export const schema = guard(baseSchema, permissions);

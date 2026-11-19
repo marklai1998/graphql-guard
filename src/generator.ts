@@ -26,27 +26,18 @@ type Resolver = GraphQLFieldResolver<any, any, any>;
 
 type FieldArgs = Parameters<Resolver>;
 
-// Called when a rule or resolver throws: rethrows in debug mode, passes the
-// error through with allowExternalErrors, and otherwise returns fallbackError.
+// Called when the guard's own work throws (or, with suppressResolverError, the
+// resolver): rethrows in debug mode, and otherwise returns fallbackError.
 const handleError = (
   err: unknown,
   options: PopulatedOptions,
   [parent, args, ctx, info]: FieldArgs,
 ): unknown => {
-  if (options.debug) {
-    throw err;
-  } else if (options.allowExternalErrors) {
-    // Returning a non-Error would make it field data, so wrap it. The value
-    // stays out of the message, as it may hold internal details.
-    return err instanceof Error
-      ? err
-      : new Error('Unexpected error value', { cause: err });
-  } else {
-    if (typeof options.fallbackError === 'function') {
-      return options.fallbackError(err, parent, args, ctx, info);
-    }
-    return options.fallbackError;
+  if (options.debug) throw err;
+  if (typeof options.fallbackError === 'function') {
+    return options.fallbackError(err, parent, args, ctx, info);
   }
+  return options.fallbackError;
 };
 
 // Runs `run` and handles anything it throws or rejects with. A synchronous
@@ -68,16 +59,32 @@ const withErrorHandling = (
   }
 };
 
-// Used for fields whose rule is allow: there is no rule to run, but errors
-// thrown by the resolver are still handled like on every other field.
+// Errors thrown by resolvers are not the guard's business: they reach the
+// client and the server's error handling untouched, unless
+// suppressResolverError replaces them with fallbackError.
+const suppressesResolverErrors = (options: PopulatedOptions): boolean =>
+  options.suppressResolverError && !options.debug;
+
+// Used for allow fields with suppressResolverError: there is no rule to run,
+// only the resolver's errors to replace.
 const allowResolver =
   (resolve: Resolver, options: PopulatedOptions): Resolver =>
   (...fieldArgs) =>
     withErrorHandling(() => resolve(...fieldArgs), options, fieldArgs);
 
-const guardResolver =
-  (resolve: Resolver, rule: GuardRule, options: PopulatedOptions): Resolver =>
-  (...fieldArgs) => {
+// Returned by the rule step when the rule allows the field.
+const proceed = Symbol('proceed');
+
+const guardResolver = (
+  resolve: Resolver,
+  rule: GuardRule,
+  options: PopulatedOptions,
+): Resolver => {
+  const runResolver = suppressesResolverErrors(options)
+    ? allowResolver(resolve, options)
+    : resolve;
+
+  return (...fieldArgs) => {
     const [parent, args, ctx, info] = fieldArgs;
     // The first error a rule threw, if any, so a denial caused by a thrown
     // error passes it to fallbackError, even from inside and/chain/or.
@@ -91,7 +98,7 @@ const guardResolver =
 
     const afterRule = (res: RuleResult): unknown => {
       if (res === true) {
-        return resolve(...fieldArgs);
+        return proceed;
       } else if (res === false) {
         if (typeof options.fallbackError === 'function') {
           return options.fallbackError(
@@ -108,8 +115,13 @@ const guardResolver =
       }
     };
 
+    // Only the rule runs inside the guard's error handling. The resolver runs
+    // after it, so its errors are left alone.
+    const afterGuard = (res: unknown): unknown =>
+      res === proceed ? runResolver(...fieldArgs) : res;
+
     // Stays synchronous unless the rule or the resolver returns a promise.
-    return withErrorHandling(
+    const res = withErrorHandling(
       () => {
         const res = resolveRule(rule, parent, args, ctx, info, ruleOptions);
         return isPromiseLike(res)
@@ -119,7 +131,11 @@ const guardResolver =
       options,
       fieldArgs,
     );
+    return isPromiseLike(res)
+      ? Promise.resolve(res).then(afterGuard)
+      : afterGuard(res);
   };
+};
 
 const wrapResolver = (
   resolve: Resolver,
@@ -217,9 +233,11 @@ export const applyRulesToSchema = (
         options.fallbackRule,
       );
 
-      // With allow and debug, the guard would neither deny nor handle errors,
-      // so the field is left as it is.
-      if (rule instanceof RuleTrue && options.debug) return fieldConfig;
+      // An allow field has nothing to deny, so unless its resolver errors are
+      // replaced, the field is left as it is.
+      if (rule instanceof RuleTrue && !suppressesResolverErrors(options)) {
+        return fieldConfig;
+      }
 
       const hasCustomResolve =
         fieldConfig.resolve !== undefined &&

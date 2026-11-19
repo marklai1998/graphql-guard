@@ -18,6 +18,7 @@ Contents:
   - [Rename Types](#rename-types)
   - [`fallbackError` Accepts `null`](#fallbackerror-accepts-null)
   - [`inputRule` Removed](#inputrule-removed)
+  - [Resolver Errors Pass Through](#resolver-errors-pass-through)
   - [Fragments Removed](#fragments-removed)
   - [Package Entry Points](#package-entry-points)
 - [Behavioral Changes](#behavioral-changes)
@@ -30,7 +31,6 @@ Contents:
   - [`race` Returns the First Error](#race-returns-the-first-error)
   - [Subscriptions Are Checked on Subscribe](#subscriptions-are-checked-on-subscribe)
   - [Rule Cache](#rule-cache)
-  - [Thrown Values With `allowExternalErrors`](#thrown-values-with-allowexternalerrors)
   - [Anonymous Rule Names](#anonymous-rule-names)
   - [Validation Error Messages](#validation-error-messages)
 - [Fixed graphql-shield Issues](#fixed-graphql-shield-issues)
@@ -195,6 +195,27 @@ const isValidSignup = zodRule(
 - `new GraphQLError(message, { extensions })` needs `graphql` 17 or a recent 16.x. Older versions ignore the options object, so pass `extensions` as the seventh positional argument there
 - `strict` hashes `parent` and `args`. To validate the same input once across the items of a list, key the cache on `args` only, for example `cache: (_parent, args) => objectHash(args)`
 
+### Resolver Errors Pass Through
+
+The guard only handles errors from its own work: rules and denials. Errors thrown by your resolvers are left alone and reach the client and your server's error handling as they are, on every field, including `allow` ones. graphql-shield replaced them with `fallbackError` (`Not Authorised!`) unless `allowExternalErrors` was set, so a bug in a public field looked like a permission failure and never reached your error logging.
+
+`allowExternalErrors` is removed: its `true` behavior is now the default. To keep graphql-shield's default, set `suppressResolverError`:
+
+```diff
+  const guardedSchema = guard(schema, rules, {
+-   allowExternalErrors: true,
+  });
+
+  // To keep replacing resolver errors with fallbackError:
+  const guardedSchema = guard(schema, rules, {
++   suppressResolverError: true,
+  });
+```
+
+A thrown value that isn't an `Error` (for example, a string) is handled by graphql-js, which turns it into an error. graphql-shield with `allowExternalErrors` returned it from the resolver, so it became field data and reached the client.
+
+Servers that mask unexpected errors, like GraphQL Yoga, still hide resolver errors from the client. Errors created by GraphQL Guard are `GraphQLError`s, so they are not masked.
+
 ### Fragments Removed
 
 The `fragment` rule option and `fragmentReplacements` are removed. They existed for `prisma-binding` and `graphql-binding`, which are deprecated. Remove the `fragment` option from your rules.
@@ -277,10 +298,6 @@ A subscription field with a custom `resolve` is also checked when the client sub
 - Cache keys include the rule name and key without ambiguity. In graphql-shield, a contextual rule named `a-b` and a rule `a` with key `b` shared one cache entry
 - When a `strict` or key-function cache key can't be computed (for example, `object-hash` throws on a Promise, a `WeakMap` or a file upload), the rule runs without the cache instead of denying the request
 - A missing context is passed to rules and resolvers as is. graphql-shield replaced it with a new `{}` for every field, so resolvers didn't get what the server passed and caching never applied
-
-### Thrown Values With `allowExternalErrors`
-
-With `allowExternalErrors`, a thrown value that isn't an `Error` (for example, a string) is wrapped in an `Error` with the message `Unexpected error value`, and the original value is kept as its `cause`. graphql-shield returned it from the resolver, so it became field data and reached the client.
 
 ### Anonymous Rule Names
 
