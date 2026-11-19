@@ -580,4 +580,42 @@ describe('internal execution', () => {
     });
     expect(res.errors?.length).toBe(1);
   });
+
+  const options = {
+    allowExternalErrors: false,
+    debug: false,
+    fallbackRule: allow,
+    fallbackError: new Error(),
+    hashFunction: () => `${Math.random()}`,
+  };
+
+  test('race returns the first error when every rule fails', async () => {
+    const res = await race(
+      rule()(() => 'first'),
+      rule()(() => 'second'),
+      rule()(() => 'third'),
+    ).resolve({}, {}, {}, {} as GraphQLResolveInfo, options);
+
+    expect(res).toBeInstanceOf(Error);
+    expect((res as Error).message).toBe('first');
+  });
+
+  test('race and chain evaluate results in rule order', async () => {
+    const first = new Error('first');
+    const second = new Error('second');
+
+    const raceResults = await race(
+      rule()(() => first),
+      rule()(() => second),
+      allow,
+    ).evaluate({}, {}, {}, {} as GraphQLResolveInfo, options);
+    expect(raceResults).toEqual([first, second, true]);
+
+    const chainResults = await chain(
+      allow,
+      rule()(() => true),
+      rule()(() => first),
+    ).evaluate({}, {}, {}, {} as GraphQLResolveInfo, options);
+    expect(chainResults).toEqual([true, true, first]);
+  });
 });
