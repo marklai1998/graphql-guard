@@ -404,6 +404,7 @@ Combine rules into more complex requirements.
 - `or(...rules)` - passes if at least one rule passes.
 - `chain(...rules)` - runs rules one by one and stops at the first failure (lazy `and`).
 - `race(...rules)` - runs rules one by one and stops at the first success (lazy `or`).
+- `and`, `or`, `chain` and `race` throw a `ValidationError` when called with no rules, so `and(...rulesFromConfig)` with an empty list fails loudly instead of making the field public. Use `allow` or `deny` to allow or deny everything.
 - `not(rule, error?)` - inverts a rule, with an optional custom error. If the wrapped rule throws (for example, its database is down), `not` denies instead of inverting, so `not(isBanned)` never lets everyone in while the ban check is broken. A rule that returns an error or a string is a deliberate "no", so `not` turns it into a "yes".
 
 ## 🧪 Examples

@@ -1,4 +1,4 @@
-import { createGuardError } from './errors.js';
+import { createGuardError, ValidationError } from './errors.js';
 import {
   Rule,
   RuleAnd,
@@ -50,19 +50,34 @@ export const rule =
     });
   };
 
+// An empty and() or chain() would resolve to true, so a field guarded by
+// and(...rulesFromConfig) would silently become public when the list is empty.
+// Empty or() and race() always deny, which is just as likely a mistake.
+const assertNotEmpty = (name: string, rules: GuardRule[]): void => {
+  if (rules.length === 0) {
+    throw new ValidationError(
+      `${name}() needs at least one rule. Use allow or deny if you meant to allow or deny everything.`,
+    );
+  }
+};
+
 export const and = (...rules: GuardRule[]): RuleAnd => {
+  assertNotEmpty('and', rules);
   return new RuleAnd(rules);
 };
 
 export const chain = (...rules: GuardRule[]): RuleChain => {
+  assertNotEmpty('chain', rules);
   return new RuleChain(rules);
 };
 
 export const race = (...rules: GuardRule[]): RuleRace => {
+  assertNotEmpty('race', rules);
   return new RuleRace(rules);
 };
 
 export const or = (...rules: GuardRule[]): RuleOr => {
+  assertNotEmpty('or', rules);
   return new RuleOr(rules);
 };
 
