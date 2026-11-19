@@ -29,6 +29,14 @@ describe('rule constructor', () => {
     expect(result).toEqual(new Rule(result.name, func, {}));
   });
 
+  test('keeps the options when the name is undefined', async () => {
+    const func = () => true;
+    const result = rule(undefined, { cache: 'strict' })(func);
+
+    expect(result.name).toMatch(/^anonymous-rule-\d+$/);
+    expect(result).toEqual(new Rule(result.name, func, { cache: 'strict' }));
+  });
+
   test('gives every anonymous rule a distinct, sequential name', async () => {
     const a = rule()(() => true);
     const b = rule()(() => true);

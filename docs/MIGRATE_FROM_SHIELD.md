@@ -149,11 +149,8 @@ export const inputRule =
   (
     schema: (y: typeof yup, ctx: Context) => yup.Schema,
     options?: yup.ValidateOptions,
-  ) => {
-    const ruleOptions = { cache: 'strict' } as const;
-    return (
-      name ? rule<Context>(name, ruleOptions) : rule<Context>(ruleOptions)
-    )(async (_parent, args, ctx) => {
+  ) =>
+    rule<Context>(name, { cache: 'strict' })(async (_parent, args, ctx) => {
       try {
         await schema(yup, ctx).validate(args, options);
         return true;
@@ -164,7 +161,6 @@ export const inputRule =
         });
       }
     });
-  };
 ```
 
 The same rule with [Zod](https://zod.dev):
