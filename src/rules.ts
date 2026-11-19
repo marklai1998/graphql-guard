@@ -7,7 +7,6 @@ import type {
   CacheConstructorOptions,
   GuardContext,
   GuardRule,
-  HashFunction,
   LogicRule as LogicRuleType,
   PopulatedOptions,
   RuleConstructorOptions,
@@ -133,7 +132,7 @@ export class Rule implements RuleType {
         switch (this.cache) {
           case 'strict': {
             return this.withCacheKey(
-              () => options.hashFunction(this.strictCacheInput(parent, args)),
+              () => options.hashFunction({ parent, args }),
               parent,
               args,
               ctx,
@@ -157,14 +156,6 @@ export class Rule implements RuleType {
         throw new Error(`Unsupported cache format: ${typeof this.cache}`);
       }
     }
-  }
-
-  /** The values a `strict` cache key is hashed from. */
-  protected strictCacheInput(
-    parent: object,
-    args: object,
-  ): Parameters<HashFunction>[0] {
-    return { parent, args };
   }
 
   /**

@@ -38,7 +38,7 @@ const isPlainObject = (x: unknown): x is Record<string, unknown> => {
 
 const notARule = (path: string) =>
   new ValidationError(
-    `It seems like ${path} is not a graphql-guard rule. Create rules with rule(), inputRule(), allow, deny or the logic rules from graphql-guard. Rules created with graphql-shield are not supported.`,
+    `It seems like ${path} is not a graphql-guard rule. Create rules with rule(), allow, deny or the logic rules from graphql-guard. Rules created with graphql-shield are not supported.`,
   );
 
 // Anything in the rule tree that is not a rule would otherwise be skipped

@@ -108,7 +108,7 @@ The rule tree passed to `guard` must match your schema definition. Rules apply t
 - **a single field**: `Query: { customers: isAdmin }`
 - **every field of a type without its own rule**: use the `'*'` wildcard
 
-Rules on interfaces and unions throw a `ValidationError`. Apply them to the object types that implement or belong to them instead. Rules on input types also throw; put the rule on the field that takes the input, or use `inputRule`. Rules on introspection types (`__Schema`, `__Type`, ...) also throw, because Guard never wraps them; disable introspection in your server to restrict it.
+Rules on interfaces and unions throw a `ValidationError`. Apply them to the object types that implement or belong to them instead. Rules on input types also throw; put the rule on the field that takes the input. Rules on introspection types (`__Schema`, `__Type`, ...) also throw, because Guard never wraps them; disable introspection in your server to restrict it.
 
 ```ts
 const guardedSchema = guard(
@@ -177,7 +177,7 @@ const canEditPost = rule<Context, { postId: string }, Post>({
 })(async (parent, args, ctx) => ctx.user.id === parent.authorId);
 ```
 
-Without them, `parent`, `args` and `ctx` are `any`. `inputRule<Context>()` types `ctx` the same way. The types used by the API (`Options`, `GuardRule`, `RuleFunction`, `GuardContext`, `FallbackErrorMapperType`, ...) are exported from `graphql-guard`.
+Without them, `parent`, `args` and `ctx` are `any`. The types used by the API (`Options`, `GuardRule`, `RuleFunction`, `GuardContext`, `FallbackErrorMapperType`, ...) are exported from `graphql-guard`.
 
 ### Caching
 
@@ -212,7 +212,7 @@ If a cache key can't be computed, the rule runs without the cache for that call.
 
 By default, GraphQL Guard catches every error thrown during execution and replaces it with `Not Authorised!`, so internal details never reach the client.
 
-Errors created by GraphQL Guard are `GraphQLError`s with a `code` extension: `FORBIDDEN` for a denial and `BAD_USER_INPUT` for a failed [`inputRule`](#inputrule). Servers that hide unexpected errors, like GraphQL Yoga's default error masking, still show them to the client.
+Errors created by GraphQL Guard are `GraphQLError`s with the `FORBIDDEN` code. Servers that hide unexpected errors, like GraphQL Yoga's default error masking, still show them to the client.
 
 To send a custom message, **return** an `Error` (or a string) from a rule instead of throwing it. A rule that returns an error counts as failing, so the resolver doesn't run.
 
@@ -313,7 +313,6 @@ One run of an operation. The cache is keyed by the context object and the run, s
 
 - [guard](#guard)
 - [rule](#rule)
-- [inputRule](#inputrule)
 - [allow / deny](#allow--deny)
 - [defaultFallbackError](#defaultfallbackerror)
 - [Logic rules](#logic-rules)
@@ -369,24 +368,7 @@ const canEditPost = rule({ cache: (parent, args) => args.postId })(
 );
 ```
 
-### `inputRule`
-
-Validates arguments with a [Zod](https://zod.dev) schema. Zod is an optional peer dependency, so install it (`npm i zod`) and import `inputRule` from `graphql-guard/zod`. Apps that do not use it never load Zod, not even for their type checks. The callback receives `z` and the context, and the schema is checked against the entire `args` object, so start the schema with an object.
-
-```ts
-import { inputRule } from 'graphql-guard/zod';
-
-const isValidSignup = inputRule()((z, ctx) =>
-  z.object({
-    email: z.email('It has to be an email!'),
-    age: z.number().min(18, 'Must be an adult!'),
-  }),
-);
-```
-
-When validation fails, the rule fails with the first issue's message (e.g. `It has to be an email!`). The full `ZodError`, with every issue, is available as the error's `cause`.
-
-Results are cached per request by `args` only, so the same input is validated once even across the items of a list.
+GraphQL Guard is a rule engine, not an input validator. To validate arguments with Zod, Yup or another library, wrap it in a rule; see [`inputRule` Removed](docs/MIGRATE_FROM_SHIELD.md#inputrule-removed).
 
 ### `allow` / `deny`
 

@@ -233,9 +233,6 @@ importers:
       vitest:
         specifier: 5.1.0
         version: 5.1.0(@types/node@22.20.5)(@vitest/coverage-v8@5.1.0)(vite@8.3.8(@types/node@22.20.5)(jiti@2.7.0))
-      zod:
-        specifier: 4.6.7
-        version: 4.6.7
 
 packages:
 
@@ -1962,9 +1959,6 @@ packages:
       '@yuku-toolchain/wasm':
         optional: true
 
-  zod@4.6.7:
-    resolution: {integrity: sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==}
-
 snapshots:
 
   '@apollo/cache-control-types@1.1.0(graphql@16.15.0)':
@@ -3489,5 +3483,3 @@ snapshots:
       '@yuku-toolchain/linux-x64': 0.28.1
       '@yuku-toolchain/win32-arm64': 0.28.1
       '@yuku-toolchain/win32-x64': 0.28.1
-
-  zod@4.6.7: {}
