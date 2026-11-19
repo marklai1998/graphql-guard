@@ -23,7 +23,7 @@ Contents:
   - [Package Entry Points](#package-entry-points)
 - [Behavioral Changes](#behavioral-changes)
   - [Errors Are `GraphQLError`s](#errors-are-graphqlerrors)
-  - [Only graphql-guard Rules Are Accepted](#only-graphql-guard-rules-are-accepted)
+  - [Rules Are Recognised by Their API](#rules-are-recognised-by-their-api)
   - [Rules on Interfaces, Unions and Introspection Types](#rules-on-interfaces-unions-and-introspection-types)
   - [Logic Rules Need at Least One Rule](#logic-rules-need-at-least-one-rule)
   - [`not` Denies When the Rule Throws](#not-denies-when-the-rule-throws)
@@ -243,13 +243,16 @@ Servers that hide unexpected errors now show them. With `graphql-shield`, GraphQ
 
 A plain `Error` returned from a rule or a custom `fallbackError` is still passed through as is. Return a string or a `GraphQLError` if it should survive error masking.
 
-### Only graphql-guard Rules Are Accepted
+### Rules Are Recognised by Their API
 
-Every value in the rule tree, and `fallbackRule`, must be a rule created with graphql-guard (`rule`, `allow`, `deny` or a logic rule). Anything else throws a `ValidationError` that names the field, for example `It seems like Query.users is not a graphql-guard rule.` `ValidationError` is exported, so you can check for it with `instanceof`.
+Every value in the rule tree, and `fallbackRule`, must be a rule. A rule is any object with the rule API: `name`, `equals()` and `resolve()`, or for a logic rule `getRules()`, `evaluate()` and `resolve()`. Anything else throws a `ValidationError` that names the field, for example `It seems like Query.users is not a rule.` `ValidationError` is exported, so you can check for it with `instanceof`.
 
-- Rules created with graphql-shield are not accepted. Recreate them with graphql-guard. Mixing the two never worked: graphql-shield rules with a contextual or strict cache always denied the request, because their cache lives on `ctx._shield`
+- Rules are recognised by their API instead of `instanceof` or a brand, so a rule from another copy of graphql-guard (for example, another package in a monorepo) is accepted
+- Rules created with graphql-shield are accepted too, so you can migrate one rule at a time. Their TypeScript types expect graphql-shield's own options, so they need a cast (`as unknown as GuardRule`). Recreate them with graphql-guard when you can:
+  - graphql-shield rules with a `contextual`, `strict` or custom cache always deny, because their cache lives on `ctx._shield`
+  - A graphql-shield rule that throws resolves to `false` itself, so `not()` around it allows the request instead of denying it
+- Only this copy's `allow` leaves a field unwrapped. `allow` from another copy, or from graphql-shield, still allows the field, but the field is wrapped like any other rule
 - `graphql-shield` replaced the whole type with the fallback rule when one value wasn't a rule, which let every field of that type through by default. GraphQL Guard throws instead
-- Rules are recognised by a brand instead of `instanceof`, so a rule created by another copy of graphql-guard (for example, another package in a monorepo) is accepted
 - `fallbackRule` is validated like the rule tree, including duplicate rule names
 
 ### Rules on Interfaces, Unions and Introspection Types
@@ -319,7 +322,7 @@ These [graphql-shield issues](https://github.com/maticzav/graphql-shield/issues)
 | ----------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
 | [#163](https://github.com/maticzav/graphql-shield/issues/163) Aliasing not working with graphql-shield permissions middleware and customFieldResolver | `guard` wraps each field's own resolver, so aliased fields resolve               |
 | [#487](https://github.com/maticzav/graphql-shield/issues/487) Shield rules with cache: "strict" don't work on types                                   | Rules whose `strict` cache key can't be computed run uncached instead of denying |
-| [#562](https://github.com/maticzav/graphql-shield/issues/562) Rule is not recognised when imported from a package                                     | Rules are recognised by a brand instead of `instanceof`                          |
+| [#562](https://github.com/maticzav/graphql-shield/issues/562) Rule is not recognised when imported from a package                                     | Rules are recognised by their API instead of `instanceof`                        |
 | [#688](https://github.com/maticzav/graphql-shield/issues/688) Unknown object type "promise" error when uploading files                                | Rules whose cache key can't be computed run uncached instead of denying          |
 | [#739](https://github.com/maticzav/graphql-shield/issues/739) Error thrown inside an async rule are not sent to the fallbackError function            | `fallbackError` receives errors thrown by rules, including inside logic rules    |
 | [#781](https://github.com/maticzav/graphql-shield/issues/781) @types/yup dev dependency                                                               | `inputRule` is removed, so Yup is no longer a dependency                         |

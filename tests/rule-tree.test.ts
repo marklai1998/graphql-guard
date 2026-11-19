@@ -1,6 +1,7 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { graphql } from 'graphql';
-import { allow, deny, rule } from '../src/index.js';
+import * as shield from 'graphql-shield';
+import { allow, and, deny, type GuardRule, rule } from '../src/index.js';
 import { ValidationError } from '../src/validation.js';
 import { applyGuard } from './helpers.js';
 
@@ -59,21 +60,66 @@ describe('rules from another copy of graphql-guard', () => {
   });
 });
 
+describe('rules from graphql-shield', () => {
+  const schema = makeExecutableSchema({
+    typeDefs: 'type Query { open: String closed: String mixed: String }',
+    resolvers: {
+      Query: {
+        open: () => 'open',
+        closed: () => 'closed',
+        mixed: () => 'mixed',
+      },
+    },
+  });
+
+  test('are enforced, alone and inside graphql-guard logic rules', async () => {
+    // graphql-shield's types expect its own options (allowExternalErrors and
+    // a required hashFunction), so they need a cast; at runtime the API is
+    // the same.
+    const isAdmin = shield.rule()(
+      (_p, _a, ctx: { admin?: boolean }) => ctx.admin === true,
+    ) as unknown as GuardRule;
+    const guarded = applyGuard(schema, {
+      Query: {
+        open: shield.allow as unknown as GuardRule,
+        closed: shield.and(shield.deny) as unknown as GuardRule,
+        mixed: and(allow, isAdmin),
+      },
+    });
+
+    expect(await execute(guarded, '{ open }')).toEqual({
+      data: { open: 'open' },
+      errors: undefined,
+    });
+    expect(await execute(guarded, '{ closed }')).toEqual({
+      data: { closed: null },
+      errors: ['Not Authorised!'],
+    });
+    expect(await execute(guarded, '{ mixed }')).toEqual({
+      data: { mixed: null },
+      errors: ['Not Authorised!'],
+    });
+  });
+});
+
 describe('values that are not rules', () => {
   const schema = makeExecutableSchema({
     typeDefs: 'type Query { a: String b: String }',
     resolvers: { Query: { a: () => 'a', b: () => 'b' } },
   });
 
-  // Same shape and class name as a graphql-shield rule, but not a
-  // graphql-guard rule.
+  // Same class name as a rule, but without the rule API (no equals).
   class Rule {
-    name = 'shield-rule';
+    name = 'incomplete-rule';
     resolve = async () => true;
   }
 
   test.each([
-    ['a graphql-shield rule', { Query: { a: new Rule() } }, 'Query.a'],
+    [
+      'an object missing part of the rule API',
+      { Query: { a: new Rule() } },
+      'Query.a',
+    ],
     ['a string', { Query: { a: 'allow' } }, 'Query.a'],
     ['a function', { Query: { a: () => true } }, 'Query.a'],
     ['a class instance as a type', { Query: new Rule() }, 'Query'],
@@ -81,7 +127,7 @@ describe('values that are not rules', () => {
   ])('throws for %s', (_label, rules, path) => {
     expect(() => applyGuard(schema, rules as never)).toThrow(
       new ValidationError(
-        `It seems like ${path} is not a graphql-guard rule. Create rules with rule(), allow, deny or the logic rules from graphql-guard. Rules created with graphql-shield are not supported.`,
+        `It seems like ${path} is not a rule. Create rules with rule(), allow, deny or the logic rules from graphql-guard.`,
       ),
     );
   });

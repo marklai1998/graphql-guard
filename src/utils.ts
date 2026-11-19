@@ -1,18 +1,34 @@
-import { allowBrand, logicRuleBrand, ruleBrand } from './brand.js';
+import { RuleTrue } from './rules.js';
 import type {
   GuardRule,
   LogicRule as LogicRuleType,
   Rule as RuleType,
 } from './types.js';
 
-export const isRule = (x: any): x is RuleType => x?.[ruleBrand] === true;
+const isObject = (x: unknown): x is Record<PropertyKey, unknown> =>
+  typeof x === 'object' && x !== null;
 
-export const isLogicRule = (x: any): x is LogicRuleType =>
-  x?.[logicRuleBrand] === true;
+// Rules are recognised by their API rather than by class or brand, so a rule
+// from another copy of graphql-guard, or from any library with the same API
+// (such as graphql-shield), is accepted.
+export const isLogicRule = (x: unknown): x is LogicRuleType =>
+  isObject(x) &&
+  typeof x.resolve === 'function' &&
+  typeof x.evaluate === 'function' &&
+  typeof x.getRules === 'function';
 
-export const isAllowRule = (x: any): boolean => x?.[allowBrand] === true;
+export const isRule = (x: unknown): x is RuleType =>
+  isObject(x) &&
+  typeof x.resolve === 'function' &&
+  typeof x.equals === 'function' &&
+  typeof x.name === 'string' &&
+  !isLogicRule(x);
 
-export const isRuleFunction = (x: any): x is GuardRule => {
+// Only this copy's `allow` is recognised. Any other always-true rule still
+// works; its fields are just wrapped like any other rule.
+export const isAllowRule = (x: unknown): boolean => x instanceof RuleTrue;
+
+export const isRuleFunction = (x: unknown): x is GuardRule => {
   return isRule(x) || isLogicRule(x);
 };
 

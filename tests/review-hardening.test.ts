@@ -25,17 +25,19 @@ describe('rules from another copy of graphql-guard', () => {
     expect(res).toEqual({ data: { a: null } });
   });
 
-  test("the other copy's allow leaves the field unwrapped", async () => {
+  test("the other copy's allow lets the field through", async () => {
     vi.resetModules();
     const other = await import('../src/index.js');
-    const schema = makeExecutableSchema({
-      typeDefs: 'type Query { a: String }',
-      resolvers: { Query: { a: () => 'a' } },
-    });
-    const guarded = applyGuard(schema, { Query: { a: other.allow } });
-    expect(guarded.getQueryType()?.getFields().a?.resolve).toBe(
-      schema.getQueryType()?.getFields().a?.resolve,
+    const schema = applyGuard(
+      makeExecutableSchema({
+        typeDefs: 'type Query { a: String }',
+        resolvers: { Query: { a: () => 'a' } },
+      }),
+      { Query: { a: other.allow } },
     );
+
+    const res = await graphql({ schema, source: '{ a }', contextValue: {} });
+    expect(res).toEqual({ data: { a: 'a' } });
   });
 });
 

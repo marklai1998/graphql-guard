@@ -42,7 +42,7 @@ describe('fallbackRule validation', () => {
     ).toThrow(ValidationError);
     expect(() =>
       guard(schema, {}, { fallbackRule: (() => true) as unknown as GuardRule }),
-    ).toThrow('options.fallbackRule is not a graphql-guard rule');
+    ).toThrow('options.fallbackRule is not a rule');
   });
 
   test('rejects a fallbackRule that shares a name with a different rule', () => {

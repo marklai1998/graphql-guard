@@ -1,6 +1,5 @@
 import type { GraphQLResolveInfo } from 'graphql';
 import hash from 'object-hash';
-import { allowBrand, logicRuleBrand, ruleBrand } from './brand.js';
 import { getRuleCache } from './cache.js';
 import { createGuardError } from './errors.js';
 import type {
@@ -17,7 +16,7 @@ import type {
   Rule as RuleType,
 } from './types.js';
 
-// The internal symbols below use Symbol.for, like the brands, so they are the
+// The internal symbols below use Symbol.for so they are the
 // same in every copy of graphql-guard (for example two packages in a monorepo
 // that each install it). With Symbol(), a rule from the other copy would not see
 // failClosed, and not() would invert its thrown error into an allow.
@@ -167,10 +166,6 @@ const firstError = (results: RuleResult[]): RuleResult =>
   results.find((res) => res instanceof Error) || false;
 
 export class Rule implements RuleType {
-  get [ruleBrand](): true {
-    return true;
-  }
-
   readonly name: string;
 
   private cache: Cache;
@@ -348,10 +343,6 @@ export class Rule implements RuleType {
 }
 
 export class LogicRule implements LogicRuleType {
-  get [logicRuleBrand](): true {
-    return true;
-  }
-
   private rules: GuardRule[];
 
   constructor(rules: GuardRule[]) {
@@ -583,10 +574,6 @@ export class RuleNot extends LogicRule {
 }
 
 export class RuleTrue extends LogicRule {
-  get [allowBrand](): true {
-    return true;
-  }
-
   constructor() {
     super([]);
   }
