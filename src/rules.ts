@@ -348,7 +348,7 @@ export class RuleChain extends LogicRule {
         if (res !== true) {
           return [res];
         } else {
-          return iterate(otherRules).then((ress) => ress.concat(res));
+          return iterate(otherRules).then((ress) => [res, ...ress]);
         }
       });
     };
@@ -396,7 +396,7 @@ export class RuleRace extends LogicRule {
         if (res === true) {
           return [res];
         } else {
-          return iterate(otherRules).then((ress) => ress.concat(res));
+          return iterate(otherRules).then((ress) => [res, ...ress]);
         }
       });
     };

@@ -26,6 +26,7 @@ Contents:
   - [Logic Rules Need at Least One Rule](#logic-rules-need-at-least-one-rule)
   - [`not` Denies When the Rule Throws](#not-denies-when-the-rule-throws)
   - [`fallbackError` Receives Errors Thrown by Rules](#fallbackerror-receives-errors-thrown-by-rules)
+  - [`race` Returns the First Error](#race-returns-the-first-error)
   - [Subscriptions Are Checked on Subscribe](#subscriptions-are-checked-on-subscribe)
   - [Rule Cache](#rule-cache)
   - [Thrown Values With `allowExternalErrors`](#thrown-values-with-allowexternalerrors)
@@ -223,6 +224,8 @@ After
 guard(schema, { Item: { secret: isAdmin } });
 ```
 
+Rules on input types were also ignored, so a rule on an input field never ran, and now throw. Put the rule on the field that takes the input instead, or use `inputRule` to validate it.
+
 Rules on introspection types (`__Schema`, `__Type`, ...) were also ignored and now throw. To restrict introspection, disable it in your server.
 
 ### Logic Rules Need at Least One Rule
@@ -238,6 +241,10 @@ Rules on introspection types (`__Schema`, `__Type`, ...) were also ignored and n
 When a rule throws, a `fallbackError` function now receives the thrown error as its first argument. graphql-shield caught the error, treated it as a denial and passed `null`, so the function couldn't tell a thrown error from a plain denial. This applies to rules on their own and inside `and`, `or`, `chain`, `race` and `not`. If several rules throw, the function receives the first error. A plain denial still passes `null`.
 
 The request is still denied. If your `fallbackError` function treats any non-`null` first argument as an unexpected error, a rule that throws now goes down that path too.
+
+### `race` Returns the First Error
+
+When every rule in `race` fails, it returns the error from the first rule that returned one. graphql-shield collected results in reverse order, so it returned the error from the last one. `chain` and `race` also list their results in rule order when you call `evaluate` directly.
 
 ### Subscriptions Are Checked on Subscribe
 
@@ -270,21 +277,23 @@ These [graphql-shield issues](https://github.com/maticzav/graphql-shield/issues)
 
 | Issue                                                                                                                                      | Fix                                                                                                          |
 | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| [#487](https://github.com/maticzav/graphql-shield/issues/487) Shield rules with cache: "strict" don't work on types                        | Rules whose `strict` cache key can't be computed run uncached instead of denying                             |
+| [#562](https://github.com/maticzav/graphql-shield/issues/562) Rule is not recognised when imported from a package                          | Rules are recognised by a brand instead of `instanceof`                                                      |
+| [#688](https://github.com/maticzav/graphql-shield/issues/688) Unknown object type "promise" error when uploading files                     | `inputRule` keys on `args` only, and rules whose cache key can't be computed run uncached instead of denying |
+| [#739](https://github.com/maticzav/graphql-shield/issues/739) Error thrown inside an async rule are not sent to the fallbackError function | `fallbackError` receives errors thrown by rules, including inside logic rules                                |
+| [#781](https://github.com/maticzav/graphql-shield/issues/781) @types/yup dev dependency                                                    | Yup is replaced with Zod, an optional peer dependency                                                        |
+| [#828](https://github.com/maticzav/graphql-shield/issues/828) Wrong order in RuleChain and RuleRace evaluation                             | `chain` and `race` keep results in rule order, so `race` returns the first error                             |
+| [#970](https://github.com/maticzav/graphql-shield/issues/970) Mono repo (lerna) MiddlewareError                                            | Same as #562                                                                                                 |
+| [#988](https://github.com/maticzav/graphql-shield/issues/988) Add support for a 'silent' mode                                              | `fallbackError` accepts `null`                                                                               |
+| [#1087](https://github.com/maticzav/graphql-shield/issues/1087) Build error with yup latest version                                        | Same as #781                                                                                                 |
+| [#1109](https://github.com/maticzav/graphql-shield/issues/1109) Context object not typed on rule arguments                                 | `rule<Context, Args, Parent>()`                                                                              |
+| [#1176](https://github.com/maticzav/graphql-shield/issues/1176) Should INTERNAL_SERVER_ERROR be UNAUTHENTICATED/FORBIDDEN?                 | Denials are `GraphQLError`s with the `FORBIDDEN` code                                                        |
+| [#1221](https://github.com/maticzav/graphql-shield/issues/1221) Error: Unknown object type "promise"                                       | Same as #688                                                                                                 |
+| [#1315](https://github.com/maticzav/graphql-shield/issues/1315) The `context` argument of `inputRule` has insufficient type definition     | `inputRule<Context>()`                                                                                       |
+| [#1365](https://github.com/maticzav/graphql-shield/issues/1365) Input field is not checked by Graphql Shield rules?                        | Rules on input types throw a `ValidationError` instead of being ignored                                      |
+| [#1473](https://github.com/maticzav/graphql-shield/issues/1473) The bundled package is missing types in `types.js` export                  | Built with tsdown; types are type-only exports                                                               |
 | [#1476](https://github.com/maticzav/graphql-shield/issues/1476) Move from graphql-middleware to Resolvers Composition                      | `guard` wraps resolvers itself                                                                               |
+| [#1487](https://github.com/maticzav/graphql-shield/issues/1487) 7.6.4 ESM build broken                                                     | Same as #1473                                                                                                |
+| [#1510](https://github.com/maticzav/graphql-shield/issues/1510) Update yup@1.x to avoid @types/lodash and babel runtime in production deps | Same as #781                                                                                                 |
 | [#1560](https://github.com/maticzav/graphql-shield/issues/1560) Support for node v23 or higher                                             | No `util.isUndefined`, which Node 23 removed (fixed upstream but never released)                             |
 | [#1561](https://github.com/maticzav/graphql-shield/issues/1561) isUndefined import error                                                   | Same as #1560                                                                                                |
-| [#1473](https://github.com/maticzav/graphql-shield/issues/1473) The bundled package is missing types in `types.js` export                  | Built with tsdown; types are type-only exports                                                               |
-| [#1487](https://github.com/maticzav/graphql-shield/issues/1487) 7.6.4 ESM build broken                                                     | Same as #1473                                                                                                |
-| [#562](https://github.com/maticzav/graphql-shield/issues/562) Rule is not recognised when imported from a package                          | Rules are recognised by a brand instead of `instanceof`                                                      |
-| [#970](https://github.com/maticzav/graphql-shield/issues/970) Mono repo (lerna) MiddlewareError                                            | Same as #562                                                                                                 |
-| [#1176](https://github.com/maticzav/graphql-shield/issues/1176) Should INTERNAL_SERVER_ERROR be UNAUTHENTICATED/FORBIDDEN?                 | Denials are `GraphQLError`s with the `FORBIDDEN` code                                                        |
-| [#688](https://github.com/maticzav/graphql-shield/issues/688) Unknown object type "promise" error when uploading files                     | `inputRule` keys on `args` only, and rules whose cache key can't be computed run uncached instead of denying |
-| [#1221](https://github.com/maticzav/graphql-shield/issues/1221) Error: Unknown object type "promise"                                       | Same as #688                                                                                                 |
-| [#487](https://github.com/maticzav/graphql-shield/issues/487) Shield rules with cache: "strict" don't work on types                        | Same as #688, for parents `object-hash` can't hash                                                           |
-| [#1109](https://github.com/maticzav/graphql-shield/issues/1109) Context object not typed on rule arguments                                 | `rule<Context, Args, Parent>()`                                                                              |
-| [#1315](https://github.com/maticzav/graphql-shield/issues/1315) The `context` argument of `inputRule` has insufficient type definition     | `inputRule<Context>()`                                                                                       |
-| [#781](https://github.com/maticzav/graphql-shield/issues/781) @types/yup dev dependency                                                    | Yup is replaced with Zod, an optional peer dependency                                                        |
-| [#1087](https://github.com/maticzav/graphql-shield/issues/1087) Build error with yup latest version                                        | Same as #781                                                                                                 |
-| [#1510](https://github.com/maticzav/graphql-shield/issues/1510) Update yup@1.x to avoid @types/lodash and babel runtime in production deps | Same as #781                                                                                                 |
-| [#739](https://github.com/maticzav/graphql-shield/issues/739) Error thrown inside an async rule are not sent to the fallbackError function | `fallbackError` receives errors thrown by rules, including inside logic rules                                |
-| [#988](https://github.com/maticzav/graphql-shield/issues/988) Add support for a 'silent' mode                                              | `fallbackError` accepts `null`                                                                               |

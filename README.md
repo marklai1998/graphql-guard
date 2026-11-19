@@ -108,7 +108,7 @@ The rule tree passed to `guard` must match your schema definition. Rules apply t
 - **a single field**: `Query: { customers: isAdmin }`
 - **every field of a type without its own rule**: use the `'*'` wildcard
 
-Rules on interfaces and unions throw a `ValidationError`. Apply them to the object types that implement or belong to them instead. Rules on introspection types (`__Schema`, `__Type`, ...) also throw, because Guard never wraps them; disable introspection in your server to restrict it.
+Rules on interfaces and unions throw a `ValidationError`. Apply them to the object types that implement or belong to them instead. Rules on input types also throw; put the rule on the field that takes the input, or use `inputRule`. Rules on introspection types (`__Schema`, `__Type`, ...) also throw, because Guard never wraps them; disable introspection in your server to restrict it.
 
 ```ts
 const guardedSchema = guard(

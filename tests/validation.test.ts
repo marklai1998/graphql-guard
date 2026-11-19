@@ -153,7 +153,9 @@ describe('rules on non-object types', () => {
       interface Node { id: ID! secret: String }
       type Item implements Node { id: ID! secret: String }
       union Result = Item
+      input ItemInput { secret: String }
       type Query { node: Node items: [Result!]! }
+      type Mutation { createItem(input: ItemInput!): Item }
     `,
     resolvers: {
       Node: { __resolveType: () => 'Item' },
@@ -174,6 +176,16 @@ describe('rules on non-object types', () => {
   test('throws for rules on a union', () => {
     expect(() => applyGuard(schema, { Query: allow, Result: allow })).toThrow(
       ValidationError,
+    );
+  });
+
+  test('throws for rules on an input type', () => {
+    expect(() =>
+      applyGuard(schema, { Query: allow, ItemInput: { secret: allow } }),
+    ).toThrow(
+      new ValidationError(
+        'It seems like you have applied rules to ItemInput types but Guard can only apply rules to object types. Apply them to the object types that implement or belong to them instead.',
+      ),
     );
   });
 
