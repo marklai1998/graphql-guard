@@ -4,5 +4,11 @@
     "types": ["vitest/globals", "node"],
     "skipLibCheck": true
   },
-  "include": ["src", "tests", "vitest.config.ts", "tsdown.config.ts"]
+  "include": [
+    "src",
+    "tests",
+    "performance",
+    "vitest.config.ts",
+    "tsdown.config.ts"
+  ]
 }

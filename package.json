@@ -56,7 +56,8 @@
   "sideEffects": false,
   "scripts": {
     "build": "tsdown --format esm --format cjs",
-    "test": "vitest run --coverage"
+    "test": "vitest run --coverage",
+    "bench": "vitest bench --run performance"
   },
   "dependencies": {
     "@graphql-tools/utils": "^12.1.0",
@@ -81,6 +82,8 @@
     "@types/request-promise-native": "1.0.18",
     "@vitest/coverage-v8": "5.1.0",
     "graphql": "16.15.0",
+    "graphql-middleware": "6.1.35",
+    "graphql-shield": "7.6.5",
     "graphql-yoga": "6.1.0",
     "lefthook": "2.2.2",
     "tsdown": "0.23.7",
