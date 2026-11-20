@@ -18,16 +18,14 @@ import {
   RuleOr,
   RuleTrue,
 } from '../src/rules.js';
-import type { GuardRule } from '../src/types/index.js';
+import type { GuardRule, Rule as RuleType } from '../src/types/index.js';
 
-// A rule's executor is a closure made per instance, so compare everything else:
-// the name and the rule function.
-const ruleFields = (rule: object) => {
-  const { executeRule: _, ...fields } = rule as unknown as Record<
-    string,
-    unknown
-  >;
-  return fields;
+// A rule's fields are #private, so compare what is observable: the name and,
+// through equals(), the rule function.
+const expectSameRule = (actual: RuleType, expected: Rule) => {
+  expect(actual).toBeInstanceOf(Rule);
+  expect(actual.name).toBe(expected.name);
+  expect(actual.equals(expected)).toBe(true);
 };
 
 describe('rule constructor', () => {
@@ -36,9 +34,7 @@ describe('rule constructor', () => {
     const result = rule()(func);
 
     expect(result.name).toMatch(/^anonymous-rule-\d+$/);
-    expect(ruleFields(result)).toEqual(
-      ruleFields(new Rule(result.name, func, {})),
-    );
+    expectSameRule(result, new Rule(result.name, func, {}));
   });
 
   test('keeps the options when the name is undefined', async () => {
@@ -46,9 +42,7 @@ describe('rule constructor', () => {
     const result = rule(undefined, { cache: 'strict' })(func);
 
     expect(result.name).toMatch(/^anonymous-rule-\d+$/);
-    expect(ruleFields(result)).toEqual(
-      ruleFields(new Rule(result.name, func, { cache: 'strict' })),
-    );
+    expectSameRule(result, new Rule(result.name, func, { cache: 'strict' }));
   });
 
   test('gives every anonymous rule a distinct, sequential name', async () => {
@@ -64,17 +58,16 @@ describe('rule constructor', () => {
   test('correctly constructs with name and options', async () => {
     const func = () => true;
 
-    expect(ruleFields(rule('name', { cache: 'contextual' })(func))).toEqual(
-      ruleFields(new Rule('name', func, { cache: 'contextual' })),
+    expectSameRule(
+      rule('name', { cache: 'contextual' })(func),
+      new Rule('name', func, { cache: 'contextual' }),
     );
   });
 
   test('correctly constructs with name but no options', async () => {
     const func = () => true;
 
-    expect(ruleFields(rule('name')(func))).toEqual(
-      ruleFields(new Rule('name', func, {})),
-    );
+    expectSameRule(rule('name')(func), new Rule('name', func, {}));
   });
 
   test('correctly constructs with options', async () => {
@@ -82,8 +75,9 @@ describe('rule constructor', () => {
     const result = rule({ cache: 'contextual' })(func);
 
     expect(result.name).toMatch(/^anonymous-rule-\d+$/);
-    expect(ruleFields(result)).toEqual(
-      ruleFields(new Rule(result.name, func, { cache: 'contextual' })),
+    expectSameRule(
+      result,
+      new Rule(result.name, func, { cache: 'contextual' }),
     );
   });
 });
@@ -92,24 +86,32 @@ describe('logic rules constructors', () => {
   test('and correctly constructs rule and', async () => {
     const ruleA = rule()(() => true);
     const ruleB = rule()(() => true);
-    expect(and(ruleA, ruleB)).toEqual(new RuleAnd([ruleA, ruleB]));
+    const result = and(ruleA, ruleB);
+    expect(result).toBeInstanceOf(RuleAnd);
+    expect(result.getRules()).toEqual([ruleA, ruleB]);
   });
 
   test('chain correctly constructs rule chain', async () => {
     const ruleA = rule()(() => true);
     const ruleB = rule()(() => true);
-    expect(chain(ruleA, ruleB)).toEqual(new RuleChain([ruleA, ruleB]));
+    const result = chain(ruleA, ruleB);
+    expect(result).toBeInstanceOf(RuleChain);
+    expect(result.getRules()).toEqual([ruleA, ruleB]);
   });
 
   test('or correctly constructs rule or', async () => {
     const ruleA = rule()(() => true);
     const ruleB = rule()(() => true);
-    expect(or(ruleA, ruleB)).toEqual(new RuleOr([ruleA, ruleB]));
+    const result = or(ruleA, ruleB);
+    expect(result).toBeInstanceOf(RuleOr);
+    expect(result.getRules()).toEqual([ruleA, ruleB]);
   });
 
   test('not correctly constructs rule not', async () => {
     const ruleA = rule()(() => true);
-    expect(not(ruleA)).toEqual(new RuleNot(ruleA));
+    const result = not(ruleA);
+    expect(result).toBeInstanceOf(RuleNot);
+    expect(result.getRules()).toEqual([ruleA]);
   });
 
   test.each([
@@ -133,10 +135,10 @@ describe('logic rules constructors', () => {
 
 describe('basic rules', () => {
   test('rule allow', async () => {
-    expect(allow).toEqual(new RuleTrue());
+    expect(allow).toBeInstanceOf(RuleTrue);
   });
 
   test('rule deny', async () => {
-    expect(deny).toEqual(new RuleFalse());
+    expect(deny).toBeInstanceOf(RuleFalse);
   });
 });
