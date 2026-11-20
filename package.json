@@ -48,7 +48,7 @@
     "bench": "vitest bench --run performance"
   },
   "dependencies": {
-    "@graphql-tools/utils": "^12.1.0",
+    "@graphql-tools/utils": "^13.0.0",
     "object-hash": "^3.0.0"
   },
   "peerDependencies": {
