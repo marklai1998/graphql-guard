@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.1](https://github.com/marklai1998/graphql-guard/compare/v1.0.0...v1.0.1) (2026-11-20)
+
+
+### Bug Fixes
+
+* resolve the rule cache strategy at construction time ([feca5d7](https://github.com/marklai1998/graphql-guard/commit/feca5d7482a60a9bef3ce63a95e310fc873b016c))
+* resolve the rule cache strategy at construction time ([941d6d1](https://github.com/marklai1998/graphql-guard/commit/941d6d1c44ae8ccc0afea11821a908caaf88e69b))
+
 ## 1.0.0 (2026-11-19)
 
 
