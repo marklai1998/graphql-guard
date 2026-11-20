@@ -5,13 +5,24 @@ import type {
   Rule as RuleType,
 } from '../types/index.js';
 
-export const isRule = (x: any): x is RuleType => x?.[ruleBrand] === true;
+export const isRule = (x: unknown): x is RuleType =>
+  x !== null &&
+  typeof x === 'object' &&
+  ruleBrand in x &&
+  x?.[ruleBrand] === true;
 
-export const isLogicRule = (x: any): x is LogicRuleType =>
+export const isLogicRule = (x: unknown): x is LogicRuleType =>
+  x !== null &&
+  typeof x === 'object' &&
+  logicRuleBrand in x &&
   x?.[logicRuleBrand] === true;
 
-export const isAllowRule = (x: any): boolean => x?.[allowBrand] === true;
+export const isAllowRule = (x: unknown): boolean =>
+  x !== null &&
+  typeof x === 'object' &&
+  allowBrand in x &&
+  x?.[allowBrand] === true;
 
-export const isRuleFunction = (x: any): x is GuardRule => {
+export const isRuleFunction = (x: unknown): x is GuardRule => {
   return isRule(x) || isLogicRule(x);
 };

@@ -143,30 +143,27 @@ const guardResolver = (
   };
 };
 
-const wrapResolver = (
-  resolve: Resolver,
-  rule: GuardRule,
-  options: PopulatedOptions,
-): Resolver =>
-  isAllowRule(rule)
-    ? allowResolver(resolve, options)
-    : guardResolver(resolve, rule, options);
+const wrapResolver =
+  (rule: GuardRule, options: PopulatedOptions) =>
+  (resolve: Resolver): Resolver =>
+    isAllowRule(rule)
+      ? allowResolver(resolve, options)
+      : guardResolver(resolve, rule, options);
 
 const ruleForField = (
   rules: Rules,
   typeName: string,
   fieldName: string,
-  fallbackRule: GuardRule,
-): GuardRule => {
+): GuardRule | null => {
   if (isRuleFunction(rules)) return rules;
 
-  if (!Object.hasOwn(rules, typeName)) return fallbackRule;
+  if (!Object.hasOwn(rules, typeName)) return null;
 
   const typeRules = rules[typeName];
   if (isRuleFunction(typeRules)) return typeRules;
   if (Object.hasOwn(typeRules, fieldName)) return typeRules[fieldName];
   if (Object.hasOwn(typeRules, '*')) return typeRules['*'];
-  return fallbackRule;
+  return null;
 };
 
 const validateRulesAgainstSchema = (schema: GraphQLSchema, rules: Rules) => {
@@ -232,12 +229,8 @@ export const applyRulesToSchema = (
 
   return mapSchema(schema, {
     [MapperKind.OBJECT_FIELD]: (fieldConfig, fieldName, typeName) => {
-      const rule = ruleForField(
-        rules,
-        typeName,
-        fieldName,
-        options.fallbackRule,
-      );
+      const rule =
+        ruleForField(rules, typeName, fieldName) ?? options.fallbackRule;
 
       // An allow field has nothing to deny, so unless its resolver errors are
       // replaced, the field is left as it is.
@@ -245,9 +238,7 @@ export const applyRulesToSchema = (
         return fieldConfig;
       }
 
-      const hasCustomResolve =
-        fieldConfig.resolve !== undefined &&
-        fieldConfig.resolve !== defaultFieldResolver;
+      const wrapper = wrapResolver(rule, options);
 
       // A subscription is checked when the client subscribes, so a denied
       // subscription never runs its subscribe function. If it also has a custom
@@ -255,24 +246,17 @@ export const applyRulesToSchema = (
       if (fieldConfig.subscribe) {
         return {
           ...fieldConfig,
-          subscribe: wrapResolver(fieldConfig.subscribe, rule, options),
-          ...(hasCustomResolve && {
-            resolve: wrapResolver(
-              fieldConfig.resolve as Resolver,
-              rule,
-              options,
-            ),
-          }),
+          subscribe: wrapper(fieldConfig.subscribe),
+          ...(fieldConfig.resolve !== undefined &&
+            fieldConfig.resolve !== defaultFieldResolver && {
+              resolve: wrapper(fieldConfig.resolve),
+            }),
         };
       }
 
       return {
         ...fieldConfig,
-        resolve: wrapResolver(
-          fieldConfig.resolve ?? defaultFieldResolver,
-          rule,
-          options,
-        ),
+        resolve: wrapper(fieldConfig.resolve ?? defaultFieldResolver),
       };
     },
   });
