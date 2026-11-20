@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.0.2](https://github.com/marklai1998/graphql-guard/compare/v1.0.1...v1.0.2) (2026-11-20)
+
+
+### Bug Fixes
+
+* skip hashing empty args in the strict cache key ([a6bbf95](https://github.com/marklai1998/graphql-guard/commit/a6bbf956440129a6d7951fd09b18bc07460bf75f))
+
+
+### Performance Improvements
+
+* skip hashing empty args in the strict cache key ([d67fdbd](https://github.com/marklai1998/graphql-guard/commit/d67fdbddd53729d8f6f0fd3878652ee1310c7d7a))
+
 ## [1.0.1](https://github.com/marklai1998/graphql-guard/compare/v1.0.0...v1.0.1) (2026-11-20)
 
 
