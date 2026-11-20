@@ -20,13 +20,25 @@ import {
 } from '../src/rules.js';
 import type { GuardRule } from '../src/types/index.js';
 
+// A rule's executor is a closure made per instance, so compare everything else:
+// the name and the rule function.
+const ruleFields = (rule: object) => {
+  const { executeRule: _, ...fields } = rule as unknown as Record<
+    string,
+    unknown
+  >;
+  return fields;
+};
+
 describe('rule constructor', () => {
   test('correctly constructs from no arguments', async () => {
     const func = () => true;
     const result = rule()(func);
 
     expect(result.name).toMatch(/^anonymous-rule-\d+$/);
-    expect(result).toEqual(new Rule(result.name, func, {}));
+    expect(ruleFields(result)).toEqual(
+      ruleFields(new Rule(result.name, func, {})),
+    );
   });
 
   test('keeps the options when the name is undefined', async () => {
@@ -34,7 +46,9 @@ describe('rule constructor', () => {
     const result = rule(undefined, { cache: 'strict' })(func);
 
     expect(result.name).toMatch(/^anonymous-rule-\d+$/);
-    expect(result).toEqual(new Rule(result.name, func, { cache: 'strict' }));
+    expect(ruleFields(result)).toEqual(
+      ruleFields(new Rule(result.name, func, { cache: 'strict' })),
+    );
   });
 
   test('gives every anonymous rule a distinct, sequential name', async () => {
@@ -50,17 +64,17 @@ describe('rule constructor', () => {
   test('correctly constructs with name and options', async () => {
     const func = () => true;
 
-    expect(
-      rule('name', {
-        cache: 'contextual',
-      })(func),
-    ).toEqual(new Rule('name', func, { cache: 'contextual' }));
+    expect(ruleFields(rule('name', { cache: 'contextual' })(func))).toEqual(
+      ruleFields(new Rule('name', func, { cache: 'contextual' })),
+    );
   });
 
   test('correctly constructs with name but no options', async () => {
     const func = () => true;
 
-    expect(rule('name')(func)).toEqual(new Rule('name', func, {}));
+    expect(ruleFields(rule('name')(func))).toEqual(
+      ruleFields(new Rule('name', func, {})),
+    );
   });
 
   test('correctly constructs with options', async () => {
@@ -68,10 +82,8 @@ describe('rule constructor', () => {
     const result = rule({ cache: 'contextual' })(func);
 
     expect(result.name).toMatch(/^anonymous-rule-\d+$/);
-    expect(result).toEqual(
-      new Rule(result.name, func, {
-        cache: 'contextual',
-      }),
+    expect(ruleFields(result)).toEqual(
+      ruleFields(new Rule(result.name, func, { cache: 'contextual' })),
     );
   });
 });
