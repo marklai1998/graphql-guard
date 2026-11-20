@@ -12,7 +12,6 @@ import {
 } from './constants/index.js';
 import { createGuardError } from './errors.js';
 import type {
-  Cache,
   CacheConstructorOptions,
   GuardContext,
   GuardRule,
@@ -22,7 +21,6 @@ import type {
   ResolveOptions,
   RuleConstructorOptions,
   RuleFunction,
-  RuleOptions,
   RuleResult,
   Rule as RuleType,
 } from './types/index.js';
@@ -122,6 +120,16 @@ const toCacheKey = (key: unknown): string => {
   );
 };
 
+type RuleExecutorResult = string | boolean | Error | Promise<RuleResult>;
+
+type RuleExecutor = (
+  parent: object,
+  args: object,
+  ctx: GuardContext,
+  info: GraphQLResolveInfo,
+  options: PopulatedOptions,
+) => RuleExecutorResult;
+
 const firstError = (results: RuleResult[]): RuleResult =>
   results.find((res) => res instanceof Error) || false;
 
@@ -132,19 +140,17 @@ export class Rule implements RuleType {
 
   readonly name: string;
 
-  private cache: Cache;
   private func: RuleFunction;
+  private executeRule: RuleExecutor;
 
   constructor(
     name: string,
     func: RuleFunction,
-    constructorOptions: RuleConstructorOptions,
+    options: RuleConstructorOptions,
   ) {
-    const options = this.normalizeOptions(constructorOptions);
-
     this.name = name;
     this.func = func;
-    this.cache = options.cache;
+    this.executeRule = this.createExecutor(options.cache);
   }
 
   async resolve(
@@ -186,75 +192,46 @@ export class Rule implements RuleType {
     return this.func === rule.func;
   }
 
-  private normalizeOptions(options: RuleConstructorOptions): RuleOptions {
-    return {
-      cache:
-        options.cache !== undefined
-          ? this.normalizeCacheOption(options.cache)
-          : 'no_cache',
-    };
-  }
+  /**
+   * Picks how the rule runs for its cache option, once, so each call is a
+   * plain function call with no option checks.
+   */
+  private createExecutor(
+    cache: CacheConstructorOptions | undefined,
+  ): RuleExecutor {
+    const func = this.func;
 
-  private normalizeCacheOption(cache: CacheConstructorOptions): Cache {
-    switch (cache) {
-      case true: {
-        return 'strict';
-      }
-      case false: {
-        return 'no_cache';
-      }
-      default: {
-        return cache;
-      }
+    if (typeof cache === 'function') {
+      /* User defined cache function. */
+      return this.withCacheKey((parent, args, ctx, info) =>
+        toCacheKey(cache(parent, args, ctx, info)),
+      );
     }
-  }
 
-  private executeRule(
-    parent: object,
-    args: object,
-    ctx: GuardContext,
-    info: GraphQLResolveInfo,
-    options: PopulatedOptions,
-  ): string | boolean | Error | Promise<RuleResult> {
-    switch (typeof this.cache) {
-      case 'function': {
-        /* User defined cache function. */
-        const cacheKeyFn = this.cache;
-        return this.withCacheKey(
-          () => toCacheKey(cacheKeyFn(parent, args, ctx, info)),
-          parent,
-          args,
-          ctx,
-          info,
+    switch (cache) {
+      case true:
+      case 'strict': {
+        return this.withCacheKey((parent, args, _ctx, _info, options) =>
+          strictCacheKey(parent, args, options),
         );
       }
-      case 'string': {
-        /* Standard cache option. */
-        switch (this.cache) {
-          case 'strict': {
-            return this.withCacheKey(
-              () => strictCacheKey(parent, args, options),
-              parent,
-              args,
-              ctx,
-              info,
-            );
-          }
-          case 'contextual': {
-            return this.writeToCache()(parent, args, ctx, info);
-          }
-          case 'no_cache': {
-            return this.func(parent, args, ctx, info);
-          }
-          /* istanbul ignore next */
-          default: {
-            throw new Error(`Unsupported cache format: ${typeof this.cache}`);
-          }
-        }
+      case 'contextual': {
+        const cacheKey = JSON.stringify([this.name]);
+        return (parent, args, ctx, info) =>
+          this.readThroughCache(cacheKey, parent, args, ctx, info);
+      }
+      case undefined:
+      case false:
+      case 'no_cache': {
+        return (parent, args, ctx, info) => func(parent, args, ctx, info);
       }
       /* istanbul ignore next */
       default: {
-        throw new Error(`Unsupported cache format: ${typeof this.cache}`);
+        // Thrown when the rule runs, not here, so an unknown option denies
+        // like any other rule error instead of failing at construction.
+        return () => {
+          throw new Error(`Unsupported cache format: ${typeof cache}`);
+        };
       }
     }
   }
@@ -265,44 +242,44 @@ export class Rule implements RuleType {
    * Promise or a WeakMap), the rule runs uncached instead of being denied.
    */
   private withCacheKey(
-    getKey: () => string,
-    parent: object,
-    args: object,
-    ctx: GuardContext,
-    info: GraphQLResolveInfo,
-  ): string | boolean | Error | Promise<RuleResult> {
-    let key: string;
-    try {
-      key = getKey();
-    } catch {
-      return this.func(parent, args, ctx, info);
-    }
-    return this.writeToCache(key)(parent, args, ctx, info);
+    getKey: (...params: Parameters<RuleExecutor>) => string,
+  ): RuleExecutor {
+    const func = this.func;
+    return (parent, args, ctx, info, options) => {
+      let key: string;
+      try {
+        key = getKey(parent, args, ctx, info, options);
+      } catch {
+        return func(parent, args, ctx, info);
+      }
+      return this.readThroughCache(
+        JSON.stringify([this.name, key]),
+        parent,
+        args,
+        ctx,
+        info,
+      );
+    };
   }
 
   /**
-   * Caches the rule result under the rule name and an optional key. The pair is
-   * encoded as a JSON array so that no name and key combination can collide
-   * with another, e.g. rule `a-b` (contextual) and rule `a` with key `b`.
+   * Returns the cached result under `cacheKey`, running the rule on a miss. The
+   * key is the rule name and an optional key encoded as a JSON array, so that
+   * no name and key combination can collide with another, e.g. rule `a-b`
+   * (contextual) and rule `a` with key `b`.
    */
-  private writeToCache(
-    key?: string,
-  ): (
+  private readThroughCache(
+    cacheKey: string,
     parent: object,
     args: object,
     ctx: GuardContext,
     info: GraphQLResolveInfo,
-  ) => string | boolean | Error | Promise<RuleResult> {
-    return (parent, args, ctx, info) => {
-      const cache = getRuleCache(ctx, info);
-      const cacheKey = JSON.stringify(
-        key === undefined ? [this.name] : [this.name, key],
-      );
-      if (!cache.has(cacheKey)) {
-        cache.set(cacheKey, this.func(parent, args, ctx, info));
-      }
-      return cache.get(cacheKey) as RuleResult | Promise<RuleResult>;
-    };
+  ): RuleExecutorResult {
+    const cache = getRuleCache(ctx, info);
+    if (!cache.has(cacheKey)) {
+      cache.set(cacheKey, this.func(parent, args, ctx, info));
+    }
+    return cache.get(cacheKey) as RuleResult | Promise<RuleResult>;
   }
 }
 
