@@ -36,21 +36,24 @@ ratio across four full runs.
 
 Mean time per query, from one full run. Lower is better.
 
-| Scenario                                                 |   plain | graphql-shield | graphql-guard | guard vs shield | Range over 4 runs |
-| -------------------------------------------------------- | ------: | -------------: | ------------: | --------------: | ----------------: |
-| Tiny query, no rules                                     |  1.0 µs |         1.5 µs |        1.1 µs |           1.45× |          1.2–1.5× |
-| Tiny query, rule tree                                    |  1.0 µs |         1.5 µs |        1.0 µs |           1.52× |          1.5–3.3× |
-| 5,000-item list, no rules                                | 6.40 ms |       29.17 ms |       7.42 ms |           3.93× |          3.8–4.5× |
-| 5,000-item list, cached type-wide rule                   | 6.27 ms |       32.93 ms |      17.55 ms |           1.88× |          1.8–2.5× |
-| Nested query, no rules                                   | 6.26 ms |       29.05 ms |       7.57 ms |           3.84× |          3.7–5.5× |
-| Nested query, sync rule tree (admin)                     | 6.48 ms |       40.62 ms |      14.86 ms |           2.73× |          1.9–3.4× |
-| Nested query, sync rule tree with a strict cache (admin) | 6.50 ms |      129.11 ms |      62.37 ms |           2.07× |          1.3–2.1× |
-| Nested query, async rule tree (admin)                    | 7.28 ms |       55.21 ms |      51.28 ms |           1.08× |          1.1–1.5× |
-| Nested query, sync rule tree (user, some fields denied)  |       — |       69.41 ms |      43.49 ms |           1.60× |          1.4–1.8× |
-| Nested query, unauthenticated (everything denied)        |       — |        20.0 µs |       28.9 µs |       **0.69×** |              0.7× |
-| Apply rules to a 200-type × 20-field schema              |       — |       25.87 ms |      12.73 ms |           2.03× |          1.7–2.0× |
+| Scenario                                                   |   plain | graphql-shield | graphql-guard | guard vs shield | Range over 4 runs |
+| ---------------------------------------------------------- | ------: | -------------: | ------------: | --------------: | ----------------: |
+| Tiny query, no rules                                       |  1.0 µs |         1.5 µs |        1.1 µs |           1.45× |          1.2–1.5× |
+| Tiny query, rule tree                                      |  1.0 µs |         1.5 µs |        1.0 µs |           1.52× |          1.5–3.3× |
+| 5,000-item list, no rules                                  | 6.40 ms |       29.17 ms |       7.42 ms |           3.93× |          3.8–4.5× |
+| 5,000-item list, cached type-wide rule                     | 6.27 ms |       32.93 ms |      17.55 ms |           1.88× |          1.8–2.5× |
+| Nested query, no rules                                     | 6.26 ms |       29.05 ms |       7.57 ms |           3.84× |          3.7–5.5× |
+| Nested query, sync rule tree (admin)                       | 6.48 ms |       40.62 ms |      14.86 ms |           2.73× |          1.9–3.4× |
+| Nested query, sync rule tree with a strict cache (admin)\* | 5.14 ms |       79.23 ms |      17.84 ms |           4.44× |      4.4× (1 run) |
+| Nested query, async rule tree (admin)                      | 7.28 ms |       55.21 ms |      51.28 ms |           1.08× |          1.1–1.5× |
+| Nested query, sync rule tree (user, some fields denied)    |       — |       69.41 ms |      43.49 ms |           1.60× |          1.4–1.8× |
+| Nested query, unauthenticated (everything denied)          |       — |        20.0 µs |       28.9 µs |       **0.69×** |              0.7× |
+| Apply rules to a 200-type × 20-field schema                |       — |       25.87 ms |      12.73 ms |           2.03× |          1.7–2.0× |
 
 Plain is left out when rules deny fields, because its response is different.
+
+\* Re-run separately after the strict cache stopped hashing empty arguments,
+on a busier machine, so compare its ratio rather than its absolute times.
 
 ### What the numbers show
 
@@ -63,10 +66,11 @@ Plain is left out when rules deny fields, because its response is different.
   `chain`, `race` and `not` around it.
 - **Async rules perform about the same in both libraries.** Once a rule
   returns a promise, each field waits on it either way.
-- **The `strict` cache is expensive in both libraries.** It hashes the parent
-  with object-hash on every call. Changing one rule from `strict` to
-  `no_cache` cuts the nested query from 62 ms to 15 ms with graphql-guard.
-  Use `strict` only when the rule itself costs more than hashing the parent.
+- **The `strict` cache costs little in graphql-guard and a lot in
+  graphql-shield.** graphql-shield hashes the parent and the arguments with
+  object-hash on every call. graphql-guard keys the parent by identity and only
+  hashes arguments when a field has some, so the nested query takes about as
+  long with `strict` as with `no_cache`.
 - **When every field is denied, graphql-guard is about 9 µs slower per
   request.** graphql-js captures a stack trace when it records a field error.
   graphql-guard returns denials synchronously, deeper in the call stack, and a

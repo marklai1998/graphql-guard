@@ -28,6 +28,7 @@ import {
   allMaybeSync,
   andThen,
   isObject,
+  isPlainObject,
   isPromiseLike,
 } from './utils/index.js';
 
@@ -101,10 +102,23 @@ const strictCacheKey = (
 ): string => {
   if (options.hashFunction) return options.hashFunction({ parent, args });
   return JSON.stringify([
-    isObject(parent) ? parentId(parent) : hash({ parent }),
-    hash({ args }),
+    isObject(parent) ? parentId(parent) : primitiveKey(parent),
+    hasNoArgs(args) ? '' : hash({ args }),
   ]);
 };
+
+// Most fields take no arguments, and graphql-js passes an empty object for
+// them. Hashing it with object-hash costs as much as a cheap rule, so it gets
+// a fixed key instead. '' can't collide with a hash, which is never empty.
+const hasNoArgs = (args: unknown): boolean => {
+  if (!isPlainObject(args)) return false;
+  for (const _ in args) return false;
+  return Object.getOwnPropertySymbols(args).length === 0;
+};
+
+// The root value is usually undefined, which needs no hashing either.
+const primitiveKey = (parent: unknown): string =>
+  parent === undefined ? 'u' : parent === null ? 'n' : hash({ parent });
 
 /**
  * Checks a key returned by a cache key function. Only strings and numbers are
@@ -118,6 +132,17 @@ const toCacheKey = (key: unknown): string => {
   throw new TypeError(
     `A cache key function must return a string or a number, got ${key === null ? 'null' : typeof key}.`,
   );
+};
+
+// A rule that throws denies, unless debug mode or an enclosing not() asks for
+// the error to be rethrown.
+const handleRuleError = (
+  err: unknown,
+  options: PopulatedOptions,
+): RuleResult => {
+  if (options.debug || (options as ResolveOptions)[failClosed]) throw err;
+  (options as ResolveOptions)[reportThrown]?.(err);
+  return false;
 };
 
 type RuleExecutorResult = string | boolean | Error | Promise<RuleResult>;
@@ -170,21 +195,15 @@ export class Rule implements RuleType {
     info: GraphQLResolveInfo,
     options: PopulatedOptions,
   ): MaybePromise<RuleResult> {
-    const onError = (err: unknown): RuleResult => {
-      if (options.debug || (options as ResolveOptions)[failClosed]) {
-        throw err;
-      }
-      (options as ResolveOptions)[reportThrown]?.(err);
-      return false;
-    };
-
     try {
       const res = this.#executeRule(parent, args, ctx, info, options);
       return isPromiseLike(res)
-        ? Promise.resolve(res).then(normalizeResult, onError)
+        ? Promise.resolve(res).then(normalizeResult, (err) =>
+            handleRuleError(err, options),
+          )
         : normalizeResult(res);
     } catch (err) {
-      return onError(err);
+      return handleRuleError(err, options);
     }
   }
 
@@ -275,10 +294,12 @@ export class Rule implements RuleType {
     info: GraphQLResolveInfo,
   ): RuleExecutorResult {
     const cache = getRuleCache(ctx, info);
-    if (!cache.has(cacheKey)) {
-      cache.set(cacheKey, this.#func(parent, args, ctx, info));
+    let res = cache.get(cacheKey);
+    if (res === undefined && !cache.has(cacheKey)) {
+      res = this.#func(parent, args, ctx, info);
+      cache.set(cacheKey, res);
     }
-    return cache.get(cacheKey) as RuleResult | Promise<RuleResult>;
+    return res as RuleExecutorResult;
   }
 }
 
@@ -497,11 +518,7 @@ export class RuleNot extends LogicRule {
     // The wrapped rule threw (for example, its database is down). Inverting
     // that would let every request through, so deny instead. Inside another
     // not(), rethrow so the outermost not() denies.
-    const onError = (err: unknown): RuleResult => {
-      if (options.debug || (options as ResolveOptions)[failClosed]) throw err;
-      (options as ResolveOptions)[reportThrown]?.(err);
-      return false;
-    };
+    const onError = (err: unknown): RuleResult => handleRuleError(err, options);
 
     // A returned error or string is a deliberate "no", so it inverts to "yes".
     const invert = ([res]: RuleResult[]): RuleResult =>
