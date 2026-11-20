@@ -140,8 +140,8 @@ export class Rule implements RuleType {
 
   readonly name: string;
 
-  private func: RuleFunction;
-  private executeRule: RuleExecutor;
+  readonly #func: RuleFunction;
+  readonly #executeRule: RuleExecutor;
 
   constructor(
     name: string,
@@ -149,8 +149,8 @@ export class Rule implements RuleType {
     options: RuleConstructorOptions,
   ) {
     this.name = name;
-    this.func = func;
-    this.executeRule = this.createExecutor(options.cache);
+    this.#func = func;
+    this.#executeRule = this.#createExecutor(options.cache);
   }
 
   async resolve(
@@ -179,7 +179,7 @@ export class Rule implements RuleType {
     };
 
     try {
-      const res = this.executeRule(parent, args, ctx, info, options);
+      const res = this.#executeRule(parent, args, ctx, info, options);
       return isPromiseLike(res)
         ? Promise.resolve(res).then(normalizeResult, onError)
         : normalizeResult(res);
@@ -188,22 +188,21 @@ export class Rule implements RuleType {
     }
   }
 
-  equals(rule: Rule): boolean {
-    return this.func === rule.func;
+  equals(rule: RuleType): boolean {
+    // A rule from another copy of graphql-guard has no #func to compare.
+    return #func in rule && this.#func === rule.#func;
   }
 
   /**
    * Picks how the rule runs for its cache option, once, so each call is a
    * plain function call with no option checks.
    */
-  private createExecutor(
-    cache: CacheConstructorOptions | undefined,
-  ): RuleExecutor {
-    const func = this.func;
+  #createExecutor(cache: CacheConstructorOptions | undefined): RuleExecutor {
+    const func = this.#func;
 
     if (typeof cache === 'function') {
       /* User defined cache function. */
-      return this.withCacheKey((parent, args, ctx, info) =>
+      return this.#withCacheKey((parent, args, ctx, info) =>
         toCacheKey(cache(parent, args, ctx, info)),
       );
     }
@@ -211,14 +210,14 @@ export class Rule implements RuleType {
     switch (cache) {
       case true:
       case 'strict': {
-        return this.withCacheKey((parent, args, _ctx, _info, options) =>
+        return this.#withCacheKey((parent, args, _ctx, _info, options) =>
           strictCacheKey(parent, args, options),
         );
       }
       case 'contextual': {
         const cacheKey = JSON.stringify([this.name]);
         return (parent, args, ctx, info) =>
-          this.readThroughCache(cacheKey, parent, args, ctx, info);
+          this.#readThroughCache(cacheKey, parent, args, ctx, info);
       }
       case undefined:
       case false:
@@ -241,10 +240,10 @@ export class Rule implements RuleType {
    * can't be computed (for example, object-hash throws on a parent holding a
    * Promise or a WeakMap), the rule runs uncached instead of being denied.
    */
-  private withCacheKey(
+  #withCacheKey(
     getKey: (...params: Parameters<RuleExecutor>) => string,
   ): RuleExecutor {
-    const func = this.func;
+    const func = this.#func;
     return (parent, args, ctx, info, options) => {
       let key: string;
       try {
@@ -252,7 +251,7 @@ export class Rule implements RuleType {
       } catch {
         return func(parent, args, ctx, info);
       }
-      return this.readThroughCache(
+      return this.#readThroughCache(
         JSON.stringify([this.name, key]),
         parent,
         args,
@@ -268,7 +267,7 @@ export class Rule implements RuleType {
    * no name and key combination can collide with another, e.g. rule `a-b`
    * (contextual) and rule `a` with key `b`.
    */
-  private readThroughCache(
+  #readThroughCache(
     cacheKey: string,
     parent: object,
     args: object,
@@ -277,7 +276,7 @@ export class Rule implements RuleType {
   ): RuleExecutorResult {
     const cache = getRuleCache(ctx, info);
     if (!cache.has(cacheKey)) {
-      cache.set(cacheKey, this.func(parent, args, ctx, info));
+      cache.set(cacheKey, this.#func(parent, args, ctx, info));
     }
     return cache.get(cacheKey) as RuleResult | Promise<RuleResult>;
   }
@@ -288,10 +287,10 @@ export class LogicRule implements LogicRuleType {
     return true;
   }
 
-  private rules: GuardRule[];
+  readonly #rules: GuardRule[];
 
   constructor(rules: GuardRule[]) {
-    this.rules = rules;
+    this.#rules = rules;
   }
 
   async resolve(
@@ -338,8 +337,8 @@ export class LogicRule implements LogicRuleType {
     );
   }
 
-  getRules() {
-    return this.rules;
+  getRules(): GuardRule[] {
+    return this.#rules;
   }
 }
 
@@ -481,7 +480,7 @@ export class RuleRace extends LogicRule {
 }
 
 export class RuleNot extends LogicRule {
-  error?: Error;
+  readonly error?: Error;
 
   constructor(rule: GuardRule, error?: Error) {
     super([rule]);
