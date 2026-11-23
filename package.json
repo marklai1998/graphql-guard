@@ -59,7 +59,7 @@
   },
   "devDependencies": {
     "@apollo/server": "5.5.2",
-    "@biomejs/biome": "2.6.7",
+    "@biomejs/biome": "2.6.8",
     "@commitlint/cli": "21.2.4",
     "@graphql-tools/schema": "11.0.9",
     "@marklai/shared-config-biome": "1.0.2",
